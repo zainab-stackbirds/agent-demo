@@ -58,6 +58,10 @@ function showSidebar() {
 	if (sidebarContainer) {
 		sidebarContainer.style.display = "flex";
 		sidebarVisible = true;
+		document.body.classList.add("stackbirds-sidebar-open");
+		// Set initial margin based on current width
+		const currentWidth = sidebarContainer.offsetWidth || 400;
+		document.body.style.marginRight = currentWidth + "px";
 		saveSidebarState(true);
 		return;
 	}
@@ -79,6 +83,11 @@ function showSidebar() {
   `;
 
 	document.body.appendChild(sidebarContainer);
+	document.body.classList.add("stackbirds-sidebar-open");
+	
+	// Set initial margin
+	const initialWidth = 400;
+	document.body.style.marginRight = initialWidth + "px";
 
 	// Add close button listener
 	document
@@ -95,6 +104,8 @@ function showSidebar() {
 function hideSidebar() {
 	if (sidebarContainer) {
 		sidebarContainer.style.display = "none";
+		document.body.classList.remove("stackbirds-sidebar-open");
+		document.body.style.marginRight = "";
 		sidebarVisible = false;
 		saveSidebarState(false);
 	}
@@ -125,6 +136,8 @@ function makeResizable() {
 		const maxWidth = 800;
 		const newWidth = Math.min(Math.max(offsetRight, minWidth), maxWidth);
 		sidebar.style.width = newWidth + "px";
+		// Update body margin to match new width
+		document.body.style.marginRight = newWidth + "px";
 	}
 
 	function stopResize() {
