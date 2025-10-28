@@ -1,0 +1,27 @@
+{
+	"manifest_version": 3,
+	"name": "Stackbirds Agent",
+	"version": "1.0.0",
+	"description": "Your AI agent assistant",
+	"permissions": ["activeTab", "storage"],
+	"action": {
+		"default_title": "Toggle Stackbirds Agent"
+	},
+	"background": {
+		"service_worker": "background.js"
+	},
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["content.js"],
+			"css": ["sidebar.css"],
+			"run_at": "document_idle"
+		}
+	],
+	"web_accessible_resources": [
+		{
+			"resources": ["sidebar.html"],
+			"matches": ["<all_urls>"]
+		}
+	]
+}

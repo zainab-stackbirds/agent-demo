@@ -1,0 +1,16 @@
+name: Deploy to Vercel
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Trigger Vercel Deployment
+              run: |
+                  if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+                      curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_1LsWfMkWKHFRk7fcXLfYMYFLZBmN/FwqsDT2Qcb
+                  fi
