@@ -31,6 +31,8 @@ import { Loader } from "@/components/ai-elements/loader";
 import { SystemEvent } from "@/components/ai-elements/system-event";
 import type { UIMessage, ChatStatus } from "ai";
 import { nanoid } from "nanoid";
+import { AudioVisualizer } from "@/components/ui/audio-visualizer";
+import { AnimatePresence, motion } from "motion/react";
 
 type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -43,6 +45,8 @@ type MessagePart =
   | { type: "reasoning"; text: string; state?: "done" }
   | { type: "source-url"; url: string }
   | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created"; metadata?: Record<string, any> }
+  | { type: "voice"; dummyText: string; recordingDuration: number }
+  | { type: "link"; text: string; url?: string }
 
 // Broadcast Channel types for cross-tab synchronization
 type BroadcastMessage = {
@@ -70,6 +74,42 @@ type BroadcastMessage = {
     isUserMessageInPlaceholder: boolean;
   };
 }
+
+// Utility functions for localStorage management
+const saveToLocalStorage = (key: string, value: any) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error saving ${key} to localStorage:`, error);
+    }
+  }
+};
+
+const loadFromLocalStorage = (key: string, defaultValue: any = null) => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch (error) {
+      console.error(`Error loading ${key} from localStorage:`, error);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+};
+
+const clearConversationStorage = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('stackbirds-conversation');
+      localStorage.removeItem('stackbirds-conversation-index');
+      localStorage.removeItem('stackbirds-demo-active');
+    } catch (error) {
+      console.error('Error clearing conversation storage:', error);
+    }
+  }
+};
 
 // Simple broadcast utility - avoiding hooks to prevent re-render issues
 class BroadcastSync {
@@ -100,7 +140,26 @@ class BroadcastSync {
       }
     };
 
+    // Listen to localStorage changes from other tabs
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key?.startsWith('stackbirds-')) {
+        // Broadcast a storage sync message to trigger state updates
+        this.broadcastMessage({
+          type: 'SYNC_STATE',
+          payload: {
+            messages: loadFromLocalStorage('stackbirds-conversation', []),
+            currentMessageIndex: loadFromLocalStorage('stackbirds-conversation-index', 0),
+            status: 'ready',
+            isUserMessageInPlaceholder: false,
+            demoModeActive: loadFromLocalStorage('stackbirds-demo-active', true),
+            input: ""
+          }
+        });
+      }
+    };
+
     window.addEventListener('message', handlePostMessage);
+    window.addEventListener('storage', handleStorageChange);
   }
 
   addMessageListener(handler: (message: BroadcastMessage) => void) {
@@ -152,7 +211,7 @@ const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-1",
     role: "user",
-    parts: [{ type: "text", text: "I need help with lead management." }],
+    parts: [{ type: "voice", dummyText: "I need help with lead management.", recordingDuration: 3000 }],
   },
   {
     id: "msg-2",
@@ -202,8 +261,9 @@ const mockConversation: CustomUIMessage[] = [
     role: "user",
     parts: [
       {
-        type: "text",
-        text: "Great! Let me walk you through Thumbtack. I login, open my leads tab, check for new leads, and never exceed my budget. When I find a lead, I pull my template and follow up via my business line."
+        type: "voice",
+        dummyText: "Great! Let me walk you through Thumbtack. I login, open my leads tab, check for new leads, and never exceed my budget. When I find a lead, I pull my template and follow up via my business line.",
+        recordingDuration: 8000
       },
     ],
   },
@@ -224,15 +284,16 @@ const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-7",
     role: "user",
-    parts: [{ type: "text", text: "Correct!" }],
+    parts: [{ type: "voice", dummyText: "Correct!", recordingDuration: 1000 }],
   },
   {
     id: "msg-8",
     role: "user",
     parts: [
       {
-        type: "text",
-        text: "Then I go to OpenPhone (via browser extension), copy the phone number from Thumbtack, create a contact, and send my first message using a template. I modify it for the client's request—name, allergens, menu, etc."
+        type: "voice",
+        dummyText: "Then I go to OpenPhone (via browser extension), copy the phone number from Thumbtack, create a contact, and send my first message using a template. I modify it for the client's request—name, allergens, menu, etc.",
+        recordingDuration: 10000
       },
     ],
   },
@@ -253,7 +314,7 @@ const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-10",
     role: "user",
-    parts: [{ type: "text", text: "Correct." }],
+    parts: [{ type: "voice", dummyText: "Correct.", recordingDuration: 1000 }],
   },
   {
     id: "msg-11",
@@ -270,8 +331,9 @@ const mockConversation: CustomUIMessage[] = [
     role: "user",
     parts: [
       {
-        type: "text",
-        text: "I go to Google Sheets, pull up my menus, and find the closest match based on event type. I adjust dishes for allergens if needed."
+        type: "voice",
+        dummyText: "I go to Google Sheets, pull up my menus, and find the closest match based on event type. I adjust dishes for allergens if needed.",
+        recordingDuration: 6000
       },
     ],
   },
@@ -292,7 +354,7 @@ const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-14",
     role: "user",
-    parts: [{ type: "text", text: "Awesome!" }],
+    parts: [{ type: "voice", dummyText: "Awesome!", recordingDuration: 1500 }],
   },
   {
     id: "msg-15",
@@ -309,8 +371,9 @@ const mockConversation: CustomUIMessage[] = [
     role: "user",
     parts: [
       {
-        type: "text",
-        text: "I always create custom. You can ask me if you don't find one."
+        type: "voice",
+        dummyText: "I always create custom. You can ask me if you don't find one.",
+        recordingDuration: 4000
       },
     ],
   },
@@ -329,8 +392,9 @@ const mockConversation: CustomUIMessage[] = [
     role: "user",
     parts: [
       {
-        type: "text",
-        text: "Right now I don't do anything, but I know I need a process."
+        type: "voice",
+        dummyText: "Right now I don't do anything, but I know I need a process.",
+        recordingDuration: 4500
       },
     ],
   },
@@ -351,7 +415,7 @@ const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-20",
     role: "user",
-    parts: [{ type: "text", text: "Oh that's really nice!" }],
+    parts: [{ type: "voice", dummyText: "Oh that's really nice!", recordingDuration: 2000 }],
   },
   {
     id: "msg-21",
@@ -366,7 +430,7 @@ const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-22",
     role: "user",
-    parts: [{ type: "text", text: "No, let's start fresh." }],
+    parts: [{ type: "voice", dummyText: "No, let's start fresh.", recordingDuration: 2500 }],
   },
   {
     id: "msg-23",
@@ -394,18 +458,79 @@ const mockConversation: CustomUIMessage[] = [
   },
 ];
 
+// Helper function to render text with clickable links
+const TextWithLinks = ({ text }: { text: string }) => {
+  // Regex to detect URLs in text
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/g;
+
+  const parts = text.split(urlRegex);
+  const matches = text.match(urlRegex);
+
+  if (!matches) {
+    return <Response>{text}</Response>;
+  }
+
+  return (
+    <div className="whitespace-pre-wrap">
+      {parts.map((part, index) => {
+        if (matches.includes(part)) {
+          // Ensure URL has protocol
+          const url = part.startsWith('http') ? part : `https://${part}`;
+          return (
+            <a
+              key={index}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 underline"
+            >
+              {part}
+            </a>
+          );
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </div>
+  );
+};
+
 const ChatBotDemo = () => {
   const [input, setInput] = useState("");
 
-  const [messages, setMessages] = useState<CustomUIMessage[]>([]);
+  // Initialize state from localStorage
+  const [messages, setMessages] = useState<CustomUIMessage[]>(() =>
+    loadFromLocalStorage('stackbirds-conversation', [])
+  );
   const [status, setStatus] = useState<ChatStatus>("ready");
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(() =>
+    loadFromLocalStorage('stackbirds-conversation-index', 0)
+  );
   const [isUserMessageInPlaceholder, setIsUserMessageInPlaceholder] = useState(false);
-  const [demoModeActive, setDemoModeActive] = useState(true);
+  const [demoModeActive, setDemoModeActive] = useState(() =>
+    loadFromLocalStorage('stackbirds-demo-active', true)
+  );
+
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage('stackbirds-conversation', messages);
+  }, [messages]);
+
+  useEffect(() => {
+    saveToLocalStorage('stackbirds-conversation-index', currentMessageIndex);
+  }, [currentMessageIndex]);
+
+  useEffect(() => {
+    saveToLocalStorage('stackbirds-demo-active', demoModeActive);
+  }, [demoModeActive]);
 
   useEffect(() => {
     if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
@@ -563,7 +688,7 @@ const ChatBotDemo = () => {
       setIsUserMessageInPlaceholder(false);
       setMessages(prev => [...prev, userMessage]);
       setCurrentMessageIndex(newIndex);
-      setInput(""); // Clear input 
+      setInput(""); // Clear input
 
       // Broadcast the user message submission
       if (updateSourceRef.current === 'self' && broadcastInstance) {
@@ -575,11 +700,112 @@ const ChatBotDemo = () => {
     }
   };
 
+  const handleStartRecording = async () => {
+    if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
+
+    const currentMessage = mockConversation[currentMessageIndex];
+    if (currentMessage.role !== "user") return;
+
+    const voicePart = currentMessage.parts.find(part => part.type === "voice");
+    if (!voicePart || voicePart.type !== "voice") return;
+
+    try {
+      // Get mock audio stream (we'll use a real microphone for visualization)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMediaStream(stream);
+      setIsRecording(true);
+
+      // Recording will continue until user clicks the cross button
+      // No auto-stop timer - demo presenter is in control
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      // If microphone access fails, just show the mic button again
+      setIsRecording(false);
+    }
+  };
+
+  const handleStopRecording = (transcribedText: string) => {
+    // Stop the recording
+    setIsRecording(false);
+
+    // Stop all tracks in the media stream
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setMediaStream(null);
+    }
+
+    // Clear the timer
+    if (recordingTimerRef.current) {
+      clearTimeout(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    // Add the transcribed message
+    const userMessage: CustomUIMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      parts: [{ type: "text", text: transcribedText }],
+    };
+
+    const newIndex = currentMessageIndex + 1;
+
+    setIsUserMessageInPlaceholder(false);
+    setMessages(prev => [...prev, userMessage]);
+    setCurrentMessageIndex(newIndex);
+    setInput(""); // Clear input
+
+    // Broadcast the user message submission
+    if (updateSourceRef.current === 'self' && broadcastInstance) {
+      broadcastInstance.broadcastMessage({
+        type: 'USER_MESSAGE_SUBMITTED',
+        payload: { message: userMessage, newIndex }
+      });
+    }
+  };
+
+  const handleCrossButtonClick = () => {
+    if (!isRecording || currentMessageIndex >= mockConversation.length) return;
+
+    const currentMessage = mockConversation[currentMessageIndex];
+    const voicePart = currentMessage.parts.find(part => part.type === "voice");
+    if (!voicePart || voicePart.type !== "voice") return;
+
+    // Add a natural delay between 50-100ms
+    const delay = Math.random() * 200 + 200; // Random delay between 50-100ms
+
+    setTimeout(() => {
+      handleStopRecording(voicePart.dummyText);
+    }, delay);
+  };
+
+  // Check if current message is a voice message and if we should show input
+  const currentMessage = mockConversation[currentMessageIndex];
+  const isVoiceMessage = currentMessage?.role === "user" &&
+    currentMessage.parts.some(part => part.type === "voice");
+  const shouldShowInput = currentMessage?.role === "user" && !isRecording;
+
+  // Show mic icon when waiting for user input, when recording, or when waiting for assistant response
+  const showMicSection = isVoiceMessage || isRecording ||
+    (currentMessage?.role === "assistant" || currentMessage?.role === "ai-agent");
+
   return (
     <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
       <div className="flex flex-col h-full">
         <Conversation className="h-full">
           <ConversationContent>
+            {messages.length === 0 && (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center space-y-4 max-w-md px-6">
+                  <div className="text-4xl mb-6">🎙️</div>
+                  <h2 className="text-2xl font-semibold text-foreground">
+                    StackBirds
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Speak and, There will be an AI-agent
+                  </p>
+                </div>
+              </div>
+            )}
             {messages.map((message) => (
               <div key={message.id}>
 
@@ -638,12 +864,41 @@ const ChatBotDemo = () => {
                             from={message.role}
                           >
                             <MessageContent>
-                              <Response>
-                                {part.text}
-                              </Response>
+                              <TextWithLinks text={part.text} />
                             </MessageContent>
                           </Message>
                         </Fragment>
+                      );
+                    case "link":
+                      return (
+                        <div
+                          key={`${message.id}-${i}`}
+                          className="flex justify-start mb-4"
+                        >
+                          <a
+                            href={part.url || `https://${part.text}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                          >
+                            {part.text}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="ml-2"
+                            >
+                              <path d="M7 7h10v10" />
+                              <path d="m6 6 12 12" />
+                            </svg>
+                          </a>
+                        </div>
                       );
                     case "reasoning":
                       return (
@@ -672,33 +927,85 @@ const ChatBotDemo = () => {
           <ConversationScrollButton />
         </Conversation>
 
-        <PromptInput
-          onSubmit={handleSubmit}
-          className="mt-4"
-          globalDrop
-          multiple
-        >
-          <PromptInputBody>
-            <PromptInputTextarea
-              onChange={(e) => setInput(e.target.value)}
-              value={input}
-              placeholder={
-                isUserMessageInPlaceholder && currentMessageIndex < mockConversation.length
-                  ? mockConversation[currentMessageIndex].parts
-                    .filter(part => part.type === "text")
-                    .map(part => part.text)
-                    .join(" ")
-                  : "Ask me anything..."
-              }
-            />
-          </PromptInputBody>
-          <PromptInputFooter className="flex justify-end">
-            <PromptInputSubmit
-              disabled={!input || isUserMessageInPlaceholder || status === "streaming"}
-              status={status}
-            />
-          </PromptInputFooter>
-        </PromptInput>
+        {showMicSection && (
+          // Voice message mode - show mic button or audio visualizer in same location
+          <div className="mt-4 relative">
+            <AnimatePresence mode="wait">
+              {!isRecording ? (
+                // Show mic button with fade animation
+                <motion.div
+                  key="mic-button"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="flex items-center justify-center"
+                >
+                  <button
+                    onClick={handleStartRecording}
+                    disabled={!shouldShowInput || status === "streaming"}
+                    className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    aria-label="Start recording"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                      <line x1="12" x2="12" y1="19" y2="22" />
+                    </svg>
+                  </button>
+                </motion.div>
+              ) : (
+                // Show audio visualizer with cross button
+                <motion.div
+                  key="audio-visualizer"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex-1 h-32">
+                    <AudioVisualizer
+                      stream={mediaStream}
+                      isRecording={isRecording}
+                      onClick={() => { }}
+                    />
+                  </div>
+                  <button
+                    onClick={handleCrossButtonClick}
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                    aria-label="Send voice message"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );
