@@ -245,25 +245,39 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "Hi! I'm the **Sales Agent**, pre-trained for sales and lead management. To customize my approach to *your* business, I need to ask a few questions. Ready? Let's get started! 🚀"
+        text: "Hi! I'm the **Sales Agent**, pre-trained for sales and lead management, so I will first need to understand your business and then understand your sales workflows. Tell me about your business. Do you have a website, facebook, instagram or google business profile?"
       },
     ],
   },
   {
     id: "msg-4",
-    role: "ai-agent",
-    parts: [
-      { type: "text", text: "First, where do you find your leads?" },
-    ],
-  },
-  {
-    id: "msg-5",
     role: "user",
     parts: [
       {
         type: "voice",
-        dummyText: "Great! Let me walk you through Thumbtack. I login, open my leads tab, check for new leads, and never exceed my budget. When I find a lead, I pull my template and follow up via my business line.",
-        recordingDuration: 8000
+        dummyText: "Yes, you can visit  www.sallypilatesstudio.com",
+        recordingDuration: 4000
+      },
+    ],
+  },
+  {
+    id: "msg-5",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. Where do you manage your leads?"
+      }
+    ]
+  },
+  {
+    id: "msg-6",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "I manage my leads on thumbtack",
+        recordingDuration: 4000
       },
     ],
   },
@@ -272,49 +286,37 @@ const mockConversation: CustomUIMessage[] = [
     role: "ai-agent",
     parts: [
       {
-        type: "reasoning",
-        text: "Extracting key workflow: Lead source = Thumbtack. Budget constraint = Never exceed. Follow-up = Business line template."
-      },
-      {
         type: "text",
-        text: "Got it! To summarize:\n- You find leads on **Thumbtack**\n- Never pass your set budget\n- Always redirect clients to your **business line**\n\nIs this correct?"
+        text: "I will need access to Thumbtack. Lets get that going."
       },
     ],
   },
   {
     id: "msg-7",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "Correct!", recordingDuration: 1000 }],
-  },
-  {
-    id: "msg-8",
-    role: "user",
-    parts: [
-      {
-        type: "voice",
-        dummyText: "Then I go to OpenPhone (via browser extension), copy the phone number from Thumbtack, create a contact, and send my first message using a template. I modify it for the client's request—name, allergens, menu, etc.",
-        recordingDuration: 10000
-      },
-    ],
-  },
-  {
-    id: "msg-9",
     role: "ai-agent",
     parts: [
       {
-        type: "reasoning",
-        text: "Workflow step 2: Create OpenPhone contact → Use template → Customize (name, allergens, menu)."
-      },
-      {
-        type: "text",
-        text: "Got it! So you:\n1. Create a new contact in **OpenPhone**\n2. Send the first message via a **template**\n3. Customize it (name, allergens, menu)\n\nCorrect?"
+        type: "link",
+        text: "Connect to Thumbtack",
+        url: "https://thumbtack.com",
       },
     ],
   },
+
+  //   {
+  //   id: "msg-6",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "Give me a few seconds, let me review your thumbtack setup. "
+  //     },
+  //   ],
+  // },
   {
     id: "msg-10",
     role: "user",
-    parts: [{ type: "voice", dummyText: "Correct.", recordingDuration: 1000 }],
+    parts: [{ type: "voice", dummyText: "Yes. Feel free to use this. I want you to respond immediately to a lead when it comes in. Timing matters so I want to get to the customer, before someone else does", recordingDuration: 2000 }],
   },
   {
     id: "msg-11",
@@ -322,7 +324,53 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "Okay, how do you know what proposal/menu to use? Can you show me?"
+        text: "Great, now lets go to Openphone"
+      },
+    ],
+  },
+  {
+    id: "msg-7",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "link",
+        text: "Connect to OpenPhone",
+        url: "https://openphone.com",
+      },
+    ],
+  },
+  {
+    id: "msg-14",
+    role: "user",
+    parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
+  },
+  {
+    id: "msg-11",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Great. To summarize:"
+      },
+    ],
+  },
+  {
+    id: "msg-11",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "You first go to Thumbtack. Then you msg leads with your template You then switch to Openphone. Then you create contact and send them the template. "
+      },
+    ],
+  },
+  {
+    id: "msg-11",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "I will now manage your lead responses and update you. Where would you like to be updated? I will be recording my tasks in Stackbirds, but I can ping you if you want? "
       },
     ],
   },
@@ -332,8 +380,8 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "voice",
-        dummyText: "I go to Google Sheets, pull up my menus, and find the closest match based on event type. I adjust dishes for allergens if needed.",
-        recordingDuration: 6000
+        dummyText: "Ok great, just send me a text when you respond. ",
+        recordingDuration: 4000
       },
     ],
   },
@@ -347,115 +395,115 @@ const mockConversation: CustomUIMessage[] = [
       },
       {
         type: "text",
-        text: "Perfect! Your proposals are based on **existing menus in Google Sheets**. Before I send any message to a client, I'll **always check with you** if it's good to go. Sound right?"
+        text: "Ok got it. Stackbirds Sales Agent is ready to go "
       },
     ],
   },
-  {
-    id: "msg-14",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "Awesome!", recordingDuration: 1500 }],
-  },
-  {
-    id: "msg-15",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "What if I don't find a matching menu? Do you have a default?"
-      },
-    ],
-  },
-  {
-    id: "msg-16",
-    role: "user",
-    parts: [
-      {
-        type: "voice",
-        dummyText: "I always create custom. You can ask me if you don't find one.",
-        recordingDuration: 4000
-      },
-    ],
-  },
-  {
-    id: "msg-17",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Got it! And lastly, how do you keep track of responses?"
-      },
-    ],
-  },
-  {
-    id: "msg-18",
-    role: "user",
-    parts: [
-      {
-        type: "voice",
-        dummyText: "Right now I don't do anything, but I know I need a process.",
-        recordingDuration: 4500
-      },
-    ],
-  },
-  {
-    id: "msg-19",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "reasoning",
-        text: "Opportunity identified: User lacks lead tracking. Solution: Create automated tracker in Google Sheets with daily updates."
-      },
-      {
-        type: "text",
-        text: "Okay, great! I'm going to **create a spreadsheet** for us to track responses from leads. I'll update it after every message and at the end of every day. You can ask me for status anytime. Sound good?"
-      },
-    ],
-  },
-  {
-    id: "msg-20",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "Oh that's really nice!", recordingDuration: 2000 }],
-  },
-  {
-    id: "msg-21",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Should I review your previous messages to leads and add them to the tracker?"
-      },
-    ],
-  },
-  {
-    id: "msg-22",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "No, let's start fresh.", recordingDuration: 2500 }],
-  },
-  {
-    id: "msg-23",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "reasoning",
-        text: "Training complete. Agent configuration: Thumbtack lead source, OpenPhone integration, Google Sheets menu lookup, automated tracker. Ready for deployment."
-      },
-      {
-        type: "text",
-        text: "Perfect! I'm now creating your **custom Sales Agent**. Here's what I'll do:\n\n**Task**: Lead Gen Connect\n- **Apps**: Thumbtack, OpenPhone, Google Sheets\n- **Workflow**: Find leads → Create contact → Send customized template → Track responses\n- **Rules**: Never exceed budget, always confirm proposals, update tracker daily\n\nLet's gooooo! 🚀"
-      },
-    ],
-  },
-  {
-    id: "msg-24",
-    role: "assistant",
-    parts: [
-      {
-        type: "text",
-        text: "Your **Sales Agent** is now live! You can deploy it, review its configuration, or continue training. What would you like to do next?"
-      },
-    ],
-  },
+  // {
+  //   id: "msg-14",
+  //   role: "user",
+  //   parts: [{ type: "voice", dummyText: "Awesome!", recordingDuration: 2000 }],
+  // },
+  // {
+  //   id: "msg-15",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "What if I don't find a matching menu? Do you have a default?"
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-16",
+  //   role: "user",
+  //   parts: [
+  //     {
+  //       type: "voice",
+  //       dummyText: "I always create custom. You can ask me if you don't find one.",
+  //       recordingDuration: 3000
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-17",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "Got it! And lastly, how do you keep track of responses?"
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-18",
+  //   role: "user",
+  //   parts: [
+  //     {
+  //       type: "voice",
+  //       dummyText: "Right now I don't do anything, but I know I need a process.",
+  //       recordingDuration: 3000
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-19",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "reasoning",
+  //       text: "Opportunity identified: User lacks lead tracking. Solution: Create automated tracker in Google Sheets with daily updates."
+  //     },
+  //     {
+  //       type: "text",
+  //       text: "Okay, great! I'm going to **create a spreadsheet** for us to track responses from leads. I'll update it after every message and at the end of every day. You can ask me for status anytime. Sound good?"
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-20",
+  //   role: "user",
+  //   parts: [{ type: "voice", dummyText: "Oh that's really nice!", recordingDuration: 2000 }],
+  // },
+  // {
+  //   id: "msg-21",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "Should I review your previous messages to leads and add them to the tracker?"
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-22",
+  //   role: "user",
+  //   parts: [{ type: "voice", dummyText: "No, let's start fresh.", recordingDuration: 2000 }],
+  // },
+  // {
+  //   id: "msg-23",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "reasoning",
+  //       text: "Training complete. Agent configuration: Thumbtack lead source, OpenPhone integration, Google Sheets menu lookup, automated tracker. Ready for deployment."
+  //     },
+  //     {
+  //       type: "text",
+  //       text: "Perfect! I'm now creating your **custom Sales Agent**. Here's what I'll do:\n\n**Task**: Lead Gen Connect\n- **Apps**: Thumbtack, OpenPhone, Google Sheets\n- **Workflow**: Find leads → Create contact → Send customized template → Track responses\n- **Rules**: Never exceed budget, always confirm proposals, update tracker daily\n\nLet's gooooo! 🚀"
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-24",
+  //   role: "assistant",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "Your **Sales Agent** is now live! You can deploy it, review its configuration, or continue training. What would you like to do next?"
+  //     },
+  //   ],
+  // },
 ];
 
 // Helper function to render text with clickable links
