@@ -72,7 +72,7 @@ function showSidebar() {
     </div>
     <iframe 
       id="stackbirds-iframe"
-      src="https://agent-demo-eight.vercel.app" 
+      src="https://agent-demo-pied.vercel.app" 
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
