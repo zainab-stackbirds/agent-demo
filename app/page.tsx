@@ -102,24 +102,10 @@ const loadFromAPI = async (): Promise<any> => {
   }
 };
 
-// Fallback to localStorage for compatibility during transition
-const saveToLocalStorage = (key: string, value: any) => {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(`Error saving ${key} to localStorage:`, error);
-    }
-  }
-};
-
 const clearConversationStorage = async () => {
   if (typeof window !== 'undefined') {
     try {
       await clearConversationState();
-      localStorage.removeItem('stackbirds-conversation');
-      localStorage.removeItem('stackbirds-conversation-index');
-      localStorage.removeItem('stackbirds-demo-active');
     } catch (error) {
       console.error('Error clearing conversation storage:', error);
     }
@@ -155,22 +141,10 @@ class BroadcastSync {
       }
     };
 
-    // Listen to localStorage changes from other tabs
+    // Listen to localStorage changes from other tabs (legacy support - not used with Redis)
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key?.startsWith('stackbirds-')) {
-        // Broadcast a storage sync message to trigger state updates
-        this.broadcastMessage({
-          type: 'SYNC_STATE',
-          payload: {
-            messages: loadFromLocalStorage('stackbirds-conversation', []),
-            currentMessageIndex: loadFromLocalStorage('stackbirds-conversation-index', 0),
-            status: 'ready',
-            isUserMessageInPlaceholder: false,
-            demoModeActive: loadFromLocalStorage('stackbirds-demo-active', true),
-            input: ""
-          }
-        });
-      }
+      // localStorage sync is no longer used - state is managed via Redis
+      // This listener is kept for compatibility but does nothing
     };
 
     window.addEventListener('message', handlePostMessage);
