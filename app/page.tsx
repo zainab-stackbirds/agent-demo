@@ -33,6 +33,7 @@ import type { UIMessage, ChatStatus } from "ai";
 import { nanoid } from "nanoid";
 import { AudioVisualizer } from "@/components/ui/audio-visualizer";
 import { AnimatePresence, motion } from "motion/react";
+import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
 
 type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -75,7 +76,33 @@ type BroadcastMessage = {
   };
 }
 
-// Utility functions for localStorage management
+// Utility functions for API state management
+const saveToAPI = async (state: any) => {
+  try {
+    await updateConversationState(state);
+  } catch (error) {
+    console.error('Error saving to API:', error);
+  }
+};
+
+const loadFromAPI = async (): Promise<any> => {
+  try {
+    return await fetchConversationState();
+  } catch (error) {
+    console.error('Error loading from API:', error);
+    // Return default state
+    return { 
+      messages: [], 
+      currentMessageIndex: 0, 
+      status: 'ready', 
+      isUserMessageInPlaceholder: false, 
+      demoModeActive: true, 
+      input: '' 
+    };
+  }
+};
+
+// Fallback to localStorage for compatibility during transition
 const saveToLocalStorage = (key: string, value: any) => {
   if (typeof window !== 'undefined') {
     try {
@@ -86,22 +113,10 @@ const saveToLocalStorage = (key: string, value: any) => {
   }
 };
 
-const loadFromLocalStorage = (key: string, defaultValue: any = null) => {
+const clearConversationStorage = async () => {
   if (typeof window !== 'undefined') {
     try {
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : defaultValue;
-    } catch (error) {
-      console.error(`Error loading ${key} from localStorage:`, error);
-      return defaultValue;
-    }
-  }
-  return defaultValue;
-};
-
-const clearConversationStorage = () => {
-  if (typeof window !== 'undefined') {
-    try {
+      await clearConversationState();
       localStorage.removeItem('stackbirds-conversation');
       localStorage.removeItem('stackbirds-conversation-index');
       localStorage.removeItem('stackbirds-demo-active');
@@ -544,19 +559,14 @@ const TextWithLinks = ({ text }: { text: string }) => {
 
 const ChatBotDemo = () => {
   const [input, setInput] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize state from localStorage
-  const [messages, setMessages] = useState<CustomUIMessage[]>(() =>
-    loadFromLocalStorage('stackbirds-conversation', [])
-  );
+  // Initialize state from API
+  const [messages, setMessages] = useState<CustomUIMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>("ready");
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(() =>
-    loadFromLocalStorage('stackbirds-conversation-index', 0)
-  );
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isUserMessageInPlaceholder, setIsUserMessageInPlaceholder] = useState(false);
-  const [demoModeActive, setDemoModeActive] = useState(() =>
-    loadFromLocalStorage('stackbirds-demo-active', true)
-  );
+  const [demoModeActive, setDemoModeActive] = useState(true);
 
   // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
@@ -567,18 +577,83 @@ const ChatBotDemo = () => {
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
 
-  // Save state to localStorage whenever it changes
+  // Initialize state from API on mount
   useEffect(() => {
-    saveToLocalStorage('stackbirds-conversation', messages);
-  }, [messages]);
+    const initializeState = async () => {
+      try {
+        const state = await loadFromAPI();
+        setMessages(state.messages || []);
+        setCurrentMessageIndex(state.currentMessageIndex || 0);
+        setStatus(state.status || 'ready');
+        setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
+        setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : true);
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error initializing state:', error);
+        setIsInitialized(true);
+      }
+    };
 
-  useEffect(() => {
-    saveToLocalStorage('stackbirds-conversation-index', currentMessageIndex);
-  }, [currentMessageIndex]);
+    initializeState();
+  }, []);
 
+  // Setup SSE connection for real-time updates
   useEffect(() => {
-    saveToLocalStorage('stackbirds-demo-active', demoModeActive);
-  }, [demoModeActive]);
+    const cleanup = setupSSEConnection((data) => {
+      // Mark that this update came from SSE, not user action
+      saveToAPIRef.current = false;
+      
+      if (data.type === 'state_update') {
+        const state = data.data;
+        setMessages(state.messages || []);
+        setCurrentMessageIndex(state.currentMessageIndex || 0);
+        setStatus(state.status || 'ready');
+        setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
+        setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : true);
+      } else if (data.type === 'clear') {
+        setMessages([]);
+        setCurrentMessageIndex(0);
+        setStatus('ready');
+        setIsUserMessageInPlaceholder(false);
+        setDemoModeActive(true);
+      }
+    });
+
+    return cleanup;
+  }, []);
+
+  // Handle clear action from URL query params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'clear') {
+      clearConversationStorage().then(() => {
+        // Remove the query param from URL without reload
+        window.history.replaceState({}, '', window.location.pathname);
+      });
+    }
+  }, []);
+
+  // Save state to API only when it changes from user actions (not SSE updates)
+  const saveToAPIRef = useRef(false);
+  
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (!saveToAPIRef.current) return; // Skip if this update came from SSE
+    
+    saveToAPI({
+      messages,
+      currentMessageIndex,
+      status,
+      isUserMessageInPlaceholder,
+      demoModeActive,
+      input: ""
+    });
+    
+    // Reset the flag
+    saveToAPIRef.current = false;
+  }, [messages, currentMessageIndex, status, isUserMessageInPlaceholder, demoModeActive, isInitialized]);
 
   useEffect(() => {
     if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
@@ -604,6 +679,8 @@ const ChatBotDemo = () => {
       // Don't auto-progress - wait for user to send manually
     } else {
       // AI message - first show thinking state
+      // Mark that this is a state change that should be saved
+      saveToAPIRef.current = true;
       setStatus("streaming");
 
       // Broadcast streaming state
@@ -619,6 +696,9 @@ const ChatBotDemo = () => {
       }
 
       const thinkingTimer = setTimeout(() => {
+        // Mark that this is a demo progress action - should be saved to API
+        saveToAPIRef.current = true;
+        
         const newIndex = currentMessageIndex + 1;
         setStatus("ready");
         setMessages(prev => [...prev, currentMessage]);
@@ -724,6 +804,9 @@ const ChatBotDemo = () => {
 
     // Only process if we're waiting for a user message
     if (currentMessage.role === "user" && isUserMessageInPlaceholder) {
+      // Mark that this is a user action - should be saved to API
+      saveToAPIRef.current = true;
+      
       // Add the user's actual input as a message
       const userMessage: CustomUIMessage = {
         id: `user-${Date.now()}`,
@@ -787,6 +870,9 @@ const ChatBotDemo = () => {
       clearTimeout(recordingTimerRef.current);
       recordingTimerRef.current = null;
     }
+
+    // Mark that this is a user action - should be saved to API
+    saveToAPIRef.current = true;
 
     // Add the transcribed message
     const userMessage: CustomUIMessage = {
