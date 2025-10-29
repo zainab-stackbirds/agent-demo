@@ -1,6 +1,7 @@
 // content.js
 let sidebarVisible = false;
 let sidebarContainer = null;
+const debug = false
 
 // Listen for extension icon click
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -62,41 +63,59 @@ function isAutoOpenDomain() {
 	);
 }
 
-// Save state to chrome.storage (only for auto-open domains)
+// Save state to chrome.storage (per-domain, excluding localhost/deployed app)
 function saveSidebarState(isVisible) {
 	if (isAutoOpenDomain()) {
-		chrome.storage.local.set({ sidebarVisible: isVisible });
+		const hostname = window.location.hostname;
+		const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+
+		// Don't save state for localhost/deployed app - it should always start hidden
+		if (isLocalOrDeployed) {
+			return;
+		}
+
+		// Save per-domain state
+		const storageKey = `sidebarVisible_${hostname}`;
+		chrome.storage.local.set({ [storageKey]: isVisible });
 	}
 }
 
 // Initialize sidebar on page load
-chrome.storage.local.get(["sidebarVisible"], (result) => {
+(function initializeSidebar() {
 	// Don't load extension sidebar if we're already inside an iframe
 	// This prevents infinite recursion when the app loads itself in the sidebar
 	if (window !== window.top) {
 		return;
 	}
 
-	if (isAutoOpenDomain()) {
-		const hostname = window.location.hostname;
-		const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+	if (!isAutoOpenDomain()) {
+		return;
+	}
 
-		if (isLocalOrDeployed) {
-			// For localhost/deployed app: always create sidebar but start hidden
-			// It will be revealed by trigger from UI
-			createSidebarHidden();
-		} else {
-			// For other auto-open domains (thumbtack, openphone, etc.): use existing behavior
-			if (result.sidebarVisible === true) {
+	const hostname = window.location.hostname;
+	const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+
+	if (isLocalOrDeployed) {
+		// For localhost/deployed app: always create sidebar but start hidden
+		// It will be revealed by trigger from UI
+		createSidebarHidden();
+	} else {
+		// For other auto-open domains (thumbtack, openphone, etc.): use per-domain storage
+		const storageKey = `sidebarVisible_${hostname}`;
+		chrome.storage.local.get([storageKey], (result) => {
+			const sidebarState = result[storageKey];
+
+			if (sidebarState === true) {
 				showSidebar();
-			} else if (result.sidebarVisible === false) {
+			} else if (sidebarState === false) {
 				return;
 			} else {
+				// First visit - show after 1 second
 				setTimeout(showSidebar, 1000);
 			}
-		}
+		});
 	}
-});
+})();
 
 // Create sidebar in hidden state (for localhost/deployed app)
 function createSidebarHidden() {
@@ -104,7 +123,7 @@ function createSidebarHidden() {
 
 	// Determine iframe URL based on hostname
 	const hostname = window.location.hostname;
-	const iframeUrl = hostname.includes("localhost")
+	const iframeUrl = hostname.includes("localhost") || debug
 		? "http://localhost:3000"
 		: "https://agent-demo-pied.vercel.app";
 
@@ -175,7 +194,7 @@ function showSidebar() {
 	}
 
 	const hostname = window.location.hostname;
-	const iframeUrl = hostname.includes("localhost")
+	const iframeUrl = hostname.includes("localhost") || debug
 		? "http://localhost:3000"
 		: "https://agent-demo-pied.vercel.app";
 
