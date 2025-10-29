@@ -937,6 +937,20 @@ const ChatBotDemo = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
+  // URL parameter handling for tab selection
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+
+      // Validate tab parameter and set active tab
+      if (tabParam === 'chat' || tabParam === 'profile') {
+        setActiveTab(tabParam);
+      }
+      // If invalid or no tab parameter, keep default "profile"
+    }
+  }, []);
+
   // Initialize state from API on mount
   useEffect(() => {
     const initializeState = async () => {

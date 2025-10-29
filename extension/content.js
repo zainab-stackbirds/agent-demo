@@ -129,7 +129,7 @@ function createSidebarHidden() {
     </div>
     <iframe
       id="stackbirds-iframe"
-      src="${iframeUrl}?isExtension=true"
+      src="${iframeUrl}?isExtension=true&tab=chat"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
@@ -205,9 +205,9 @@ function showSidebar() {
       <span class="stackbirds-title">Stackbirds Agent</span>
       <button class="stackbirds-close" id="stackbirds-close-btn">✕</button>
     </div>
-    <iframe 
+    <iframe
       id="stackbirds-iframe"
-      src="${iframeUrl}?isExtension=true"
+      src="${iframeUrl}?isExtension=true&tab=chat"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
