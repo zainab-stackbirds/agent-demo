@@ -6,6 +6,7 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageAvatar } from "@/components/ai-elements/message";
+import { MessageImage } from "@/components/ai-elements/message-image";
 import { Fragment, useEffect, useState, useCallback, useRef } from "react";
 import { Response } from "@/components/ai-elements/response";
 import {
@@ -41,6 +42,7 @@ export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
 // Update your types
 type MessagePart =
   | { type: "text"; text: string }
+  | { type: "text-image"; text: string; url: string; link?: string }
   | { type: "reasoning"; text: string; status?: "start" | "done" | "streaming" }
   | { type: "source-url"; url: string }
   | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created" | "agent-switching"; metadata?: Record<string, any> }
@@ -287,6 +289,18 @@ const mockConversation: CustomUIMessage[] = [
   },
   {
     id: "msg-5",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text-image",
+        text: "After searching I found this website, does this look yours?",
+        url: "/www_eatcookjoy_com.png",
+        link: "https://www.eatcookjoy.com"
+      },
+    ],
+  },
+  {
+    id: "msg-6",
     role: "ai-agent",
     parts: [
       {
@@ -1748,6 +1762,17 @@ const ChatBotDemo = () => {
                     <ReasoningTrigger />
                     <ReasoningContent>{part.text}</ReasoningContent>
                   </Reasoning>
+                );
+              case "text-image":
+                return (
+                  <MessageImage
+                    key={`${message.id}-${i}`}
+                    from={message.role}
+                    text={part.text}
+                    url={part.url}
+                    link={part.link}
+                    className="mb-2"
+                  />
                 );
               default:
                 return null;
