@@ -1688,160 +1688,145 @@ const ChatBotDemo = () => {
 
   return (
     <LayoutGroup>
-      <div className={`max-w-4xl p-6 mx-auto relative size-full min-h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
-        {/* Show Header when hero is hidden */}
-        <AnimatePresence>
-          {!showHero && !isMobile && !isExtension && <Header key="header" />}
-        </AnimatePresence>
-
-        {/* Hero Section with fade-out animation */}
-        <AnimatePresence>
-          {showHero && !isMobile && !isExtension && <Hero key="hero" />}
-        </AnimatePresence>
+      <div className={`max-w-4xl mx-auto relative size-full min-h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
+        {/* Show Header always */}
+        {!isMobile && !isExtension && <Header />}
 
         {/* Mobile Tabs - Show on mobile width (including narrow extension sidebars) */}
-      {isMobile && (
-        <div className="flex flex-col h-full">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
-            <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="profile">Business Profile</TabsTrigger>
-            </TabsList>
+        {isMobile && (
+          <div className="flex flex-col h-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
+              <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+                <TabsTrigger value="chat">Chat</TabsTrigger>
+                <TabsTrigger value="profile">Business Profile</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
-              <div className="flex flex-col h-full">
-                <Conversation className="flex-1">
-                  <ConversationContent>
-                    {renderConversationMessages()}
-                  </ConversationContent>
-                  <ConversationScrollButton />
-                </Conversation>
+              <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
+                <div className="flex flex-col h-full">
+                  <Conversation className="flex-1">
+                    <ConversationContent>
+                      {renderConversationMessages()}
+                    </ConversationContent>
+                    <ConversationScrollButton />
+                  </Conversation>
 
-                {renderMicSection()}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
-                   {/* Recording animation */}
-                {isMobile && isExtension ? (
-                  <RecordingIndicator recordingState={workflowRecordingState} />
-                ) : null}
-              {/* Business Profile content */}
-              {showSummary && summaryData ? (
-                <>
-                  <ExtensionSummary
-                    heading={summaryData.heading}
-                    subheading={summaryData.subheading}
-                    messages={summaryMessages}
-                  />
-                  {showApps && appStatuses.length > 0 && (
-                    <div className="mt-4">
-                      <AppIntegrations apps={appStatuses} />
-                    </div>
-                  )}
-                  {showWorkflows && workflows.length > 0 && (
-                    <div className="mt-4">
-                      <Workflows workflows={workflows} />
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-muted-foreground mb-4"
-                  >
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="m22 2-5 10-7-5" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-foreground mb-2">No Business Profile Yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                    Start a conversation with the assistant to create your business profile.
-                    Your information will appear here once it's collected.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab("chat")}
-                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    Start Chat
-                  </button>
+                  {renderMicSection()}
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
+              </TabsContent>
 
-      {/* Extension mode only - Show summary and apps at top when in extension and desktop width */}
-      {!isMobile && isExtension && showSummary && summaryData && (
-        <div className="flex-shrink-0 mb-4">
-          <ExtensionSummary
-            heading={summaryData.heading}
-            subheading={summaryData.subheading}
-            messages={summaryMessages}
-          />
-        </div>
-      )}
+              <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
+                {/* Business Profile content */}
+                {showSummary && summaryData ? (
+                  <>
+                    <ExtensionSummary
+                      heading={summaryData.heading}
+                      subheading={summaryData.subheading}
+                      messages={summaryMessages}
+                    />
+                    {showApps && appStatuses.length > 0 && (
+                      <div className="mt-4">
+                        <AppIntegrations apps={appStatuses} />
+                      </div>
+                    )}
+                    {showWorkflows && workflows.length > 0 && (
+                      <div className="mt-4">
+                        <Workflows workflows={workflows} />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-muted-foreground mb-4"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="m22 2-5 10-7-5" />
+                    </svg>
+                    <h3 className="text-lg font-medium text-foreground mb-2">No Business Profile Yet</h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                      Start a conversation with the assistant to create your business profile.
+                      Your information will appear here once it's collected.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab("chat")}
+                      className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      Start Chat
+                    </button>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
 
-      {!isMobile && isExtension && showApps && appStatuses.length > 0 && (
-        <div className="flex-shrink-0 mb-4">
-          <AppIntegrations apps={appStatuses} />
-        </div>
-      )}
+        {/* Extension mode only - Show summary and apps at top when in extension and desktop width */}
+        {!isMobile && isExtension && showSummary && summaryData && (
+          <div className="flex-shrink-0 mb-4">
+            <ExtensionSummary
+              heading={summaryData.heading}
+              subheading={summaryData.subheading}
+              messages={summaryMessages}
+            />
+          </div>
+        )}
 
-      {!isMobile && isExtension && showWorkflows && workflows.length > 0 && (
-        <div className="flex-shrink-0 mb-4">
-          <Workflows workflows={workflows} />
-        </div>
-      )}
+        {!isMobile && isExtension && showApps && appStatuses.length > 0 && (
+          <div className="flex-shrink-0 mb-4">
+            <AppIntegrations apps={appStatuses} />
+          </div>
+        )}
 
-      {/* Desktop conversation - Hide on mobile and when extension is on localhost/deployed app */}
-      {!isMobile && !(isExtension && isOnOwnDomain) && (
-        <motion.div
-          layoutId="conversation-container"
-          layout="position"
-          className="flex flex-col px-6 pb-6 will-change-transform"
-          initial={false}
-          animate={{
-            minHeight: isExtension && showSummary ? '0px' : showHero ? '50vh' : 'calc(100vh - 64px)',
-            paddingTop: showHero ? 0 : 16,
-            transition: {
-              minHeight: { duration: 1, ease: [0.16, 1, 0.3, 1] },
-              paddingTop: { delay: 0.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] },
-            }
-          }}
-          transition={{
-            layout: { duration: 1, ease: [0.16, 1, 0.3, 1] }
-          }}
-        >
+        {!isMobile && isExtension && showWorkflows && workflows.length > 0 && (
+          <div className="flex-shrink-0 mb-4">
+            <Workflows workflows={workflows} />
+          </div>
+        )}
+
+        {/* Desktop conversation - Hide on mobile and when extension is on localhost/deployed app */}
+        {!isMobile && !(isExtension && isOnOwnDomain) && (
           <motion.div
-            layoutId="conversation-content"
+            layoutId="conversation-container"
             layout="position"
-            className="flex-1 flex flex-col will-change-transform"
+            className="flex flex-col px-6 pb-6 will-change-transform"
+            initial={false}
+            animate={{
+              minHeight: isExtension && showSummary ? '0px' : 'calc(100vh - 64px)',
+              paddingTop: 16,
+            }}
             transition={{
               layout: { duration: 1, ease: [0.16, 1, 0.3, 1] }
             }}
           >
-            <Conversation className="flex-1">
-              <ConversationContent>
-                {renderConversationMessages()}
-              </ConversationContent>
-              <ConversationScrollButton />
-            </Conversation>
+            <motion.div
+              layoutId="conversation-content"
+              layout="position"
+              className="flex-1 flex flex-col will-change-transform"
+              transition={{
+                layout: { duration: 1, ease: [0.16, 1, 0.3, 1] }
+              }}
+            >
+              <Conversation className="flex-1">
+                <ConversationContent>
+                  {renderConversationMessages()}
+                </ConversationContent>
+                <ConversationScrollButton />
+              </Conversation>
 
-            {renderMicSection()}
+              {renderMicSection()}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
       </div>
     </LayoutGroup>
   );
