@@ -14,7 +14,7 @@ import {
   PromptInputTextarea,
   PromptInputFooter,
 } from "@/components/ai-elements/prompt-input";
-import { Fragment, useEffect, useState, useCallback, useRef } from "react";
+import { Fragment, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Response } from "@/components/ai-elements/response";
 import {
   Source,
@@ -299,11 +299,6 @@ const mockConversation: CustomUIMessage[] = [
     id: "msg-9",
     role: "ai-agent",
     parts: [
-      {
-        type: "summary-updated",
-        id: "sales_agent_summary",
-        messages: ["Identified thumbtack integration requirement"]
-      },
       {
         type: "app-event",
         apps: [
@@ -657,6 +652,16 @@ const ChatBotDemo = () => {
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
 
+  const appendMessage = useCallback((message: CustomUIMessage) => {
+    setMessages(prev => {
+      if (prev.some(existing => existing.id === message.id)) {
+        return prev;
+      }
+
+      return [...prev, message];
+    });
+  }, [setMessages]);
+
   // Detect if running inside extension iframe via URL param
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -803,7 +808,7 @@ const ChatBotDemo = () => {
         
         const newIndex = currentMessageIndex + 1;
         setStatus("ready");
-        setMessages(prev => [...prev, currentMessage]);
+        appendMessage(currentMessage);
         setCurrentMessageIndex(newIndex);
 
         // Check if message contains open-sidebar action and trigger it
@@ -811,41 +816,6 @@ const ChatBotDemo = () => {
         if (hasOpenSidebar) {
           // Send postMessage to current window for content script to receive
           window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
-        }
-
-        // Check if message contains summary-added and trigger it with delay (extension only)
-        const summaryPart = currentMessage.parts.find(part => part.type === "summary-added");
-        if (summaryPart && summaryPart.type === "summary-added") {
-          // Wait 1-2 seconds before showing summary
-          const summaryDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
-          setTimeout(() => {
-            setShowSummary(true);
-            // Initialize with heading and subheading, but empty messages
-            setSummaryData({
-              heading: summaryPart.heading,
-              subheading: summaryPart.subheading,
-            });
-          }, summaryDelay);
-        }
-        // Check if message contains summary-added and trigger it with delay (extension only)
-        const summaryUpdatedPart = currentMessage.parts.find(part => part.type === "summary-updated");
-        if (summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
-          // Wait 1-2 seconds before showing summary
-          const summaryDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
-          setTimeout(() => {
-            setSummaryMessages((prev) => [...prev, ...(summaryUpdatedPart.messages) ])
-          }, summaryDelay);
-        }
-
-        // Check if message contains app-event and trigger it with delay
-        const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
-        if (appEventPart && appEventPart.type === "app-event") {
-          // Wait 1-2 seconds before showing apps
-          const appDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
-          setTimeout(() => {
-            setShowApps(true);
-            setAppStatuses(appEventPart.apps);
-          }, appDelay);
         }
 
         // Broadcast the completed message
@@ -863,7 +833,7 @@ const ChatBotDemo = () => {
       }, 3000);
       return () => clearTimeout(thinkingTimer);
     }
-  }, [currentMessageIndex, demoModeActive]);
+  }, [currentMessageIndex, demoModeActive, appendMessage]);
 
   // Start demo mode on mount
   useEffect(() => {
@@ -896,7 +866,7 @@ const ChatBotDemo = () => {
           break;
 
         case 'USER_MESSAGE_SUBMITTED':
-          setMessages(prev => [...prev, message.payload.message]);
+          appendMessage(message.payload.message);
           setCurrentMessageIndex(message.payload.newIndex);
           setIsUserMessageInPlaceholder(false);
           setInput("");
@@ -907,7 +877,7 @@ const ChatBotDemo = () => {
           setStatus(message.payload.status);
           setIsUserMessageInPlaceholder(message.payload.isUserMessageInPlaceholder);
           if (message.payload.newMessage) {
-            setMessages(prev => [...prev, message.payload.newMessage!]);
+            appendMessage(message.payload.newMessage);
           }
           break;
       }
@@ -922,7 +892,7 @@ const ChatBotDemo = () => {
         messageCleanup();
       }
     };
-  }, [broadcastInstance]);
+  }, [broadcastInstance, appendMessage]);
 
   // Broadcast state changes when they come from this tab (not from broadcast)
   useEffect(() => {
@@ -961,7 +931,7 @@ const ChatBotDemo = () => {
       const newIndex = currentMessageIndex + 1;
 
       setIsUserMessageInPlaceholder(false);
-      setMessages(prev => [...prev, userMessage]);
+      appendMessage(userMessage);
       setCurrentMessageIndex(newIndex);
       setInput(""); // Clear input
 
@@ -1028,7 +998,7 @@ const ChatBotDemo = () => {
     const newIndex = currentMessageIndex + 1;
 
     setIsUserMessageInPlaceholder(false);
-    setMessages(prev => [...prev, userMessage]);
+    appendMessage(userMessage);
     setCurrentMessageIndex(newIndex);
     setInput(""); // Clear input
 
@@ -1061,6 +1031,7 @@ const ChatBotDemo = () => {
   const isVoiceMessage = currentMessage?.role === "user" &&
     currentMessage.parts.some(part => part.type === "voice");
   const shouldShowInput = currentMessage?.role === "user" && !isRecording;
+  const isUserTurnToSpeak = shouldShowInput && status !== "streaming";
 
   // Show mic icon when waiting for user input, when recording, or when waiting for assistant response
   const showMicSection = isVoiceMessage || isRecording ||
@@ -1245,7 +1216,7 @@ const ChatBotDemo = () => {
                     className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     aria-label="Start recording"
                   >
-                    <svg
+                    <motion.svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="28"
                       height="28"
@@ -1255,11 +1226,14 @@ const ChatBotDemo = () => {
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
+                      className="origin-center"
+                      animate={isUserTurnToSpeak ? { rotate: [0, -6, 6, -6, 0] } : { rotate: 0 }}
+                      transition={isUserTurnToSpeak ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
                     >
                       <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                       <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                       <line x1="12" x2="12" y1="19" y2="22" />
-                    </svg>
+                    </motion.svg>
                   </button>
                 </motion.div>
               ) : (
