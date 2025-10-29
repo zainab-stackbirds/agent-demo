@@ -167,7 +167,16 @@ function toggleSidebar() {
 	if (sidebarVisible) {
 		hideSidebar();
 	} else {
-		showSidebar();
+		// For localhost/deployed domains, sidebar is created hidden with CSS classes
+		// so we need to use revealSidebar instead of showSidebar
+		const hostname = window.location.hostname;
+		const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+
+		if (isLocalOrDeployed && sidebarContainer && sidebarContainer.classList.contains("stackbirds-hidden")) {
+			revealSidebar();
+		} else {
+			showSidebar();
+		}
 	}
 }
 
