@@ -7,6 +7,7 @@ const AUDIO_CONFIG = {
     FFT_SIZE: 512,
     SMOOTHING: 0.8,
     MIN_BAR_HEIGHT: 2,
+    MAX_BAR_HEIGHT_RATIO: 0.4, // Maximum bar height as ratio of canvas height (0.4 = 40% of canvas height)
     MIN_BAR_WIDTH: 2,
     BAR_SPACING: 1,
     COLOR: {
@@ -186,9 +187,10 @@ export function AudioVisualizer({
             // Draw each frequency bar
             for (let i = 0; i < bufferLength; i++) {
                 const normalizedHeight = frequencyData[i] / 255 // Convert to 0-1 range
+                const maxBarHeight = centerY * AUDIO_CONFIG.MAX_BAR_HEIGHT_RATIO
                 const barHeight = Math.max(
                     AUDIO_CONFIG.MIN_BAR_HEIGHT,
-                    normalizedHeight * centerY
+                    normalizedHeight * maxBarHeight
                 )
 
                 drawBar(

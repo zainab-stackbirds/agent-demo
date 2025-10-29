@@ -1641,7 +1641,7 @@ const ChatBotDemo = () => {
               </div>
               <button
                 onClick={handleCrossButtonClick}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-500 transition-all shadow-md hover:shadow-lg border-green-500"
+                className="flex items-center justify-center w-10 h-10 rounded-full text-green-500 transition-all shadow-md hover:shadow-lg"
                 aria-label="Send voice message"
               >
                 <svg
