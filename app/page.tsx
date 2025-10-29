@@ -5,6 +5,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import { Message, MessageContent, MessageAvatar } from "@/components/ai-elements/message";
 import { Fragment, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Response } from "@/components/ai-elements/response";
@@ -24,6 +25,8 @@ import { SystemEvent } from "@/components/ai-elements/system-event";
 import type { UIMessage, ChatStatus } from "ai";
 import { nanoid } from "nanoid";
 import { AudioVisualizer } from "@/components/ui/audio-visualizer";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion, LayoutGroup } from "motion/react";
 import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
 import { ExtensionSummary } from "@/components/extension/extension-summary";
@@ -672,6 +675,65 @@ const ChatBotDemo = () => {
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
   const workflowsHydratedRef = useRef(false); // Used to decide when to mark workflows as newly learned
 
+  // Component to handle auto-scrolling within the Conversation context
+  const AutoScrollHandler = () => {
+    const { scrollToBottom } = useStickToBottomContext();
+    const messagesLengthRef = useRef<number | null>(null);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isInitialMountRef = useRef(true);
+
+    useEffect(() => {
+      const performScroll = () => {
+        // Clear any pending scroll
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+
+        // Use requestAnimationFrame to ensure DOM is updated, then wait for layout
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            // Add a delay to allow animations to start and layout to settle
+            // The delay accounts for the motion.div layout animation (1s duration)
+            scrollTimeoutRef.current = setTimeout(() => {
+              scrollToBottom();
+              scrollTimeoutRef.current = null;
+            }, 200);
+          });
+        });
+      };
+
+      // On initial mount, scroll to bottom if messages exist
+      if (isInitialMountRef.current) {
+        isInitialMountRef.current = false;
+        messagesLengthRef.current = messages.length;
+        if (messages.length > 0) {
+          performScroll();
+        }
+        return;
+      }
+
+      // Only scroll if a new message was added (not on removal)
+      const hasNewMessage = messagesLengthRef.current !== null &&
+        messages.length > messagesLengthRef.current;
+
+      if (hasNewMessage) {
+        performScroll();
+      }
+
+      messagesLengthRef.current = messages.length;
+
+      // Cleanup timeout on unmount or dependency change
+      return () => {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+          scrollTimeoutRef.current = null;
+        }
+      };
+    }, [messages.length, scrollToBottom]);
+
+    return null; // This component renders nothing
+  };
+
   const appendMessage = useCallback((message: CustomUIMessage) => {
     setMessages(prev => {
       if (prev.some(existing => existing.id === message.id)) {
@@ -1154,6 +1216,7 @@ const ChatBotDemo = () => {
   }, [messages, currentMessageIndex, status, isUserMessageInPlaceholder, demoModeActive, broadcastInstance]);
 
 
+
   const handleStartRecording = async () => {
     if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
 
@@ -1244,10 +1307,6 @@ const ChatBotDemo = () => {
     currentMessage.parts.some(part => part.type === "voice");
   const shouldShowInput = currentMessage?.role === "user" && !isRecording;
   const isUserTurnToSpeak = shouldShowInput && status !== "streaming";
-
-  // Show mic icon when waiting for user input, when recording, or when waiting for assistant response
-  const showMicSection = isVoiceMessage || isRecording ||
-    (currentMessage?.role === "assistant" || currentMessage?.role === "ai-agent");
 
   // Render conversation messages
   const renderConversationMessages = () => (
@@ -1563,97 +1622,55 @@ const ChatBotDemo = () => {
     </>
   );
 
-  // Render mic section
-  const renderMicSection = () => (
-    showMicSection && (
-      <div className="flex-shrink-0 mt-4 relative">
-        <AnimatePresence mode="wait">
-          {recordingState === "idle" ? (
-            // Show mic button with fade animation
-            <motion.div
-              key="mic-button"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex items-center justify-center relative"
-            >
-              <button
-                onClick={handleStartRecording}
-                disabled={!shouldShowInput || status === "streaming"}
-                className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
-                aria-label="Start recording"
-              >
-                <motion.svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="origin-center"
-                  animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
-                  transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                >
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" x2="12" y1="19" y2="22" />
-                </motion.svg>
-              </button>
-            </motion.div>
-          ) : recordingState === "paused" ? (
-            // Show recording paused state
-            <motion.div
-              key="recording-paused"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex items-center justify-center relative"
-            >
-              <button
-                onClick={handleStartRecording}
-                disabled={!shouldShowInput || status === "streaming"}
-                className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
-                aria-label="Resume recording"
-              >
-                <motion.svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="origin-center"
-                  animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
-                  transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                >
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" x2="12" y1="19" y2="22" />
-                </motion.svg>
-              </button>
-              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-lg text-sm font-medium border border-yellow-200">
-                Recording Paused
-              </div>
-            </motion.div>
-          ) : (
-            // Show audio visualizer when recording
-            <motion.div
-              key="audio-visualizer"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex items-center gap-3"
-            >
-              <div className="flex-1 h-32">
+  // Handle text input submission
+  const handleTextSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !demoModeActive || currentMessageIndex >= mockConversation.length) return;
+
+    const currentMessage = mockConversation[currentMessageIndex];
+    if (currentMessage.role !== "user") return;
+
+    // Mark as user action
+    saveToAPIRef.current = true;
+
+    // Create user message
+    const userMessage: CustomUIMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      parts: [{ type: "text", text: input.trim() }],
+    };
+
+    const newIndex = currentMessageIndex + 1;
+    setIsUserMessageInPlaceholder(false);
+    appendMessage(userMessage);
+    setCurrentMessageIndex(newIndex);
+    setInput("");
+
+    // Broadcast the user message and progress
+    if (updateSourceRef.current === 'self' && broadcastInstance) {
+      broadcastInstance.broadcastMessage({
+        type: 'USER_MESSAGE_SUBMITTED',
+        payload: { message: userMessage, newIndex }
+      });
+    }
+  };
+
+  // Render sticky input section
+  const renderInputSection = () => (
+    <div className="sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/40 py-4 px-6">
+      <AnimatePresence mode="wait">
+        {recordingState === "recording" ? (
+          // Show audio visualizer when recording
+          <motion.div
+            key="audio-visualizer"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-24">
                 <AudioVisualizer
                   stream={mediaStream}
                   isRecording={recordingState === "recording"}
@@ -1662,7 +1679,7 @@ const ChatBotDemo = () => {
               </div>
               <button
                 onClick={handleCrossButtonClick}
-                className="flex items-center justify-center w-10 h-10 rounded-full text-green-500 transition-all shadow-md hover:shadow-lg"
+                className="flex items-center justify-center w-12 h-12 rounded-full  text-green transition-all shadow-md hover:shadow-lg hover:bg-green-600 hover:text-white duration-300"
                 aria-label="Send voice message"
               >
                 <svg
@@ -1679,39 +1696,125 @@ const ChatBotDemo = () => {
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )
+            </div>
+          </motion.div>
+        ) : (
+          // Show input box with plus, input field, and mic icon
+          <motion.div
+            key="input-box"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="max-w-4xl mx-auto"
+          >
+            <form onSubmit={handleTextSubmit} className="relative">
+              <div className="flex items-center gap-2 w-full rounded-full border border-border/40 bg-background shadow-sm px-4 py-3 focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] transition-all">
+                {/* Plus icon for attachments */}
+                <button
+                  type="button"
+                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-foreground hover:bg-accent rounded-full transition-colors"
+                  aria-label="Add attachment"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" x2="12" y1="5" y2="19" />
+                    <line x1="5" x2="19" y1="12" y2="12" />
+                  </svg>
+                </button>
+
+                {/* Input field */}
+                <Input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask anything"
+                  disabled={!shouldShowInput || status === "streaming"}
+                  className="flex-1 border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground shadow-none"
+                />
+
+                {/* Microphone icon button */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleStartRecording}
+                    disabled={!shouldShowInput || status === "streaming"}
+                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-foreground hover:bg-accent rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Start recording"
+                  >
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animate={isUserTurnToSpeak && !isRecording ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
+                      transition={isUserTurnToSpeak && !isRecording ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                    >
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                      <line x1="12" x2="12" y1="19" y2="22" />
+                    </motion.svg>
+                  </button>
+
+                  {/* Audio visualizer icon (when recording state is paused or idle but mic section should show) */}
+                  {recordingState === "paused" && (
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center">
+                      <div className="flex gap-0.5 items-end">
+                        <div className="w-1 bg-foreground rounded-full" style={{ height: '8px' }} />
+                        <div className="w-1 bg-foreground rounded-full" style={{ height: '12px' }} />
+                        <div className="w-1 bg-foreground rounded-full" style={{ height: '16px' }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 
   return (
     <LayoutGroup>
-      <div className={`max-w-4xl mx-auto relative size-full min-h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
+      <div className="max-w-4xl p-4 md:p-0 mx-auto relative size-full min-h-screen flex flex-col">
         {/* Show Header always */}
         {!isMobile && !isExtension && <Header />}
 
         {/* Mobile Tabs - Show on mobile width (including narrow extension sidebars) */}
         {isMobile && (
-          <div className="flex flex-col h-full">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
+          <div className="flex flex-col flex-1 min-h-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 min-h-0">
               <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
                 <TabsTrigger value="chat">Chat</TabsTrigger>
                 <TabsTrigger value="profile">Business Profile</TabsTrigger>
               </TabsList>
 
               <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
-                <div className="flex flex-col h-full">
-                  <Conversation className="flex-1">
+                <div className="flex flex-col flex-1 min-h-0">
+                  <Conversation className="flex-1 min-h-0">
                     <ConversationContent>
                       {renderConversationMessages()}
+                      <AutoScrollHandler />
                     </ConversationContent>
                     <ConversationScrollButton />
                   </Conversation>
-
-                  {renderMicSection()}
                 </div>
+                {renderInputSection()}
               </TabsContent>
 
               <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
@@ -1798,10 +1901,9 @@ const ChatBotDemo = () => {
           <motion.div
             layoutId="conversation-container"
             layout="position"
-            className="flex flex-col px-6 pb-6 will-change-transform"
+            className="flex flex-col flex-1 min-h-0 px-6 will-change-transform"
             initial={false}
             animate={{
-              minHeight: isExtension && showSummary ? '0px' : 'calc(100vh - 64px)',
               paddingTop: 16,
             }}
             transition={{
@@ -1811,20 +1913,20 @@ const ChatBotDemo = () => {
             <motion.div
               layoutId="conversation-content"
               layout="position"
-              className="flex-1 flex flex-col will-change-transform"
+              className="flex-1 flex flex-col min-h-0 will-change-transform"
               transition={{
                 layout: { duration: 1, ease: [0.16, 1, 0.3, 1] }
               }}
             >
-              <Conversation className="flex-1">
+              <Conversation className="flex-1 min-h-0">
                 <ConversationContent>
                   {renderConversationMessages()}
+                  <AutoScrollHandler />
                 </ConversationContent>
                 <ConversationScrollButton />
               </Conversation>
-
-              {renderMicSection()}
             </motion.div>
+            {renderInputSection()}
           </motion.div>
         )}
       </div>
