@@ -120,7 +120,7 @@ function createSidebarHidden() {
     </div>
     <iframe
       id="stackbirds-iframe"
-      src="${iframeUrl}"
+      src="${iframeUrl}?isExtension=true"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
@@ -189,7 +189,7 @@ function showSidebar() {
     </div>
     <iframe 
       id="stackbirds-iframe"
-      src="${iframeUrl}"
+      src="${iframeUrl}?isExtension=true"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
