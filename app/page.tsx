@@ -322,7 +322,7 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "Ok, let's continue. Where do you manage your leads? Feel free to share in chat or over voice."
+        text: "Ok, let's continue. Where do you manage your leads?"
       },
     ],
   },
