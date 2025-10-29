@@ -18,7 +18,6 @@ window.addEventListener("message", (event) => {
 	// Verify the origin is from localhost or deployed app
 	const allowedOrigins = [
 		"http://localhost:3000",
-		"http://localhost:5173",
 		"https://agent-demo-pied.vercel.app"
 	];
 
