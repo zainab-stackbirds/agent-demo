@@ -48,6 +48,7 @@ type MessagePart =
   | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created"; metadata?: Record<string, any> }
   | { type: "voice"; dummyText: string; recordingDuration: number }
   | { type: "link"; text: string; url?: string }
+  | { type: "open-sidebar" }
 
 // Broadcast Channel types for cross-tab synchronization
 type BroadcastMessage = {
@@ -256,7 +257,9 @@ const mockConversation: CustomUIMessage[] = [
       {
         type: "text",
         text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. Where do you manage your leads?"
-      }
+      },
+      // Trigger sidebar when the business context is provided
+      { type: "open-sidebar" },
     ]
   },
   {
@@ -677,6 +680,13 @@ const ChatBotDemo = () => {
         setStatus("ready");
         setMessages(prev => [...prev, currentMessage]);
         setCurrentMessageIndex(newIndex);
+
+        // Check if message contains open-sidebar action and trigger it
+        const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
+        if (hasOpenSidebar) {
+          // Send postMessage to current window for content script to receive
+          window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
+        }
 
         // Broadcast the completed message
         if (updateSourceRef.current === 'self' && broadcastInstance) {

@@ -11,10 +11,51 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	return true; // Required for async sendResponse
 });
 
-// Check if current domain should auto-open sidebar
+// Listen for postMessage from the app (localhost or deployed)
+window.addEventListener("message", (event) => {
+	console.log("📨 [CONTENT.JS] Received postMessage:", {
+		origin: event.origin,
+		data: event.data
+	});
+
+	// Verify the origin is from localhost or deployed app
+	const allowedOrigins = [
+		"http://localhost:3000",
+		"http://localhost:5173",
+		"https://agent-demo-pied.vercel.app"
+	];
+
+	if (!allowedOrigins.includes(event.origin)) {
+		console.warn("⚠️ [CONTENT.JS] Origin not allowed:", event.origin);
+		return;
+	}
+
+	console.log("✅ [CONTENT.JS] Origin verified:", event.origin);
+
+	// Handle open sidebar request
+	if (event.data && event.data.action === "openSidebar") {
+		console.log("🎯 [CONTENT.JS] Received openSidebar trigger");
+
+		// If sidebar doesn't exist yet, create it first
+		if (!sidebarContainer) {
+			createSidebarHidden();
+		}
+
+		// Reveal the sidebar if it's hidden
+		if (!sidebarVisible) {
+			revealSidebar();
+		} else {
+			console.log("ℹ️ [CONTENT.JS] Sidebar already visible");
+		}
+	}
+});
+
+// Check if current domain should auto-load sidebar (hidden by default, revealed by trigger)
 function isAutoOpenDomain() {
 	const hostname = window.location.hostname;
 	return (
+		hostname.includes("localhost") ||
+		hostname.includes("agent-demo-pied.vercel.app") ||
 		hostname.includes("thumbtack.com") ||
 		hostname.includes("openphone.com") ||
 		hostname.includes("docs.google.com")
@@ -30,21 +71,88 @@ function saveSidebarState(isVisible) {
 
 // Initialize sidebar on page load
 chrome.storage.local.get(["sidebarVisible"], (result) => {
+	// Don't load extension sidebar if we're already inside an iframe
+	// This prevents infinite recursion when the app loads itself in the sidebar
+	if (window !== window.top) {
+		return;
+	}
+
 	if (isAutoOpenDomain()) {
-		// On auto-open domains
-		if (result.sidebarVisible === true) {
-			// User explicitly wants it open
-			showSidebar();
-		} else if (result.sidebarVisible === false) {
-			// User explicitly closed it, don't auto-open
-			return;
+		const hostname = window.location.hostname;
+		const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+
+		if (isLocalOrDeployed) {
+			// For localhost/deployed app: always create sidebar but start hidden
+			// It will be revealed by trigger from UI
+			createSidebarHidden();
 		} else {
-			// First visit, auto-open after 1 second
-			setTimeout(showSidebar, 1000);
+			// For other auto-open domains (thumbtack, openphone, etc.): use existing behavior
+			if (result.sidebarVisible === true) {
+				showSidebar();
+			} else if (result.sidebarVisible === false) {
+				return;
+			} else {
+				setTimeout(showSidebar, 1000);
+			}
 		}
 	}
-	// On non-auto-open domains, don't auto-open
 });
+
+// Create sidebar in hidden state (for localhost/deployed app)
+function createSidebarHidden() {
+	if (sidebarContainer) return; // Already created
+
+	// Determine iframe URL based on hostname
+	const hostname = window.location.hostname;
+	const iframeUrl = hostname.includes("localhost")
+		? "http://localhost:3000"
+		: "https://agent-demo-pied.vercel.app";
+
+	// Create sidebar container
+	sidebarContainer = document.createElement("div");
+	sidebarContainer.id = "stackbirds-sidebar";
+	sidebarContainer.classList.add("stackbirds-hidden"); // Start hidden
+
+	sidebarContainer.innerHTML = `
+    <div class="stackbirds-sidebar-header">
+      <span class="stackbirds-title">Stackbirds Agent</span>
+      <button class="stackbirds-close" id="stackbirds-close-btn">✕</button>
+    </div>
+    <iframe
+      id="stackbirds-iframe"
+      src="${iframeUrl}"
+      frameborder="0"
+      allow="clipboard-write; microphone"
+    ></iframe>
+  `;
+
+	document.body.appendChild(sidebarContainer);
+
+	// Add close button listener
+	document.getElementById("stackbirds-close-btn").addEventListener("click", hideSidebar);
+
+	// Add draggable functionality
+	makeResizable();
+
+	// Note: sidebarVisible is false, sidebar exists but is hidden
+}
+
+// Reveal the hidden sidebar (toggle CSS class)
+function revealSidebar() {
+	if (!sidebarContainer) {
+		return;
+	}
+
+	sidebarContainer.classList.remove("stackbirds-hidden");
+	sidebarContainer.classList.add("stackbirds-visible");
+	sidebarVisible = true;
+	document.body.classList.add("stackbirds-sidebar-open");
+
+	// Set margin based on sidebar width
+	const currentWidth = sidebarContainer.offsetWidth || 400;
+	document.body.style.marginRight = currentWidth + "px";
+
+}
 
 function toggleSidebar() {
 	if (sidebarVisible) {
@@ -66,6 +174,11 @@ function showSidebar() {
 		return;
 	}
 
+	const hostname = window.location.hostname;
+	const iframeUrl = hostname.includes("localhost")
+		? "http://localhost:3000"
+		: "https://agent-demo-pied.vercel.app";
+
 	// Create sidebar container
 	sidebarContainer = document.createElement("div");
 	sidebarContainer.id = "stackbirds-sidebar";
@@ -76,7 +189,7 @@ function showSidebar() {
     </div>
     <iframe 
       id="stackbirds-iframe"
-      src="https://agent-demo-pied.vercel.app" 
+      src="${iframeUrl}"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
@@ -103,7 +216,16 @@ function showSidebar() {
 
 function hideSidebar() {
 	if (sidebarContainer) {
-		sidebarContainer.style.display = "none";
+		// Check if using CSS classes or display property
+		if (sidebarContainer.classList.contains("stackbirds-visible")) {
+			// CSS-based hiding (for localhost/deployed)
+			sidebarContainer.classList.remove("stackbirds-visible");
+			sidebarContainer.classList.add("stackbirds-hidden");
+		} else {
+			// Display-based hiding (for other domains)
+			sidebarContainer.style.display = "none";
+		}
+
 		document.body.classList.remove("stackbirds-sidebar-open");
 		document.body.style.marginRight = "";
 		sidebarVisible = false;

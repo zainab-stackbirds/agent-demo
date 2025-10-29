@@ -43,25 +43,40 @@ export async function clearConversationState(): Promise<void> {
 
 // Setup SSE connection for real-time updates
 export function setupSSEConnection(onUpdate: (data: any) => void): () => void {
-  const eventSource = new EventSource('/api/conversation/stream');
-  
-  eventSource.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      onUpdate(data);
-    } catch (error) {
-      console.error('Error parsing SSE data:', error);
-    }
-  };
-  
-  eventSource.onerror = (error) => {
-    console.error('SSE connection error:', error);
-    eventSource.close();
-  };
-  
+  let eventSource: EventSource | null = null;
+  let isClosed = false;
+
+  try {
+    eventSource = new EventSource('/api/conversation/stream');
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onUpdate(data);
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      // SSE errors are common when the endpoint doesn't exist or server is down
+      // Silently close the connection instead of logging errors
+      if (eventSource && !isClosed) {
+        eventSource.close();
+        isClosed = true;
+      }
+    };
+  } catch (error) {
+    // Failed to create EventSource, silently continue without SSE
+    console.debug('SSE not available:', error);
+  }
+
   // Return cleanup function
   return () => {
-    eventSource.close();
+    if (eventSource && !isClosed) {
+      eventSource.close();
+      isClosed = true;
+    }
   };
 }
 
