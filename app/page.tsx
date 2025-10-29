@@ -222,7 +222,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-2b",
+    id: "msg-3",
     role: "assistant", // Role doesn't matter for system events, but keep it for type safety
     parts: [
       {
@@ -233,7 +233,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-3",
+    id: "msg-4",
     role: "ai-agent",
     parts: [
       {
@@ -243,7 +243,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-4",
+    id: "msg-5",
     role: "user",
     parts: [
       {
@@ -254,7 +254,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-5",
+    id: "msg-6",
     role: "ai-agent",
     parts: [
       {
@@ -263,7 +263,7 @@ const mockConversation: CustomUIMessage[] = [
       },
       // Trigger sidebar when the business context is provided
       { type: "open-sidebar" },
-            {
+      {
         type: "summary-added",
         heading: "Agent Configuration Summary",
         subheading: "Sales Agent is now learning about your workflow",
@@ -272,7 +272,18 @@ const mockConversation: CustomUIMessage[] = [
     ]
   },
   {
-    id: "msg-6",
+    id: "msg-7",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "summary-updated",
+        messages: ['Gathered business details from www.sallypilatesstudio.com'],
+        id: "sales_agent_summary"
+      },
+    ]
+  },
+  {
+    id: "msg-8",
     role: "user",
     parts: [
       {
@@ -283,7 +294,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-6a",
+    id: "msg-9",
     role: "ai-agent",
     parts: [
       {
@@ -294,7 +305,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-7",
+    id: "msg-10",
     role: "ai-agent",
     parts: [
       {
@@ -304,7 +315,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-8",
+    id: "msg-11",
     role: "ai-agent",
     parts: [
       {
@@ -326,12 +337,12 @@ const mockConversation: CustomUIMessage[] = [
   //   ],
   // },
   {
-    id: "msg-9",
+    id: "msg-12",
     role: "user",
     parts: [{ type: "voice", dummyText: "Yes. Feel free to use this. I want you to respond immediately to a lead when it comes in. Timing matters so I want to get to the customer, before someone else does", recordingDuration: 2000 }],
   },
   {
-    id: "msg-10",
+    id: "msg-13",
     role: "ai-agent",
     parts: [
       {
@@ -341,7 +352,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-11",
+    id: "msg-14",
     role: "ai-agent",
     parts: [
       {
@@ -352,12 +363,12 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-12",
+    id: "msg-15",
     role: "user",
     parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
   },
   {
-    id: "msg-13",
+    id: "msg-16",
     role: "ai-agent",
     parts: [
       {
@@ -367,7 +378,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-14",
+    id: "msg-17",
     role: "ai-agent",
     parts: [
       {
@@ -377,7 +388,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-15",
+    id: "msg-18",
     role: "ai-agent",
     parts: [
       {
@@ -387,7 +398,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-16",
+    id: "msg-19",
     role: "user",
     parts: [
       {
@@ -398,7 +409,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-17",
+    id: "msg-20",
     role: "ai-agent",
     parts: [
       {
@@ -560,6 +571,7 @@ const ChatBotDemo = () => {
 
   // Check if running inside extension iframe
   const [isExtension, setIsExtension] = useState(false);
+  const [isOnOwnDomain, setIsOnOwnDomain] = useState(false);
 
   // Summary state for extension view
   const [summaryData, setSummaryData] = useState<{
@@ -568,7 +580,7 @@ const ChatBotDemo = () => {
   } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
 
-  const [summaryMessages, setSummaryMessages] = useState([])
+  const [summaryMessages, setSummaryMessages] = useState<string[]>([])
 
   // Initialize state from API
   const [messages, setMessages] = useState<CustomUIMessage[]>([]);
@@ -592,6 +604,19 @@ const ChatBotDemo = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const isExtensionParam = urlParams.get('isExtension');
       setIsExtension(isExtensionParam === 'true');
+
+      // Check if parent window (where extension is loaded) is on our own domain
+      if (isExtensionParam === 'true' && window.parent !== window) {
+        try {
+          const parentHostname = window.parent.location.hostname;
+          const isOwnDomain = parentHostname.includes('localhost') ||
+                             parentHostname.includes('agent-demo-pied.vercel.app');
+          setIsOnOwnDomain(isOwnDomain);
+        } catch (e) {
+          // Cross-origin error, means we're on a different domain
+          setIsOnOwnDomain(false);
+        }
+      }
     }
   }, []);
 
@@ -721,7 +746,6 @@ const ChatBotDemo = () => {
         setStatus("ready");
         setMessages(prev => [...prev, currentMessage]);
         setCurrentMessageIndex(newIndex);
-        debugger;
 
         // Check if message contains open-sidebar action and trigger it
         const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
@@ -744,10 +768,9 @@ const ChatBotDemo = () => {
             });
           }, summaryDelay);
         }
-
         // Check if message contains summary-added and trigger it with delay (extension only)
         const summaryUpdatedPart = currentMessage.parts.find(part => part.type === "summary-updated");
-        if (summaryData && summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
+        if (summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
           // Wait 1-2 seconds before showing summary
           const summaryDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
           setTimeout(() => {
@@ -985,10 +1008,12 @@ const ChatBotDemo = () => {
           />
         </div>
       )}
-      
-      <div className={`flex flex-col ${isExtension && showSummary ? 'flex-1 min-h-0' : 'h-full'}`}>
-        <Conversation className="h-full">
-          <ConversationContent>
+
+      {/* Hide conversation when extension is on localhost/deployed app */}
+      {!(isExtension && isOnOwnDomain) && (
+        <div className={`flex flex-col ${isExtension && showSummary ? 'flex-1 min-h-0' : 'h-full'}`}>
+          <Conversation className="h-full">
+            <ConversationContent>
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4 max-w-md px-6">
@@ -1202,7 +1227,8 @@ const ChatBotDemo = () => {
             </AnimatePresence>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
