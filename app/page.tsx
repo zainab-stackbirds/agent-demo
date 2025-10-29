@@ -35,6 +35,7 @@ import { AudioVisualizer } from "@/components/ui/audio-visualizer";
 import { AnimatePresence, motion } from "motion/react";
 import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
 import { ExtensionSummary } from "@/components/extension/extension-summary";
+import { AppIntegrations } from "@/components/extension/app-integrations";
 
 type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -52,6 +53,7 @@ type MessagePart =
   | { type: "open-sidebar" }
   | { type: "summary-added"; heading: string; subheading: string; id:string }
   | { type: "summary-updated"; messages: string[]; id:string }
+  | { type: "app-event"; apps: Array<{ app_id: string; enabled: boolean }> }
 
 // Broadcast Channel types for cross-tab synchronization
 type BroadcastMessage = {
@@ -302,6 +304,12 @@ const mockConversation: CustomUIMessage[] = [
         id: "sales_agent_summary",
         messages: ["Identified thumbtack integration requirement"]
       },
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: false },
+        ]
+      },
     ],
   },
   {
@@ -342,6 +350,19 @@ const mockConversation: CustomUIMessage[] = [
     parts: [{ type: "voice", dummyText: "Yes. Feel free to use this. I want you to respond immediately to a lead when it comes in. Timing matters so I want to get to the customer, before someone else does", recordingDuration: 2000 }],
   },
   {
+    id: "msg-12a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: true },
+          { app_id: "openphone", enabled: false },
+        ]
+      },
+    ],
+  },
+  {
     id: "msg-13",
     role: "ai-agent",
     parts: [
@@ -360,12 +381,32 @@ const mockConversation: CustomUIMessage[] = [
         text: "Connect to OpenPhone",
         url: "https://openphone.com",
       },
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: true },
+          { app_id: "openphone", enabled: false },
+        ]
+      },
     ],
   },
   {
     id: "msg-15",
     role: "user",
     parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
+  },
+  {
+    id: "msg-15a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: true },
+          { app_id: "openphone", enabled: true },
+        ]
+      },
+    ],
   },
   {
     id: "msg-16",
@@ -422,6 +463,20 @@ const mockConversation: CustomUIMessage[] = [
       },
     ],
   },
+  // {
+  //   id: "msg-20a",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //         { app_id: "openphone", enabled: true },
+  //         { app_id: "google-docs", enabled: true }
+  //       ]
+  //     },
+  //   ],
+  // },
   // {
   //   id: "msg-14",
   //   role: "user",
@@ -581,6 +636,10 @@ const ChatBotDemo = () => {
   const [showSummary, setShowSummary] = useState(false);
 
   const [summaryMessages, setSummaryMessages] = useState<string[]>([])
+
+  // App integrations state
+  const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean }>>([])
+  const [showApps, setShowApps] = useState(false)
 
   // Initialize state from API
   const [messages, setMessages] = useState<CustomUIMessage[]>([]);
@@ -776,6 +835,17 @@ const ChatBotDemo = () => {
           setTimeout(() => {
             setSummaryMessages((prev) => [...prev, ...(summaryUpdatedPart.messages) ])
           }, summaryDelay);
+        }
+
+        // Check if message contains app-event and trigger it with delay
+        const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
+        if (appEventPart && appEventPart.type === "app-event") {
+          // Wait 1-2 seconds before showing apps
+          const appDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
+          setTimeout(() => {
+            setShowApps(true);
+            setAppStatuses(appEventPart.apps);
+          }, appDelay);
         }
 
         // Broadcast the completed message
@@ -1006,6 +1076,13 @@ const ChatBotDemo = () => {
             subheading={summaryData.subheading}
             messages={summaryMessages}
           />
+        </div>
+      )}
+
+      {/* App Integrations - shown below summary */}
+      {isExtension && showApps && appStatuses.length > 0 && (
+        <div className="flex-shrink-0 mb-4">
+          <AppIntegrations apps={appStatuses} />
         </div>
       )}
 
