@@ -93,7 +93,9 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
           </h3>
           <div className="space-y-1.5">
             <AnimatePresence mode="popLayout">
-              {sortedWorkflows.map((workflow, index) => {
+              {workflows.map((workflow, index) => {
+                const shouldAnimateIn = workflow.isNew === true;
+
                 const category = WORKFLOW_CATEGORIES[workflow.category || "default"];
                 const isRecent = workflow.isNew === true;
                 const isPretrained = workflow.isPretrained === true;
@@ -101,22 +103,25 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                 return (
                   <motion.div
                     key={workflow.id}
-                    initial={{ opacity: 0, x: -16, scale: 0.95 }}
+                    initial={shouldAnimateIn ? { opacity: 0, x: -16, scale: 0.95 } : false}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: 16, scale: 0.95 }}
-                    transition={{
-                      duration: 0.35,
-                      delay: index * 0.08,
-                      ease: [0.23, 1, 0.32, 1],
-                    }}
+                    transition={shouldAnimateIn
+                      ? {
+                        duration: 0.35,
+                        delay: index * 0.08,
+                        ease: [0.23, 1, 0.32, 1],
+                      }
+                      : undefined
+                    }
                   >
                     <div
                       className={`group relative flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all duration-300 backdrop-blur
                         ${isRecent
                           ? 'border-primary/50 bg-gradient-to-r from-primary/12 to-primary/8 shadow-md ring-1 ring-primary/20'
                           : isPretrained
-                          ? 'border-muted/25 bg-muted/15 opacity-75'
-                          : 'border-muted/30 bg-muted/12'
+                            ? 'border-muted/30 bg-muted/20'
+                            : 'border-muted/20 bg-muted/10'
                         }
                       `}
                       style={{
@@ -126,22 +131,19 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                     >
                       {/* Category Icon */}
                       <motion.div
-                        initial={{ scale: 0.8, rotate: -8 }}
+                        initial={shouldAnimateIn ? { scale: 0.8, rotate: -8 } : false}
                         animate={{ scale: 1, rotate: 0 }}
-                        transition={{
-                          duration: 0.45,
-                          delay: index * 0.08 + 0.12,
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 16
-                        }}
-                        className={`flex h-7 w-7 items-center justify-center rounded-md text-sm shadow-sm ring-1
-                          ${isRecent
-                            ? 'bg-white/95 ring-primary/30 shadow-md'
-                            : isPretrained
-                            ? 'bg-white/70 ring-black/5'
-                            : 'bg-white/85 ring-black/10'
-                          }`}
+                        transition={shouldAnimateIn
+                          ? {
+                            duration: 0.45,
+                            delay: index * 0.08 + 0.12,
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 16
+                          }
+                          : undefined
+                        }
+                        className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-sm shadow-sm ring-1 ring-black/5"
                         style={{
                           backgroundColor: isRecent ? `${category.color}20` : undefined,
                           borderColor: isRecent ? `${category.color}40` : undefined,
@@ -154,38 +156,32 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                       {/* Workflow Text */}
                       <div className="flex-1 min-w-0">
                         <motion.p
-                          initial={{ opacity: 0, y: 4 }}
+                          initial={shouldAnimateIn ? { opacity: 0, y: 4 } : false}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{
-                            duration: 0.25,
-                            delay: index * 0.08 + 0.18
-                          }}
-                          className={`text-[0.78rem] leading-tight font-medium
-                            ${isRecent
-                              ? 'text-foreground font-semibold'
-                              : isPretrained
-                              ? 'text-foreground/70'
-                              : 'text-foreground/85'
-                            }`}
+                          transition={shouldAnimateIn
+                            ? {
+                              duration: 0.25,
+                              delay: index * 0.08 + 0.18
+                            }
+                            : undefined
+                          }
+                          className="text-[0.78rem] leading-tight text-foreground/90 font-medium"
                         >
                           {workflow.workflow}
                         </motion.p>
 
                         {/* Category label */}
                         <motion.span
-                          initial={{ opacity: 0 }}
+                          initial={shouldAnimateIn ? { opacity: 0 } : false}
                           animate={{ opacity: 1 }}
-                          transition={{
-                            duration: 0.2,
-                            delay: index * 0.08 + 0.24
-                          }}
-                          className={`text-[0.65rem] font-medium mt-0.5 block
-                            ${isRecent
-                              ? 'text-muted-foreground/80'
-                              : isPretrained
-                              ? 'text-muted-foreground/60'
-                              : 'text-muted-foreground/70'
-                            }`}
+                          transition={shouldAnimateIn
+                            ? {
+                              duration: 0.2,
+                              delay: index * 0.08 + 0.24
+                            }
+                            : undefined
+                          }
+                          className="text-[0.65rem] text-muted-foreground/70 font-medium mt-0.5 block"
                         >
                           {category.label}
                         </motion.span>
@@ -195,16 +191,19 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                       <div className="flex items-center gap-1.5">
                         {isRecent && (
                           <motion.div
-                            initial={{ scale: 0, opacity: 0 }}
+                            initial={shouldAnimateIn ? { scale: 0, opacity: 0 } : false}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{
-                              duration: 0.3,
-                              delay: index * 0.08 + 0.3,
-                              type: "spring",
-                              stiffness: 400,
-                              damping: 20
-                            }}
-                            className="flex items-center gap-1 rounded-full bg-green-100/80 px-2 py-0.5 text-green-700"
+                            transition={shouldAnimateIn
+                              ? {
+                                duration: 0.3,
+                                delay: index * 0.08 + 0.3,
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 20
+                              }
+                              : undefined
+                            }
+                            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -225,16 +224,19 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
 
                         {isPretrained && !isRecent && (
                           <motion.div
-                            initial={{ scale: 0, opacity: 0 }}
+                            initial={shouldAnimateIn ? { scale: 0, opacity: 0 } : false}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{
-                              duration: 0.3,
-                              delay: index * 0.08 + 0.3,
-                              type: "spring",
-                              stiffness: 400,
-                              damping: 20
-                            }}
-                            className="flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5 text-muted-foreground/70"
+                            transition={shouldAnimateIn
+                              ? {
+                                duration: 0.3,
+                                delay: index * 0.08 + 0.3,
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 20
+                              }
+                              : undefined
+                            }
+                            className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/10 text-muted-foreground/60"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"

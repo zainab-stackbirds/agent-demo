@@ -24,13 +24,15 @@ import { SystemEvent } from "@/components/ai-elements/system-event";
 import type { UIMessage, ChatStatus } from "ai";
 import { nanoid } from "nanoid";
 import { AudioVisualizer } from "@/components/ui/audio-visualizer";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, LayoutGroup } from "motion/react";
 import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
 import { ExtensionSummary } from "@/components/extension/extension-summary";
 import { AppIntegrations } from "@/components/extension/app-integrations";
 import { openPhoneConversation } from "@/lib/consts";
 import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import Hero from "@/components/UnitComponents/Hero";
+import Header from "@/components/UnitComponents/Header";
 
 export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -116,6 +118,15 @@ const clearConversationStorage = async () => {
       console.error('Error clearing conversation storage:', error);
     }
   }
+};
+
+const createWorkflowId = (
+  messageId: string | undefined,
+  fallbackMessageIndex: number,
+  partIndex: number
+) => {
+  const baseId = messageId || `message-${fallbackMessageIndex}`;
+  return `workflow-${baseId}-${partIndex}`;
 };
 
 // Simple broadcast utility - avoiding hooks to prevent re-render issues
@@ -651,9 +662,13 @@ const ChatBotDemo = () => {
   const [isAgentSwitching, setIsAgentSwitching] = useState(false);
   const [agentSwitchingText, setAgentSwitchingText] = useState("");
 
+  // Hero visibility state
+  const [showHero, setShowHero] = useState(true);
+
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
+  const workflowsHydratedRef = useRef(false); // Used to decide when to mark workflows as newly learned
 
   const appendMessage = useCallback((message: CustomUIMessage) => {
     setMessages(prev => {
@@ -892,20 +907,46 @@ const ChatBotDemo = () => {
         }
 
         // Process new-workflow parts
-        const newWorkflowPart = currentMessage.parts.find(part => part.type === "new-workflow");
-        if (newWorkflowPart && newWorkflowPart.type === "new-workflow") {
-          setWorkflows(prev => [
-            // Add new workflow at the top
-            {
-              id: `workflow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              workflow: newWorkflowPart.workflow,
-              category: newWorkflowPart.category || "default",
-              isNew: true,
-              isPretrained: false
-            },
-            // Mark existing new workflows as no longer "new"
-            ...prev.map(w => w.isNew ? { ...w, isNew: false } : w)
-          ]);
+        const newWorkflowParts = currentMessage.parts
+          .map((part, partIndex) => ({ part, partIndex }))
+          .filter(
+            (entry): entry is {
+              part: Extract<MessagePart, { type: "new-workflow" }>;
+              partIndex: number;
+            } => entry.part.type === "new-workflow"
+          );
+
+        if (newWorkflowParts.length > 0) {
+          setWorkflows(prev => {
+            const next = [...prev];
+
+            newWorkflowParts.forEach(({ part, partIndex }) => {
+              const workflowId = createWorkflowId(currentMessage.id, currentMessageIndex, partIndex);
+              const baseData = {
+                id: workflowId,
+                workflow: part.workflow,
+                category: part.category || "default",
+                isPretrained: false as const
+              };
+
+              const existingIndex = next.findIndex(item => item.id === workflowId);
+
+              if (existingIndex >= 0) {
+                next[existingIndex] = {
+                  ...next[existingIndex],
+                  ...baseData,
+                  isNew: true
+                };
+              } else {
+                next.push({
+                  ...baseData,
+                  isNew: true
+                });
+              }
+            });
+
+            return next;
+          });
           setShowWorkflows(true);
         }
 
@@ -977,8 +1018,10 @@ const ChatBotDemo = () => {
       isPretrained?: boolean;
     }> = [];
 
-    messages.forEach(message => {
-      message.parts.forEach(part => {
+    const shouldMarkAsNew = workflowsHydratedRef.current;
+
+    messages.forEach((message, messageIndex) => {
+      message.parts.forEach((part, partIndex) => {
         if (part.type === "summary-added") {
           latestSummaryData = {
             heading: part.heading,
@@ -992,10 +1035,10 @@ const ChatBotDemo = () => {
           latestAppStatuses = part.apps.map(app => ({ ...app, connecting: false }));
         } else if (part.type === "new-workflow") {
           newWorkflows.push({
-            id: `workflow-existing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: createWorkflowId(message.id, messageIndex, partIndex),
             workflow: part.workflow,
             category: part.category || "default",
-            isNew: false, // Since we're processing existing messages, don't mark as new
+            isNew: shouldMarkAsNew,
             isPretrained: false
           });
         }
@@ -1016,11 +1059,32 @@ const ChatBotDemo = () => {
 
     if (newWorkflows.length > 0) {
       setWorkflows(prev => {
-        // Get pre-trained workflows and put learned ones first
+        // Preserve pre-trained workflows and merge with new ones using stable IDs
         const pretrainedWorkflows = prev.filter(w => w.isPretrained);
-        return [...newWorkflows, ...pretrainedWorkflows];
+        const prevById = new Map(prev.map(workflow => [workflow.id, workflow]));
+
+        const mergedWorkflows = newWorkflows.map(workflow => {
+          const existing = prevById.get(workflow.id);
+          if (existing) {
+            return {
+              ...existing,
+              workflow: workflow.workflow,
+              category: workflow.category,
+              isNew: existing.isNew,
+              isPretrained: false
+            };
+          }
+
+          return workflow;
+        });
+
+        return [...pretrainedWorkflows, ...mergedWorkflows];
       });
       setShowWorkflows(true);
+    }
+
+    if (!workflowsHydratedRef.current) {
+      workflowsHydratedRef.current = true;
     }
   }, [messages]);
 
@@ -1186,8 +1250,19 @@ const ChatBotDemo = () => {
   // Render conversation messages
   const renderConversationMessages = () => (
     <>
-      {messages.map((message) => (
-        <div key={message.id}>
+      {messages.map((message, index) => (
+        <motion.div
+          key={message.id}
+          layoutId={`message-${message.id}`}
+          layout="position"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            layout: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0 },
+            opacity: { duration: 0.6, delay: index * 0.05 },
+            y: { duration: 0.6, delay: index * 0.05 }
+          }}
+        >
 
           {message.parts
             .filter((part) => part.type === "system-event")
@@ -1256,13 +1331,32 @@ const ChatBotDemo = () => {
                     className="flex flex-wrap gap-2 mb-4 justify-start"
                   >
                     {part.options.map((option, optionIndex) => (
-                      <button
+                      <motion.button
                         key={optionIndex}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: 1,
+                          transition: {
+                            delay: optionIndex * 0.1,
+                            duration: 0.5,
+                            ease: [0.16, 1, 0.3, 1]
+                          }
+                        }}
+                        whileHover={{
+                          scale: 1.05,
+                          transition: { duration: 0.2 }
+                        }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           // Handle option selection - add user message and progress conversation
                           if (option.action === "select_sales") {
                             // Mark as user action
                             saveToAPIRef.current = true;
+
+                            // Hide the hero with a fade-out animation
+                            setShowHero(false);
 
                             // Add user message for the selected option
                             const userMessage: CustomUIMessage = {
@@ -1288,7 +1382,7 @@ const ChatBotDemo = () => {
                         className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent text-foreground transition-colors"
                       >
                         {option.label}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 );
@@ -1442,7 +1536,7 @@ const ChatBotDemo = () => {
                 return null;
             }
           })}
-        </div>
+        </motion.div>
       ))}
       {status === "submitted" && <Loader />}
     </>
@@ -1572,8 +1666,19 @@ const ChatBotDemo = () => {
   );
 
   return (
-    <div className={`max-w-4xl mx-auto p-6 relative size-full h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
-      {/* Mobile Tabs - Show on mobile width (including narrow extension sidebars) */}
+    <LayoutGroup>
+      <div className={`max-w-4xl p-6 mx-auto relative size-full min-h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
+        {/* Show Header when hero is hidden */}
+        <AnimatePresence>
+          {!showHero && !isMobile && !isExtension && <Header key="header" />}
+        </AnimatePresence>
+
+        {/* Hero Section with fade-out animation */}
+        <AnimatePresence>
+          {showHero && !isMobile && !isExtension && <Hero key="hero" />}
+        </AnimatePresence>
+
+        {/* Mobile Tabs - Show on mobile width (including narrow extension sidebars) */}
       {isMobile && (
         <div className="flex flex-col h-full">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
@@ -1676,18 +1781,44 @@ const ChatBotDemo = () => {
 
       {/* Desktop conversation - Hide on mobile and when extension is on localhost/deployed app */}
       {!isMobile && !(isExtension && isOnOwnDomain) && (
-        <div className={`flex flex-col ${isExtension && showSummary ? 'flex-1 min-h-0' : 'h-full'}`}>
-          <Conversation className="h-full">
-            <ConversationContent>
-              {renderConversationMessages()}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
+        <motion.div
+          layoutId="conversation-container"
+          layout="position"
+          className="flex flex-col px-6 pb-6 will-change-transform"
+          initial={false}
+          animate={{
+            minHeight: isExtension && showSummary ? '0px' : showHero ? '50vh' : 'calc(100vh - 64px)',
+            paddingTop: showHero ? 0 : 16,
+            transition: {
+              minHeight: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+              paddingTop: { delay: 0.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+            }
+          }}
+          transition={{
+            layout: { duration: 1, ease: [0.16, 1, 0.3, 1] }
+          }}
+        >
+          <motion.div
+            layoutId="conversation-content"
+            layout="position"
+            className="flex-1 flex flex-col will-change-transform"
+            transition={{
+              layout: { duration: 1, ease: [0.16, 1, 0.3, 1] }
+            }}
+          >
+            <Conversation className="flex-1">
+              <ConversationContent>
+                {renderConversationMessages()}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
 
-          {renderMicSection()}
-        </div>
+            {renderMicSection()}
+          </motion.div>
+        </motion.div>
       )}
-    </div>
+      </div>
+    </LayoutGroup>
   );
 };
 
