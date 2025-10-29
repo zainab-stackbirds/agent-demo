@@ -28,9 +28,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
 import { ExtensionSummary } from "@/components/extension/extension-summary";
 import { AppIntegrations } from "@/components/extension/app-integrations";
+import { openPhoneConversation } from "@/lib/consts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
+export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
   parts: MessagePart[];
 };
@@ -321,7 +322,7 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "Ok, let's continue. Where do you manage your leads? Feel free to share in chat or over voice."
+        text: "Ok, let's continue. Where do you manage your leads?"
       },
     ],
   },
@@ -505,7 +506,9 @@ const mockConversation: CustomUIMessage[] = [
       },
     ],
   },
+  ...openPhoneConversation
 ];
+
 
 // Helper function to render text with clickable links and preserve newlines
 const TextWithLinks = ({ text }: { text: string }) => {
@@ -1190,22 +1193,23 @@ const ChatBotDemo = () => {
                   >
                     <button
                       onClick={() => {
-                        if (part.action === "connect_thumbtack") {
+                        if (["connect_thumbtack", "connect_openphone"].includes(part.action)) {
+                          const appId = part.action.split('_')[1]
                           // Mark as user action
                           saveToAPIRef.current = true;
 
                           // Set connecting state for Thumbtack
                           setAppStatuses(prev => {
-                            const thumbtackApp = prev.find(app => app.app_id === "thumbtack");
-                            if (thumbtackApp) {
+                            const existingApp = prev.find(app => app.app_id === appId);
+                            if (existingApp) {
                               return prev.map(app =>
-                                app.app_id === "thumbtack"
+                                app.app_id === appId
                                   ? { ...app, connecting: true, enabled: false }
                                   : app
                               );
                             } else {
                               // If app doesn't exist yet, add it
-                              return [...prev, { app_id: "thumbtack", enabled: false, connecting: true }];
+                              return [...prev, { app_id: appId, enabled: false, connecting: true }];
                             }
                           });
 
@@ -1214,7 +1218,7 @@ const ChatBotDemo = () => {
                             saveToAPIRef.current = true;
                             setAppStatuses(prev =>
                               prev.map(app =>
-                                app.app_id === "thumbtack"
+                                app.app_id === appId
                                   ? { ...app, connecting: false, enabled: true }
                                   : app
                               )
@@ -1222,7 +1226,7 @@ const ChatBotDemo = () => {
                             // Progress to next message after connection is complete
                             setCurrentMessageIndex(prev => prev + 1);
                           }, 10000);
-                        } else if (part.action === "navigate_thumbtack") {
+                        } else if (["navigate_thumbtack", "navigate_openphone"].includes(part.action)) {
                           // Open Thumbtack in new tab/window
                           window.open(part.url, '_blank');
                           // Progress to next message
