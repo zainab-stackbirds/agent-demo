@@ -203,7 +203,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                               }
                               : undefined
                             }
-                            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary"
+                            className="flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-primary"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -236,7 +236,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                               }
                               : undefined
                             }
-                            className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/10 text-muted-foreground/60"
+                            className="flex items-center gap-1 rounded-full bg-muted-foreground/10 px-2 py-0.5 text-muted-foreground/60"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
