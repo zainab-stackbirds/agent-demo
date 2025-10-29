@@ -135,9 +135,20 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
             },
         ],
     },
-
     {
         id: "msg-openphone-13",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "new-workflow",
+                workflow: "Use appropriate OpenPhone template based on lead context and status",
+                category: "communication"
+            },
+        ],
+    },
+
+    {
+        id: "msg-openphone-14",
         role: "ai-agent",
         parts: [
             {
@@ -147,7 +158,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-14",
+        id: "msg-openphone-15",
         role: "user",
         parts: [
             {
@@ -160,7 +171,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 
 
     {
-        id: "msg-openphone-15",
+        id: "msg-openphone-16",
         role: "ai-agent",
         parts: [
             {
@@ -171,7 +182,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
     },
 
     {
-        id: "msg-openphone-16",
+        id: "msg-openphone-17",
         role: "user",
         parts: [
             {
@@ -181,9 +192,20 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
             },
         ],
     },
+    {
+        id: "msg-openphone-18",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "new-workflow",
+                workflow: "Setup one follow up message 24 hours after last response from client",
+                category: "automation"
+            },
+        ],
+    },
 
     {
-        id: "msg-openphone-17",
+        id: "msg-openphone-19",
         role: "ai-agent",
         parts: [
             {
@@ -193,6 +215,29 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
 
+    {
+        id: "msg-openphone-20",
+        role: "user",
+        parts: [
+            {
+                type: "voice",
+                dummyText: "That would be great!",
+                recordingDuration: 2000
+            },
+        ],
+    },
+
+    {
+        id: "msg-openphone-21",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "new-workflow",
+                workflow: "Generate and send summary of WTD leads every monday morning",
+                category: "automation"
+            },
+        ],
+    },
 
 
 ]
