@@ -1,11 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { SparklesIcon, CheckCircleIcon, ArrowRightIcon } from "lucide-react";
+import { SparklesIcon, CheckCircleIcon, ArrowRightIcon, RefreshCwIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 
 export type SystemEventProps = ComponentProps<"div"> & {
-    event: "agent-joined" | "agent-left" | "task-created";
+    event: "agent-joined" | "agent-left" | "task-created" | "agent-switching";
     agentName?: string;
     metadata?: Record<string, any>;
 };
@@ -29,6 +29,12 @@ const eventConfig = {
         bgColor: "bg-green-50 dark:bg-green-950/30",
         borderColor: "border-green-200 dark:border-green-800",
     },
+    "agent-switching": {
+        icon: RefreshCwIcon,
+        color: "text-orange-600 dark:text-orange-400",
+        bgColor: "bg-orange-50 dark:bg-orange-950/30",
+        borderColor: "border-orange-200 dark:border-orange-800",
+    },
 };
 
 export const SystemEvent = ({
@@ -49,6 +55,8 @@ export const SystemEvent = ({
                 return `${agentName} has left the conversation`;
             case "task-created":
                 return `Task created: ${metadata?.taskName || "Untitled"}`;
+            case "agent-switching":
+                return `Switching to ${metadata?.targetAgent || "Agent"} mode`;
             default:
                 return "System event";
         }

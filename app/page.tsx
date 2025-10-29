@@ -6,14 +6,6 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  PromptInputBody,
-  type PromptInputMessage,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputFooter,
-} from "@/components/ai-elements/prompt-input";
 import { Fragment, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Response } from "@/components/ai-elements/response";
 import {
@@ -47,13 +39,17 @@ type MessagePart =
   | { type: "text"; text: string }
   | { type: "reasoning"; text: string; state?: "done" }
   | { type: "source-url"; url: string }
-  | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created"; metadata?: Record<string, any> }
+  | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created" | "agent-switching"; metadata?: Record<string, any> }
   | { type: "voice"; dummyText: string; recordingDuration: number }
   | { type: "link"; text: string; url?: string }
   | { type: "open-sidebar" }
-  | { type: "summary-added"; heading: string; subheading: string; id:string }
-  | { type: "summary-updated"; messages: string[]; id:string }
+  | { type: "summary-added"; heading: string; subheading: string; id: string }
+  | { type: "summary-updated"; messages: string[]; id: string }
   | { type: "app-event"; apps: Array<{ app_id: string; enabled: boolean }> }
+  | { type: "options"; options: Array<{ label: string; action: string }> }
+  | { type: "button"; text: string; action: string; url?: string }
+  | { type: "recording-state"; state: "start" | "pause" | "stop" }
+  | { type: "agent-interrupt"; message: string }
 
 // Broadcast Channel types for cross-tab synchronization
 type BroadcastMessage = {
@@ -97,13 +93,13 @@ const loadFromAPI = async (): Promise<any> => {
   } catch (error) {
     console.error('Error loading from API:', error);
     // Return default state
-    return { 
-      messages: [], 
-      currentMessageIndex: 0, 
-      status: 'ready', 
-      isUserMessageInPlaceholder: false, 
-      demoModeActive: true, 
-      input: '' 
+    return {
+      messages: [],
+      currentMessageIndex: 0,
+      status: 'ready',
+      isUserMessageInPlaceholder: false,
+      demoModeActive: true,
+      input: ''
     };
   }
 };
@@ -205,47 +201,56 @@ const getBroadcastSync = () => {
 const mockConversation: CustomUIMessage[] = [
   {
     id: "msg-1",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "I need help with lead management.", recordingDuration: 3000 }],
+    role: "assistant",
+    parts: [
+      {
+        type: "text",
+        text: "How can I help you?"
+      },
+      {
+        type: "options",
+        options: [
+          { label: "Sales", action: "select_sales" },
+          { label: "Marketing", action: "select_marketing" },
+          { label: "Operations", action: "select_operations" },
+          { label: "Analyst", action: "select_analyst" }
+        ]
+      }
+    ],
   },
   {
     id: "msg-2",
     role: "assistant",
     parts: [
       {
-        type: "reasoning",
-        text: "Analyzing user's request... Determining best agent for lead management workflows. Sales agent is optimal for this task.",
-        state: "done",
-      },
-      {
         type: "text",
-        text: "Got it! Based on your need, I'm invoking our **Sales Agent** who specializes in lead management. Let me hand this over..."
-      },
+        text: "Great, I can help you with that. Switching to Sales agent mode."
+      }
+    ],
+  },
+  {
+    id: "msg-2b",
+    role: "assistant",
+    parts: [
+      {
+        type: "system-event",
+        event: "agent-switching",
+        metadata: { targetAgent: "Sales Agent" }
+      }
     ],
   },
   {
     id: "msg-3",
-    role: "assistant", // Role doesn't matter for system events, but keep it for type safety
+    role: "ai-agent",
     parts: [
       {
-        type: "system-event",
-        event: "agent-joined",
-        metadata: { agentName: "Sales Agent" }
+        type: "text",
+        text: "I need to understand your business first. Tell me about your business. Do you have a website, facebook, instagram or google business profile?"
       },
     ],
   },
   {
     id: "msg-4",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Hi! I'm the **Sales Agent**, pre-trained for sales and lead management, so I will first need to understand your business and then understand your sales workflows. Tell me about your business. Do you have a website, facebook, instagram or google business profile?"
-      },
-    ],
-  },
-  {
-    id: "msg-5",
     role: "user",
     parts: [
       {
@@ -256,84 +261,93 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-6",
+    id: "msg-5",
     role: "ai-agent",
     parts: [
-       {
+      {
         type: "reasoning",
         text: "Analyzing business context",
         state: "done",
       },
       {
         type: "text",
-        text: "Here is what I understand: \n **Business Name**: Eat Cook Joy \n**Value Prop**: Chef tool providing personalization + convenience + affordability \n **Location**: Texas \n **Services**: Meal Prep, Events \nAm I missing anything?"
+        text: "Here is what I understand:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n\nAm I missing anything?"
       },
     ]
   },
   {
-    id: "msg-7",
+    id: "msg-6",
     role: "user",
     parts: [
       {
         type: "voice",
         dummyText: "No",
-        recordingDuration: 4000
+        recordingDuration: 1000
       },
     ],
   },
-    {
-    id: "msg-8",
+  {
+    id: "msg-7",
     role: "ai-agent",
     parts: [
-       {
-        type: "reasoning",
-        text: "Analyzing business context",
-        state: "done",
-      },
       {
         type: "text",
-        text: "Got it. I will store this information and share with your other agents in the future so you don’t have to go through this step again. You can find and update this information anytime from the sidebar."
+        text: "Got it. I will store this information and share with your other agents in the future so you don't have to go through this step again. You can find and update this information anytime from the sidebar."
       },
-      // Trigger sidebar when the business context is provided
       { type: "open-sidebar" },
       {
         type: "summary-added",
-        heading: "Agent Configuration Summary",
-        subheading: "Sales Agent is now learning about your workflow",
-        id: "sales_agent_summary"
-      },
-    ]
-  },
-    {
-    id: "msg-9",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "summary-updated",
-        messages: ['Business Name: Eat Cook Joy \nValue Prop: Chef tool providing personalization + convenience + affordability \n Location: Texas \nServices: Meal Prep, Events'],
-        id: "sales_agent_summary"
+        heading: "Business Profile",
+        subheading: "Your business information for all agents",
+        id: "business_profile"
       },
     ]
   },
   {
-    id: "msg-10",
+    id: "msg-8",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "summary-updated",
+        messages: ['Business Name: Eat Cook Joy\nValue Prop: Chef tool providing personalization + convenience + affordability\nLocation: Texas\nServices: Meal Prep, Events'],
+        id: "business_profile"
+      },
+    ]
+  },
+  {
+    id: "msg-9",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Alright, can you now walk me through how you manage leads?"
+        text: "Ok, let's continue. Where do you manage your leads? Feel free to share in chat or over voice."
       },
     ],
   },
-    {
-    id: "msg-11",
+  {
+    id: "msg-10",
     role: "user",
     parts: [
       {
         type: "voice",
-        dummyText: "I manage my leads on thumbtack",
-        recordingDuration: 4000
+        dummyText: "I manage my leads on Thumbtack",
+        recordingDuration: 2000
       },
+    ],
+  },
+  {
+    id: "msg-11",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. Lets connect with Thumbtack"
+      },
+      {
+        type: "button",
+        text: "Connect Thumbtack",
+        action: "connect_thumbtack"
+      }
     ],
   },
   {
@@ -343,7 +357,7 @@ const mockConversation: CustomUIMessage[] = [
       {
         type: "app-event",
         apps: [
-          { app_id: "thumbtack", enabled: false },
+          { app_id: "thumbtack", enabled: true },
         ]
       },
     ],
@@ -354,54 +368,58 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "I will need access to Thumbtack. Lets get that going."
+        text: "Now that I can access Thumbtack, lets walk through how you manage your leads there."
       },
+      {
+        type: "button",
+        text: "Go To Thumbtack",
+        action: "navigate_thumbtack",
+        url: "https://thumbtack.com"
+      }
     ],
   },
   {
     id: "msg-14",
-    role: "ai-agent",
+    role: "user",
     parts: [
       {
-        type: "link",
-        text: "Connect to Thumbtack",
-        url: "https://thumbtack.com",
+        type: "recording-state",
+        state: "start"
+      },
+      {
+        type: "voice",
+        dummyText: "Ok so first I got to Thumbtack. and then I go to jobs. This is where I see the leads. I will click on a lead, then send them a template message.",
+        recordingDuration: 4000
       },
     ],
   },
-
-    {
+  {
     id: "msg-15",
     role: "ai-agent",
     parts: [
       {
-        type: "text",
-        text: "Next, lets figure out how you manage leads so I can start supporting you. In as much detail as possible, can you walk me through the steps? "
+        type: "agent-interrupt",
+        message: "Do you respond to all leads?"
       },
+      {
+        type: "recording-state",
+        state: "pause"
+      }
     ],
   },
   {
     id: "msg-16",
     role: "user",
-    parts: [{ type: "voice", dummyText: "Ok so first I got to Thumbtack. and then I go to jobs. This is where I see the leads. I will click on a lead, then send them a template message.", recordingDuration: 2000 }],
-  },
-  {
-    id: "msg-17",
-    role: "ai-agent",
     parts: [
       {
-        type: "text",
-        text: "Do you respond to all leads?"
+        type: "voice",
+        dummyText: "Yes, I respond to all my leads.",
+        recordingDuration: 2000
       },
     ],
   },
   {
-    id: "msg-18",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "Yes, I respond to all my leads.", recordingDuration: 2000 }],
-  },
-  {
-    id: "msg-19",
+    id: "msg-17",
     role: "ai-agent",
     parts: [
       {
@@ -411,12 +429,18 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-20",
+    id: "msg-18",
     role: "user",
-    parts: [{ type: "voice", dummyText: "Get my approval and then we can adjust over time?", recordingDuration: 2000 }],
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Get my approval and then we can adjust over time?",
+        recordingDuration: 3000
+      },
+    ],
   },
   {
-    id: "msg-21",
+    id: "msg-19",
     role: "ai-agent",
     parts: [
       {
@@ -425,216 +449,31 @@ const mockConversation: CustomUIMessage[] = [
       },
     ],
   },
-  // {
-  //   id: "msg-22",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "link",
-  //       text: "Connect to OpenPhone",
-  //       url: "https://openphone.com",
-  //     },
-  //     {
-  //       type: "app-event",
-  //       apps: [
-  //         { app_id: "thumbtack", enabled: true },
-  //         { app_id: "openphone", enabled: false },
-  //       ]
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-23",
-  //   role: "user",
-  //   parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
-  // },
-  // {
-  //   id: "msg-24",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "app-event",
-  //       apps: [
-  //         { app_id: "thumbtack", enabled: true },
-  //         { app_id: "openphone", enabled: true },
-  //       ]
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-25",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "Great. To summarize:"
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-26",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "You first go to Thumbtack. Then you msg leads with your template You then switch to Openphone. Then you create contact and send them the template. "
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-27",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "I will now manage your lead responses and update you. Where would you like to be updated? I will be recording my tasks in Stackbirds, but I can ping you if you want? "
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-28",
-  //   role: "user",
-  //   parts: [
-  //     {
-  //       type: "voice",
-  //       dummyText: "Ok great, just send me a text when you respond. ",
-  //       recordingDuration: 4000
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-29",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "reasoning",
-  //       text: "Proposal logic: Fetch menus from Google Sheets → Match by event type → Adjust for allergens. Requires user confirmation before sending."
-  //     },
-  //     {
-  //       type: "text",
-  //       text: "Ok got it. Stackbirds Sales Agent is ready to go "
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-20a",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "app-event",
-  //       apps: [
-  //         { app_id: "thumbtack", enabled: true },
-  //         { app_id: "openphone", enabled: true },
-  //         { app_id: "google-docs", enabled: true }
-  //       ]
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-14",
-  //   role: "user",
-  //   parts: [{ type: "voice", dummyText: "Awesome!", recordingDuration: 2000 }],
-  // },
-  // {
-  //   id: "msg-15",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "What if I don't find a matching menu? Do you have a default?"
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-16",
-  //   role: "user",
-  //   parts: [
-  //     {
-  //       type: "voice",
-  //       dummyText: "I always create custom. You can ask me if you don't find one.",
-  //       recordingDuration: 3000
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-17",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "Got it! And lastly, how do you keep track of responses?"
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-18",
-  //   role: "user",
-  //   parts: [
-  //     {
-  //       type: "voice",
-  //       dummyText: "Right now I don't do anything, but I know I need a process.",
-  //       recordingDuration: 3000
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-19",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "reasoning",
-  //       text: "Opportunity identified: User lacks lead tracking. Solution: Create automated tracker in Google Sheets with daily updates."
-  //     },
-  //     {
-  //       type: "text",
-  //       text: "Okay, great! I'm going to **create a spreadsheet** for us to track responses from leads. I'll update it after every message and at the end of every day. You can ask me for status anytime. Sound good?"
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-20",
-  //   role: "user",
-  //   parts: [{ type: "voice", dummyText: "Oh that's really nice!", recordingDuration: 2000 }],
-  // },
-  // {
-  //   id: "msg-21",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "Should I review your previous messages to leads and add them to the tracker?"
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-22",
-  //   role: "user",
-  //   parts: [{ type: "voice", dummyText: "No, let's start fresh.", recordingDuration: 2000 }],
-  // },
-  // {
-  //   id: "msg-23",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "reasoning",
-  //       text: "Training complete. Agent configuration: Thumbtack lead source, OpenPhone integration, Google Sheets menu lookup, automated tracker. Ready for deployment."
-  //     },
-  //     {
-  //       type: "text",
-  //       text: "Perfect! I'm now creating your **custom Sales Agent**. Here's what I'll do:\n\n**Task**: Lead Gen Connect\n- **Apps**: Thumbtack, OpenPhone, Google Sheets\n- **Workflow**: Find leads → Create contact → Send customized template → Track responses\n- **Rules**: Never exceed budget, always confirm proposals, update tracker daily\n\nLet's gooooo! 🚀"
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: "msg-24",
-  //   role: "assistant",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "Your **Sales Agent** is now live! You can deploy it, review its configuration, or continue training. What would you like to do next?"
-  //     },
-  //   ],
-  // },
+  {
+    id: "msg-20",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "agent-interrupt",
+        message: "Ok so I see your templates, these are the ones you want me to use?"
+      },
+      {
+        type: "recording-state",
+        state: "pause"
+      }
+    ],
+  },
+  {
+    id: "msg-21",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Yes. Feel free to use this. After Thumbtack message is sent I continue the conversation on Openphone.",
+        recordingDuration: 4000
+      },
+    ],
+  },
 ];
 
 // Helper function to render text with clickable links and preserve newlines
@@ -710,6 +549,11 @@ const ChatBotDemo = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [recordingState, setRecordingState] = useState<"idle" | "recording" | "paused">("idle");
+
+  // Agent switching animation state
+  const [isAgentSwitching, setIsAgentSwitching] = useState(false);
+  const [agentSwitchingText, setAgentSwitchingText] = useState("");
 
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
@@ -737,7 +581,7 @@ const ChatBotDemo = () => {
         try {
           const parentHostname = window.parent.location.hostname;
           const isOwnDomain = parentHostname.includes('localhost') ||
-                             parentHostname.includes('agent-demo-pied.vercel.app');
+            parentHostname.includes('agent-demo-pied.vercel.app');
           setIsOnOwnDomain(isOwnDomain);
         } catch (e) {
           // Cross-origin error, means we're on a different domain
@@ -752,14 +596,21 @@ const ChatBotDemo = () => {
     const initializeState = async () => {
       try {
         const state = await loadFromAPI();
-        setMessages(state.messages || []);
-        setCurrentMessageIndex(state.currentMessageIndex || 0);
-        setStatus(state.status || 'ready');
-        setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
-        setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : true);
+        // For demo mode, start fresh - don't load old state that might interfere
+        setMessages([]);
+        setCurrentMessageIndex(0);
+        setStatus('ready');
+        setIsUserMessageInPlaceholder(false);
+        setDemoModeActive(true); // Always start in demo mode
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing state:', error);
+        // Even on error, start in demo mode
+        setMessages([]);
+        setCurrentMessageIndex(0);
+        setStatus('ready');
+        setIsUserMessageInPlaceholder(false);
+        setDemoModeActive(true);
         setIsInitialized(true);
       }
     };
@@ -772,31 +623,38 @@ const ChatBotDemo = () => {
     const cleanup = setupSSEConnection((data) => {
       // Mark that this update came from SSE, not user action
       saveToAPIRef.current = false;
-      
+
       if (data.type === 'state_update') {
         const state = data.data;
-        setMessages(state.messages || []);
-        setCurrentMessageIndex(state.currentMessageIndex || 0);
-        setStatus(state.status || 'ready');
-        setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
-        setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : true);
+        // Don't override demo state when demo mode is active
+        // Demo mode controls the conversation flow locally
+        if (!demoModeActive) {
+          setMessages(state.messages || []);
+          setCurrentMessageIndex(state.currentMessageIndex || 0);
+          setStatus(state.status || 'ready');
+          setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
+          setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : true);
+        }
       } else if (data.type === 'clear') {
-        setMessages([]);
-        setCurrentMessageIndex(0);
-        setStatus('ready');
-        setIsUserMessageInPlaceholder(false);
-        setDemoModeActive(true);
+        // Don't clear demo state when demo mode is active
+        if (!demoModeActive) {
+          setMessages([]);
+          setCurrentMessageIndex(0);
+          setStatus('ready');
+          setIsUserMessageInPlaceholder(false);
+          setDemoModeActive(true);
+        }
       }
     });
 
     return cleanup;
-  }, []);
+  }, [demoModeActive]);
 
   // Handle clear action from URL query params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
-    
+
     if (action === 'clear') {
       clearConversationStorage().then(() => {
         // Remove the query param from URL without reload
@@ -807,11 +665,11 @@ const ChatBotDemo = () => {
 
   // Save state to API only when it changes from user actions (not SSE updates)
   const saveToAPIRef = useRef(false);
-  
+
   useEffect(() => {
     if (!isInitialized) return;
     if (!saveToAPIRef.current) return; // Skip if this update came from SSE
-    
+
     saveToAPI({
       messages,
       currentMessageIndex,
@@ -820,15 +678,24 @@ const ChatBotDemo = () => {
       demoModeActive,
       input: ""
     });
-    
+
     // Reset the flag
     saveToAPIRef.current = false;
   }, [messages, currentMessageIndex, status, isUserMessageInPlaceholder, demoModeActive, isInitialized]);
 
   useEffect(() => {
-    if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
+    if (!demoModeActive || !isInitialized || currentMessageIndex >= mockConversation.length) return;
 
     const currentMessage = mockConversation[currentMessageIndex];
+
+    // Check if current message has options - if so, don't auto-progress
+    const hasOptions = currentMessage.parts.some(part => part.type === "options");
+    if (hasOptions) {
+      // Show the message but don't auto-progress
+      setStatus("ready");
+      appendMessage(currentMessage);
+      return;
+    }
 
     if (currentMessage.role === "user") {
       // Show user message as placeholder - wait for manual input
@@ -868,7 +735,7 @@ const ChatBotDemo = () => {
       const thinkingTimer = setTimeout(() => {
         // Mark that this is a demo progress action - should be saved to API
         saveToAPIRef.current = true;
-        
+
         const newIndex = currentMessageIndex + 1;
         setStatus("ready");
         appendMessage(currentMessage);
@@ -905,6 +772,31 @@ const ChatBotDemo = () => {
           setShowApps(true);
         }
 
+        // Process recording-state parts
+        const recordingStatePart = currentMessage.parts.find(part => part.type === "recording-state");
+        if (recordingStatePart && recordingStatePart.type === "recording-state") {
+          if (recordingStatePart.state === "start") {
+            setRecordingState("recording");
+          } else if (recordingStatePart.state === "pause") {
+            setRecordingState("paused");
+          } else if (recordingStatePart.state === "stop") {
+            setRecordingState("idle");
+          }
+        }
+
+        // Process system-event parts for agent switching
+        const systemEventPart = currentMessage.parts.find(part => part.type === "system-event");
+        if (systemEventPart && systemEventPart.type === "system-event" && systemEventPart.event === "agent-switching") {
+          setIsAgentSwitching(true);
+          setAgentSwitchingText(`Switching to ${systemEventPart.metadata?.targetAgent || 'Agent'}...`);
+
+          // Hide the switching animation after a delay
+          setTimeout(() => {
+            setIsAgentSwitching(false);
+            setAgentSwitchingText("");
+          }, 3000);
+        }
+
         // Broadcast the completed message
         if (updateSourceRef.current === 'self' && broadcastInstance) {
           broadcastInstance.broadcastMessage({
@@ -920,20 +812,17 @@ const ChatBotDemo = () => {
       }, 3000);
       return () => clearTimeout(thinkingTimer);
     }
-  }, [currentMessageIndex, demoModeActive, appendMessage]);
+  }, [currentMessageIndex, demoModeActive, isInitialized, appendMessage]);
 
   // Start demo mode on mount
   useEffect(() => {
-    if (demoModeActive && mockConversation.length > 0) {
-      const firstMessage = mockConversation[0];
-      if (firstMessage.role === "user") {
-        setInput(""); // Clear input initially
-        setIsUserMessageInPlaceholder(true);
-      }
+    if (demoModeActive && mockConversation.length > 0 && currentMessageIndex === 0 && messages.length === 0) {
+      // The demo progression useEffect will handle showing the first message
+      // since it has options, it will stop there and wait for user interaction
     }
 
     // Broadcast instance is automatically initialized when created
-  }, [demoModeActive]);
+  }, [demoModeActive, currentMessageIndex, messages.length]);
 
   // Process existing messages to extract summary and app data
   useEffect(() => {
@@ -1154,220 +1043,360 @@ const ChatBotDemo = () => {
         <div className={`flex flex-col ${isExtension && showSummary ? 'flex-1 min-h-0' : 'h-full'}`}>
           <Conversation className="h-full">
             <ConversationContent>
-            {messages.length === 0 && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center space-y-4 max-w-md px-6">
-                  <div className="text-4xl mb-6">🎙️</div>
-                  <h2 className="text-2xl font-semibold text-foreground">
-                    StackBirds
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Speak and, There will be an AI-agent
-                  </p>
-                </div>
-              </div>
-            )}
-            {messages.map((message) => (
-              <div key={message.id}>
+              {messages.map((message) => (
+                <div key={message.id}>
 
-                {message.parts
-                  .filter((part) => part.type === "system-event")
-                  .map((part, i) => (
-                    <SystemEvent
-                      key={`${message.id}-event-${i}`}
-                      event={part.event}
-                      agentName={part.metadata?.agentName}
-                      metadata={part.metadata}
-                    />
-                  ))}
+                  {message.parts
+                    .filter((part) => part.type === "system-event")
+                    .map((part, i) => (
+                      <SystemEvent
+                        key={`${message.id}-event-${i}`}
+                        event={part.event}
+                        agentName={part.metadata?.agentName}
+                        metadata={part.metadata}
+                      />
+                    ))}
 
-                {message.role === "assistant" &&
-                  message.parts.filter(
-                    (part) => part.type === "source-url"
-                  ).length > 0 && (
-                    <Sources>
-                      <SourcesTrigger
-                        count={
-                          message.parts.filter(
+                  {message.role === "assistant" &&
+                    message.parts.filter(
+                      (part) => part.type === "source-url"
+                    ).length > 0 && (
+                      <Sources>
+                        <SourcesTrigger
+                          count={
+                            message.parts.filter(
+                              (part) =>
+                                part.type ===
+                                "source-url"
+                            ).length
+                          }
+                        />
+                        {message.parts
+                          .filter(
                             (part) =>
                               part.type ===
                               "source-url"
-                          ).length
-                        }
-                      />
-                      {message.parts
-                        .filter(
-                          (part) =>
-                            part.type ===
-                            "source-url"
-                        )
-                        .map((part, i) => (
-                          <SourcesContent
+                          )
+                          .map((part, i) => (
+                            <SourcesContent
+                              key={`${message.id}-${i}`}
+                            >
+                              <Source
+                                key={`${message.id}-${i}`}
+                                href={part.url}
+                                title={part.url}
+                              />
+                            </SourcesContent>
+                          ))}
+                      </Sources>
+                    )}
+                  {message.parts.map((part, i) => {
+                    switch (part.type) {
+                      case "text":
+                        return (
+                          <Fragment
                             key={`${message.id}-${i}`}
                           >
-                            <Source
-                              key={`${message.id}-${i}`}
-                              href={part.url}
-                              title={part.url}
-                            />
-                          </SourcesContent>
-                        ))}
-                    </Sources>
-                  )}
-                {message.parts.map((part, i) => {
-                  switch (part.type) {
-                    case "text":
-                      return (
-                        <Fragment
-                          key={`${message.id}-${i}`}
-                        >
-                          <Message
-                            from={message.role}
-                          >
-                            <MessageContent>
-                              <TextWithLinks text={part.text} />
-                            </MessageContent>
-                          </Message>
-                        </Fragment>
-                      );
-                    case "link":
-                      return (
-                        <div
-                          key={`${message.id}-${i}`}
-                          className="flex justify-start mb-4"
-                        >
-                          <a
-                            href={part.url || `https://${part.text}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-                          >
-                            {part.text}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="ml-2"
+                            <Message
+                              from={message.role}
                             >
-                              <path d="M7 7h10v10" />
-                            </svg>
-                          </a>
-                        </div>
-                      );
-                    case "reasoning":
-                      return (
-                        <Reasoning
-                          key={`${message.id}-${i}`}
-                          className="w-full"
-                          isStreaming={
-                            status ===
-                            "streaming"
-                          }
-                        >
-                          <ReasoningTrigger />
-                          <ReasoningContent>
-                            {part.text}
-                          </ReasoningContent>
-                        </Reasoning>
-                      );
-                    default:
-                      return null;
-                  }
-                })}
-              </div>
-            ))}
-            {status === "submitted" && <Loader />}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+                              <MessageContent>
+                                <TextWithLinks text={part.text} />
+                              </MessageContent>
+                            </Message>
+                          </Fragment>
+                        );
+                      case "options":
+                        return (
+                          <div
+                            key={`${message.id}-${i}`}
+                            className="flex flex-wrap gap-2 mb-4 justify-start"
+                          >
+                            {part.options.map((option, optionIndex) => (
+                              <button
+                                key={optionIndex}
+                                onClick={() => {
+                                  // Handle option selection - add user message and progress conversation
+                                  if (option.action === "select_sales") {
+                                    // Mark as user action
+                                    saveToAPIRef.current = true;
 
-        {showMicSection && (
-          // Voice message mode - show mic button or audio visualizer in same location
-          <div className="flex-shrink-0 mt-4 relative">
-            <AnimatePresence mode="wait">
-              {!isRecording ? (
-                // Show mic button with fade animation
-                <motion.div
-                  key="mic-button"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="flex items-center justify-center relative"
-                >
-                  <button
-                    onClick={handleStartRecording}
-                    disabled={!shouldShowInput || status === "streaming"}
-                    className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
-                    aria-label="Start recording"
+                                    // Add user message for the selected option
+                                    const userMessage: CustomUIMessage = {
+                                      id: `user-${Date.now()}`,
+                                      role: "user",
+                                      parts: [{ type: "text", text: option.label }],
+                                    };
+
+                                    // Add the user message and progress to next AI message
+                                    appendMessage(userMessage);
+                                    const newIndex = currentMessageIndex + 1;
+                                    setCurrentMessageIndex(newIndex);
+
+                                    // Broadcast the user message and progress
+                                    if (updateSourceRef.current === 'self' && broadcastInstance) {
+                                      broadcastInstance.broadcastMessage({
+                                        type: 'USER_MESSAGE_SUBMITTED',
+                                        payload: { message: userMessage, newIndex }
+                                      });
+                                    }
+                                  }
+                                }}
+                                className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent text-foreground transition-colors"
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      case "button":
+                        return (
+                          <div
+                            key={`${message.id}-${i}`}
+                            className="flex justify-start mb-4"
+                          >
+                            <button
+                              onClick={() => {
+                                if (part.action === "connect_thumbtack") {
+                                  // Handle connect thumbtack - progress to next message
+                                  saveToAPIRef.current = true;
+                                  setCurrentMessageIndex(prev => prev + 1);
+                                } else if (part.action === "navigate_thumbtack") {
+                                  // Open Thumbtack in new tab/window
+                                  window.open(part.url, '_blank');
+                                  // Progress to next message
+                                  saveToAPIRef.current = true;
+                                  setCurrentMessageIndex(prev => prev + 1);
+                                }
+                              }}
+                              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                            >
+                              {part.text}
+                              {part.url && (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="ml-2"
+                                >
+                                  <path d="M7 7h10v10" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      case "link":
+                        return (
+                          <div
+                            key={`${message.id}-${i}`}
+                            className="flex justify-start mb-4"
+                          >
+                            <a
+                              href={part.url || `https://${part.text}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                            >
+                              {part.text}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="ml-2"
+                              >
+                                <path d="M7 7h10v10" />
+                              </svg>
+                            </a>
+                          </div>
+                        );
+                      case "agent-interrupt":
+                        return (
+                          <div
+                            key={`${message.id}-${i}`}
+                            className="flex justify-start mb-4"
+                          >
+                            <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-200">
+                              <div className="flex items-center gap-2">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="12" y1="8" x2="12" y2="12" />
+                                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                                <span className="font-medium">Agent Interrupt</span>
+                              </div>
+                              <p className="mt-1">{part.message}</p>
+                            </div>
+                          </div>
+                        );
+                      case "reasoning":
+                        return (
+                          <Reasoning
+                            key={`${message.id}-${i}`}
+                            className="w-full"
+                            isStreaming={
+                              status ===
+                              "streaming"
+                            }
+                          >
+                            <ReasoningTrigger />
+                            <ReasoningContent>
+                              {part.text}
+                            </ReasoningContent>
+                          </Reasoning>
+                        );
+                      default:
+                        return null;
+                    }
+                  })}
+                </div>
+              ))}
+              {status === "submitted" && <Loader />}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+
+          {showMicSection && (
+            // Voice message mode - show mic button or audio visualizer in same location
+            <div className="flex-shrink-0 mt-4 relative">
+              <AnimatePresence mode="wait">
+                {recordingState === "idle" ? (
+                  // Show mic button with fade animation
+                  <motion.div
+                    key="mic-button"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="flex items-center justify-center relative"
                   >
-                    <motion.svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="origin-center"
-                      animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
-                      transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                    <button
+                      onClick={handleStartRecording}
+                      disabled={!shouldShowInput || status === "streaming"}
+                      className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
+                      aria-label="Start recording"
                     >
-                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                      <line x1="12" x2="12" y1="19" y2="22" />
-                    </motion.svg>
-                  </button>
-                </motion.div>
-              ) : (
-                // Show audio visualizer with cross button
-                <motion.div
-                  key="audio-visualizer"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex-1 h-32">
-                    <AudioVisualizer
-                      stream={mediaStream}
-                      isRecording={isRecording}
-                      onClick={() => { }}
-                    />
-                  </div>
-                  <button
-                    onClick={handleCrossButtonClick}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-500 transition-all shadow-md hover:shadow-lg border-green-500"
-                    aria-label="Send voice message"
+                      <motion.svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="origin-center"
+                        animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
+                        transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                      >
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                      </motion.svg>
+                    </button>
+                  </motion.div>
+                ) : recordingState === "paused" ? (
+                  // Show recording paused state
+                  <motion.div
+                    key="recording-paused"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="flex items-center justify-center relative"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    <button
+                      onClick={handleStartRecording}
+                      disabled={!shouldShowInput || status === "streaming"}
+                      className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
+                      aria-label="Resume recording"
                     >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+                      <motion.svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="origin-center"
+                        animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
+                        transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                      >
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                      </motion.svg>
+                    </button>
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-lg text-sm font-medium border border-yellow-200">
+                      Recording Paused
+                    </div>
+                  </motion.div>
+                ) : (
+                  // Show audio visualizer when recording
+                  <motion.div
+                    key="audio-visualizer"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="flex-1 h-32">
+                      <AudioVisualizer
+                        stream={mediaStream}
+                        isRecording={recordingState === "recording"}
+                        onClick={() => { }}
+                      />
+                    </div>
+                    <button
+                      onClick={handleCrossButtonClick}
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-500 transition-all shadow-md hover:shadow-lg border-green-500"
+                      aria-label="Send voice message"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       )}
     </div>

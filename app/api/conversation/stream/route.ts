@@ -16,7 +16,16 @@ export async function GET(request: NextRequest) {
           controller.enqueue(encoder.encode(message));
         } catch (error) {
           console.error('Error sending SSE data:', error);
-          isClosed = true;
+          if (!isClosed) {
+            isClosed = true;
+            try {
+              if (controller.desiredSize !== null) {
+                controller.close();
+              }
+            } catch (closeError) {
+              console.error('Error closing controller after send error:', closeError);
+            }
+          }
         }
       };
 
@@ -39,10 +48,12 @@ export async function GET(request: NextRequest) {
         
         // Cleanup on client disconnect
         request.signal.addEventListener('abort', async () => {
+          if (isClosed) return; // Already cleaned up
           isClosed = true;
           try {
             await subscriberRedis.unsubscribe('conversation:updates');
-            if (!controller.desiredSize) {
+            // Check if controller is not already closed
+            if (controller.desiredSize !== null) {
               controller.close();
             }
           } catch (error) {
@@ -52,9 +63,15 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         console.error('Error in SSE stream:', error);
         if (!isClosed) {
-          send(JSON.stringify({ type: 'error', data: { message: 'Stream error' } }));
-          controller.close();
           isClosed = true;
+          try {
+            send(JSON.stringify({ type: 'error', data: { message: 'Stream error' } }));
+            if (controller.desiredSize !== null) {
+              controller.close();
+            }
+          } catch (closeError) {
+            console.error('Error closing controller in error handler:', closeError);
+          }
         }
       }
     },
