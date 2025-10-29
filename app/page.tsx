@@ -29,6 +29,7 @@ import { fetchConversationState, updateConversationState, clearConversationState
 import { ExtensionSummary } from "@/components/extension/extension-summary";
 import { AppIntegrations } from "@/components/extension/app-integrations";
 import { openPhoneConversation } from "@/lib/consts";
+import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
@@ -52,6 +53,7 @@ type MessagePart =
   | { type: "button"; text: string; action: string; url?: string }
   | { type: "recording-state"; state: "start" | "pause" | "stop" }
   | { type: "agent-interrupt"; message: string }
+  | { type: "new-workflow"; workflow: string; category?: string }
 
 // Broadcast Channel types for cross-tab synchronization
 type BroadcastMessage = {
@@ -473,6 +475,16 @@ const mockConversation: CustomUIMessage[] = [
         type: "text",
         text: "Sure. Your preference has been recorded"
       },
+      {
+        type: "new-workflow",
+        workflow: "Respond to all incoming leads automatically",
+        category: "lead-management"
+      },
+      {
+        type: "new-workflow",
+        workflow: "Get user approval before sending templated messages",
+        category: "communication"
+      },
     ],
   },
   {
@@ -503,6 +515,22 @@ const mockConversation: CustomUIMessage[] = [
         type: "voice",
         dummyText: "Yes. Feel free to use this. After Thumbtack message is sent I continue the conversation on Openphone.",
         recordingDuration: 4000
+      },
+    ],
+  },
+  {
+    id: "msg-22",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "new-workflow",
+        workflow: "Use approved templates for initial lead responses",
+        category: "communication"
+      },
+      {
+        type: "new-workflow",
+        workflow: "Continue conversations on OpenPhone after Thumbtack",
+        category: "communication"
       },
     ],
   },
@@ -575,6 +603,36 @@ const ChatBotDemo = () => {
   // App integrations state
   const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean; connecting?: boolean }>>([])
   const [showApps, setShowApps] = useState(false)
+
+  // Workflows state
+  const [workflows, setWorkflows] = useState<Array<{
+    id: string;
+    workflow: string;
+    category?: string;
+    isNew?: boolean;
+    isPretrained?: boolean;
+  }>>([
+    // Pre-trained workflows
+    {
+      id: "pretrained-1",
+      workflow: "Analyze user business context and value proposition",
+      category: "analysis",
+      isPretrained: true
+    },
+    {
+      id: "pretrained-2",
+      workflow: "Collect and store business profile information",
+      category: "lead-management",
+      isPretrained: true
+    },
+    {
+      id: "pretrained-3",
+      workflow: "Connect with lead management platforms",
+      category: "automation",
+      isPretrained: true
+    }
+  ])
+  const [showWorkflows, setShowWorkflows] = useState(true)
 
   // Initialize state from API
   const [messages, setMessages] = useState<CustomUIMessage[]>([]);
@@ -826,6 +884,22 @@ const ChatBotDemo = () => {
           setShowApps(true);
         }
 
+        // Process new-workflow parts
+        const newWorkflowPart = currentMessage.parts.find(part => part.type === "new-workflow");
+        if (newWorkflowPart && newWorkflowPart.type === "new-workflow") {
+          setWorkflows(prev => [
+            ...prev,
+            {
+              id: `workflow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              workflow: newWorkflowPart.workflow,
+              category: newWorkflowPart.category || "default",
+              isNew: true,
+              isPretrained: false
+            }
+          ]);
+          setShowWorkflows(true);
+        }
+
         // Process recording-state parts
         const recordingStatePart = currentMessage.parts.find(part => part.type === "recording-state");
         if (recordingStatePart && recordingStatePart.type === "recording-state") {
@@ -886,6 +960,13 @@ const ChatBotDemo = () => {
     let latestSummaryData: { heading: string; subheading: string } | null = null;
     let latestSummaryMessages: string[] = [];
     let latestAppStatuses: Array<{ app_id: string; enabled: boolean }> = [];
+    let newWorkflows: Array<{
+      id: string;
+      workflow: string;
+      category?: string;
+      isNew?: boolean;
+      isPretrained?: boolean;
+    }> = [];
 
     messages.forEach(message => {
       message.parts.forEach(part => {
@@ -900,6 +981,14 @@ const ChatBotDemo = () => {
         } else if (part.type === "app-event") {
           // When processing existing messages, clear connecting state
           latestAppStatuses = part.apps.map(app => ({ ...app, connecting: false }));
+        } else if (part.type === "new-workflow") {
+          newWorkflows.push({
+            id: `workflow-existing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            workflow: part.workflow,
+            category: part.category || "default",
+            isNew: false, // Since we're processing existing messages, don't mark as new
+            isPretrained: false
+          });
         }
       });
     });
@@ -914,6 +1003,15 @@ const ChatBotDemo = () => {
     if (latestAppStatuses.length > 0) {
       setAppStatuses(latestAppStatuses);
       setShowApps(true);
+    }
+
+    if (newWorkflows.length > 0) {
+      setWorkflows(prev => {
+        // Get pre-trained workflows and add new ones
+        const pretrainedWorkflows = prev.filter(w => w.isPretrained);
+        return [...pretrainedWorkflows, ...newWorkflows];
+      });
+      setShowWorkflows(true);
     }
   }, [messages]);
 
@@ -1502,6 +1600,11 @@ const ChatBotDemo = () => {
                       <AppIntegrations apps={appStatuses} />
                     </div>
                   )}
+                  {showWorkflows && workflows.length > 0 && (
+                    <div className="mt-4">
+                      <Workflows workflows={workflows} />
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -1553,6 +1656,12 @@ const ChatBotDemo = () => {
       {!isMobile && isExtension && showApps && appStatuses.length > 0 && (
         <div className="flex-shrink-0 mb-4">
           <AppIntegrations apps={appStatuses} />
+        </div>
+      )}
+
+      {!isMobile && isExtension && showWorkflows && workflows.length > 0 && (
+        <div className="flex-shrink-0 mb-4">
+          <Workflows workflows={workflows} />
         </div>
       )}
 

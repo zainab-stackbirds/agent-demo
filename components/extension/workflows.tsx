@@ -1,0 +1,233 @@
+"use client";
+
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { AnimatePresence, motion } from "motion/react";
+
+interface WorkflowsProps {
+  workflows: Array<{
+    id: string;
+    workflow: string;
+    category?: string;
+    isNew?: boolean;
+    isPretrained?: boolean;
+  }>;
+}
+
+// Predefined workflow categories with colors and icons
+const WORKFLOW_CATEGORIES: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
+  "lead-management": {
+    color: "#10b981",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="m22 2-5 10-7-5" />
+      </svg>
+    ),
+    label: "Lead Management"
+  },
+  "communication": {
+    color: "#3b82f6",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+    label: "Communication"
+  },
+  "automation": {
+    color: "#8b5cf6",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
+      </svg>
+    ),
+    label: "Automation"
+  },
+  "analysis": {
+    color: "#f59e0b",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" x2="18" y1="20" y2="4" />
+        <line x1="12" x2="12" y1="20" y2="4" />
+        <line x1="6" x2="6" y1="20" y2="16" />
+      </svg>
+    ),
+    label: "Analysis"
+  },
+  "default": {
+    color: "#6b7280",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+    label: "General"
+  }
+};
+
+export const Workflows = ({ workflows }: WorkflowsProps) => {
+  if (workflows.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="mb-3"
+    >
+      <Card className="border-primary/10 bg-gradient-to-br from-background/95 via-background to-muted/10">
+        <CardContent className="px-3 py-2 sm:px-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
+            Learned Workflows
+          </h3>
+          <div className="space-y-1.5">
+            <AnimatePresence mode="popLayout">
+              {workflows.map((workflow, index) => {
+                const category = WORKFLOW_CATEGORIES[workflow.category || "default"];
+                const isRecent = workflow.isNew === true;
+                const isPretrained = workflow.isPretrained === true;
+
+                return (
+                  <motion.div
+                    key={workflow.id}
+                    initial={{ opacity: 0, x: -16, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 16, scale: 0.95 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: index * 0.08,
+                      ease: [0.23, 1, 0.32, 1],
+                    }}
+                  >
+                    <div
+                      className={`group relative flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all duration-300 backdrop-blur
+                        ${isRecent
+                          ? 'border-primary/40 bg-primary/8 shadow-sm'
+                          : isPretrained
+                          ? 'border-muted/30 bg-muted/20'
+                          : 'border-muted/20 bg-muted/10'
+                        }
+                      `}
+                      style={{
+                        boxShadow: isRecent ? `0 4px 12px -8px ${category.color}` : undefined,
+                        borderColor: isRecent ? `${category.color}33` : undefined
+                      }}
+                    >
+                      {/* Category Icon */}
+                      <motion.div
+                        initial={{ scale: 0.8, rotate: -8 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{
+                          duration: 0.45,
+                          delay: index * 0.08 + 0.12,
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 16
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-sm shadow-sm ring-1 ring-black/5"
+                        style={{
+                          backgroundColor: isRecent ? `${category.color}15` : undefined,
+                          borderColor: isRecent ? `${category.color}33` : undefined
+                        }}
+                      >
+                        {category.icon}
+                      </motion.div>
+
+                      {/* Workflow Text */}
+                      <div className="flex-1 min-w-0">
+                        <motion.p
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.25,
+                            delay: index * 0.08 + 0.18
+                          }}
+                          className="text-[0.78rem] leading-tight text-foreground/90 font-medium"
+                        >
+                          {workflow.workflow}
+                        </motion.p>
+
+                        {/* Category label */}
+                        <motion.span
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{
+                            duration: 0.2,
+                            delay: index * 0.08 + 0.24
+                          }}
+                          className="text-[0.65rem] text-muted-foreground/70 font-medium mt-0.5 block"
+                        >
+                          {category.label}
+                        </motion.span>
+                      </div>
+
+                      {/* Status indicators */}
+                      <div className="flex items-center gap-1">
+                        {isRecent && (
+                          <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: index * 0.08 + 0.3,
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 20
+                            }}
+                            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="20,6 9,17 4,12" />
+                            </svg>
+                          </motion.div>
+                        )}
+
+                        {isPretrained && (
+                          <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: index * 0.08 + 0.3,
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 20
+                            }}
+                            className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/10 text-muted-foreground/60"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              stroke="none"
+                            >
+                              <circle cx="12" cy="12" r="8" />
+                            </svg>
+                          </motion.div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};

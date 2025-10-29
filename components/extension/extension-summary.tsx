@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AnimatePresence, motion } from "motion/react";
 
 interface ExtensionSummaryProps {
@@ -12,42 +12,49 @@ interface ExtensionSummaryProps {
 export const ExtensionSummary = ({ heading, subheading, messages }: ExtensionSummaryProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="mb-4"
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="mb-3"
     >
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold whitespace-pre-line">
-            {heading.replace(/\\n/g, "\n")}
-          </CardTitle>
-          <CardDescription className="text-sm whitespace-pre-line">
+      <Card className="border-primary/10 bg-gradient-to-br from-background/95 via-background to-muted/10">
+        <CardContent className="px-3 py-2 sm:px-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
+            {heading}
+          </h3>
+          <p className="mb-3 text-[0.72rem] text-muted-foreground/70 leading-tight">
             {subheading.replace(/\\n/g, "\n")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
+          </p>
+          <div className="space-y-1.5">
             <AnimatePresence mode="popLayout">
               {messages.map((message, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
+                  initial={{ opacity: 0, x: -16, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 16, scale: 0.95 }}
                   transition={{
-                    duration: 0.3,
-                    delay: index * 0.1,
-                    ease: "easeOut"
+                    duration: 0.35,
+                    delay: index * 0.08,
+                    ease: [0.23, 1, 0.32, 1],
                   }}
-                  className="flex items-start gap-2 rounded-md bg-background/50 p-2"
                 >
-                  <div className="mt-1.5 flex-shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <div className="group relative flex items-start gap-3 rounded-lg border border-muted/20 bg-muted/10 py-2.5 transition-all duration-300 backdrop-blur">
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <motion.p
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.25,
+                          delay: index * 0.08 + 0.18
+                        }}
+                        className="text-[0.78rem] leading-tight text-foreground/90 font-medium whitespace-pre-line break-words"
+                      >
+                        {message.replace(/\\n/g, "\n")}
+                      </motion.p>
+                    </div>
                   </div>
-                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line break-words">
-                    {message.replace(/\\n/g, "\n")}
-                  </p>
                 </motion.div>
               ))}
             </AnimatePresence>
