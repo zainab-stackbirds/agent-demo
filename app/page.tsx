@@ -680,8 +680,8 @@ const ChatBotDemo = () => {
     const scrollToBottom = useCallback(() => {
       // Find the conversation container and scroll it
       const conversationElement = document.querySelector('[data-conversation-content]') ||
-                                  document.querySelector('.conversation-content') ||
-                                  document.querySelector('[data-testid="conversation-content"]');
+        document.querySelector('.conversation-content') ||
+        document.querySelector('[data-testid="conversation-content"]');
 
       if (conversationElement) {
         conversationElement.scrollTop = conversationElement.scrollHeight;
@@ -1824,12 +1824,22 @@ const ChatBotDemo = () => {
         {isMobile && (
           <div className="flex flex-col flex-1 min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 min-h-0">
-              <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
-                <TabsTrigger value="chat">Chat</TabsTrigger>
-                <TabsTrigger value="profile">Business Profile</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-0 z-10 bg-background p-0 gap-0 h-12">
+                <TabsTrigger
+                  value="chat"
+                  className="data-[state=active]:bg-[#f5f5f5] data-[state=active]:text-foreground px-4 py-2 transition-all duration-200 ease-in-out"
+                >
+                  Chat
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profile"
+                  className="data-[state=active]:bg-[#f5f5f5] data-[state=active]:text-foreground px-4 py-2 transition-all duration-200 ease-in-out"
+                >
+                  Business Profile
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
+              <TabsContent value="chat" className="mt-0 flex-1 flex flex-col min-h-0 transition-all duration-200 ease-in-out">
                 <div className="flex flex-col flex-1 min-h-0">
                   <Conversation className="flex-1 min-h-0">
                     <ConversationContent>
@@ -1842,7 +1852,7 @@ const ChatBotDemo = () => {
                 {renderInputSection()}
               </TabsContent>
 
-              <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
+              <TabsContent value="profile" className="mt-0 flex-1 flex flex-col min-h-0 transition-all duration-200 ease-in-out">
                 {/* Business Profile content */}
                 {showSummary && summaryData ? (
                   <>
