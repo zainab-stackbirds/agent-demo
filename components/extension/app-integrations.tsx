@@ -89,9 +89,10 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                             duration: isConnecting ? 1.5 : 0.45,
                             repeat: isConnecting ? Infinity : 0,
                             delay: index * 0.12 + 0.18,
-                            type: isConnecting ? "linear" : "spring",
-                            stiffness: 200,
-                            damping: 16
+                            type: isConnecting ? "tween" : "spring",
+                            ease: isConnecting ? "linear" : undefined,
+                            stiffness: isConnecting ? undefined : 200,
+                            damping: isConnecting ? undefined : 16
                           }}
                           className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white/90 shadow-sm ring-1 ring-black/5"
                           style={{ border: (isConnected || isConnecting) ? `1px solid ${accentColor}` : undefined }}
