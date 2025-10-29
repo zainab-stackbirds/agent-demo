@@ -382,6 +382,12 @@ const mockConversation: CustomUIMessage[] = [
         type: "text",
         text: "Now that I can access Thumbtack, lets walk through how you manage your leads there."
       },
+    ],
+  },
+  {
+    id: "msg-13b",
+    role: "ai-agent",
+    parts: [
       {
         type: "button",
         text: "Go To Thumbtack",
@@ -406,6 +412,16 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
+    id: "msg-14b",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "recording-state",
+        state: "pause"
+      }
+    ]
+  },
+  {
     id: "msg-15",
     role: "ai-agent",
     parts: [
@@ -413,10 +429,6 @@ const mockConversation: CustomUIMessage[] = [
         type: "agent-interrupt",
         message: "Do you respond to all leads?"
       },
-      {
-        type: "recording-state",
-        state: "pause"
-      }
     ],
   },
   {
@@ -462,16 +474,22 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
+    id: "msg-19b",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "recording-state",
+        state: "pause"
+      }
+    ],
+  },
+  {
     id: "msg-20",
     role: "ai-agent",
     parts: [
       {
         type: "agent-interrupt",
         message: "Ok so I see your templates, these are the ones you want me to use?"
-      },
-      {
-        type: "recording-state",
-        state: "pause"
       }
     ],
   },
@@ -1181,8 +1199,8 @@ const ChatBotDemo = () => {
                                   setAppStatuses(prev => {
                                     const thumbtackApp = prev.find(app => app.app_id === "thumbtack");
                                     if (thumbtackApp) {
-                                      return prev.map(app => 
-                                        app.app_id === "thumbtack" 
+                                      return prev.map(app =>
+                                        app.app_id === "thumbtack"
                                           ? { ...app, connecting: true, enabled: false }
                                           : app
                                       );
@@ -1192,19 +1210,19 @@ const ChatBotDemo = () => {
                                     }
                                   });
 
-                                  // After 3 seconds, mark as connected and progress to next message
+                                  // After 10 seconds, mark as connected and progress to next message
                                   setTimeout(() => {
                                     saveToAPIRef.current = true;
-                                    setAppStatuses(prev => 
-                                      prev.map(app => 
-                                        app.app_id === "thumbtack" 
+                                    setAppStatuses(prev =>
+                                      prev.map(app =>
+                                        app.app_id === "thumbtack"
                                           ? { ...app, connecting: false, enabled: true }
                                           : app
                                       )
                                     );
                                     // Progress to next message after connection is complete
                                     setCurrentMessageIndex(prev => prev + 1);
-                                  }, 3000);
+                                  }, 10000);
                                 } else if (part.action === "navigate_thumbtack") {
                                   // Open Thumbtack in new tab/window
                                   window.open(part.url, '_blank');
@@ -1267,11 +1285,11 @@ const ChatBotDemo = () => {
                         );
                       case "agent-interrupt":
                         return (
-                          <div
+                          <Message
                             key={`${message.id}-${i}`}
-                            className="flex justify-start mb-4"
+                            from="ai-agent"
                           >
-                            <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-200">
+                            <MessageContent>
                               <div className="flex items-center gap-2">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -1291,8 +1309,8 @@ const ChatBotDemo = () => {
                                 <span className="font-medium">Agent Interrupt</span>
                               </div>
                               <p className="mt-1">{part.message}</p>
-                            </div>
-                          </div>
+                            </MessageContent>
+                          </Message>
                         );
                       case "reasoning":
                         return (
