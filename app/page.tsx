@@ -558,7 +558,7 @@ const ChatBotDemo = () => {
 
   // Mobile responsive state
   const [isMobile, setIsMobile] = useState(false);
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Summary state for extension view
   const [summaryData, setSummaryData] = useState<{
@@ -1462,8 +1462,8 @@ const ChatBotDemo = () => {
 
   return (
     <div className={`max-w-4xl mx-auto p-6 relative size-full h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
-      {/* Mobile Tabs - Show only on mobile */}
-      {isMobile && !isExtension && (
+      {/* Mobile Tabs - Show on mobile width (including narrow extension sidebars) */}
+      {isMobile && (
         <div className="flex flex-col h-full">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
             <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
@@ -1472,18 +1472,16 @@ const ChatBotDemo = () => {
             </TabsList>
 
             <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
-              {!(isExtension && isOnOwnDomain) && (
-                <div className="flex flex-col h-full">
-                  <Conversation className="flex-1">
-                    <ConversationContent>
-                      {renderConversationMessages()}
-                    </ConversationContent>
-                    <ConversationScrollButton />
-                  </Conversation>
+              <div className="flex flex-col h-full">
+                <Conversation className="flex-1">
+                  <ConversationContent>
+                    {renderConversationMessages()}
+                  </ConversationContent>
+                  <ConversationScrollButton />
+                </Conversation>
 
-                  {renderMicSection()}
-                </div>
-              )}
+                {renderMicSection()}
+              </div>
             </TabsContent>
 
             <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
@@ -1537,7 +1535,7 @@ const ChatBotDemo = () => {
         </div>
       )}
 
-      {/* Extension mode only - Show summary and apps at top when in extension but not mobile */}
+      {/* Extension mode only - Show summary and apps at top when in extension and desktop width */}
       {!isMobile && isExtension && showSummary && summaryData && (
         <div className="flex-shrink-0 mb-4">
           <ExtensionSummary
