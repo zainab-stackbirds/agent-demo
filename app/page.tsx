@@ -5,9 +5,8 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { useStickToBottomContext } from "use-stick-to-bottom";
 import { Message, MessageContent, MessageAvatar } from "@/components/ai-elements/message";
-import { Fragment, useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { Fragment, useEffect, useState, useCallback, useRef } from "react";
 import { Response } from "@/components/ai-elements/response";
 import {
   Source,
@@ -23,10 +22,8 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { SystemEvent } from "@/components/ai-elements/system-event";
 import type { UIMessage, ChatStatus } from "ai";
-import { nanoid } from "nanoid";
 import { AudioVisualizer } from "@/components/ui/audio-visualizer";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion, LayoutGroup } from "motion/react";
 import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
 import { ExtensionSummary } from "@/components/extension/extension-summary";
@@ -34,9 +31,7 @@ import { AppIntegrations } from "@/components/extension/app-integrations";
 import { openPhoneConversation } from "@/lib/consts";
 import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import Hero from "@/components/UnitComponents/Hero";
 import Header from "@/components/UnitComponents/Header";
-import RecordingIndicator from "@/components/extension/recording-indicator";
 
 export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -698,10 +693,14 @@ const ChatBotDemo = () => {
   // Hero visibility state
   const [showHero, setShowHero] = useState(true);
 
+  // Manual progression state (for keyboard control)
+  const [waitingForManualProgression, setWaitingForManualProgression] = useState(false);
+
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
   const workflowsHydratedRef = useRef(false); // Used to decide when to mark workflows as newly learned
+
 
   // Simple direct scroll to bottom - bypass the library
   const AutoScrollHandler = () => {
@@ -757,6 +756,148 @@ const ChatBotDemo = () => {
       return [...prev, message];
     });
   }, [setMessages]);
+
+  // Function to handle AI message progression (extracted from setTimeout)
+  const progressAIMessage = useCallback(() => {
+    if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
+
+    const currentMessage = mockConversation[currentMessageIndex];
+
+    // Mark that this is a demo progress action - should be saved to API
+    saveToAPIRef.current = true;
+
+    const newIndex = currentMessageIndex + 1;
+    setStatus("ready");
+    appendMessage(currentMessage);
+    setCurrentMessageIndex(newIndex);
+    setWaitingForManualProgression(false);
+
+    // Check if message contains open-sidebar action and trigger it
+    const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
+    if (hasOpenSidebar) {
+      // Send postMessage to current window for content script to receive
+      window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
+    }
+
+    // Process summary-added parts
+    const summaryAddedPart = currentMessage.parts.find(part => part.type === "summary-added");
+    if (summaryAddedPart && summaryAddedPart.type === "summary-added") {
+      setSummaryData({
+        heading: summaryAddedPart.heading,
+        subheading: summaryAddedPart.subheading
+      });
+      setShowSummary(true);
+      setSummaryMessages([]);
+    }
+
+    // Process summary-updated parts
+    const summaryUpdatedPart = currentMessage.parts.find(part => part.type === "summary-updated");
+    if (summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
+      setSummaryMessages(prev => [...prev, ...summaryUpdatedPart.messages]);
+    }
+
+    // Process app-event parts
+    const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
+    if (appEventPart && appEventPart.type === "app-event") {
+      setAppStatuses(appEventPart.apps.map(app => ({ ...app, connecting: false })));
+      setShowApps(true);
+    }
+
+    // Process new-workflow parts
+    const newWorkflowParts = currentMessage.parts
+      .map((part, partIndex) => ({ part, partIndex }))
+      .filter(
+        (entry): entry is {
+          part: Extract<MessagePart, { type: "new-workflow" }>;
+          partIndex: number;
+        } => entry.part.type === "new-workflow"
+      );
+
+    if (newWorkflowParts.length > 0) {
+      setWorkflows(prev => {
+        const next = [...prev];
+
+        newWorkflowParts.forEach(({ part, partIndex }) => {
+          const workflowId = createWorkflowId(currentMessage.id, currentMessageIndex, partIndex);
+          const baseData = {
+            id: workflowId,
+            workflow: part.workflow,
+            category: part.category || "default",
+            isPretrained: false as const
+          };
+
+          const existingIndex = next.findIndex(item => item.id === workflowId);
+
+          if (existingIndex >= 0) {
+            next[existingIndex] = {
+              ...next[existingIndex],
+              ...baseData,
+              isNew: true
+            };
+          } else {
+            next.push({
+              ...baseData,
+              isNew: true
+            });
+          }
+        });
+
+        return next;
+      });
+      setShowWorkflows(true);
+    }
+
+    // Process recording-state parts
+    const recordingStatePart = currentMessage.parts.find(part => part.type === "recording-state");
+    if (recordingStatePart && recordingStatePart.type === "recording-state") {
+      if (recordingStatePart.state === "start") {
+        setWorkflowRecordingState("recording");
+      } else if (recordingStatePart.state === "pause") {
+        setWorkflowRecordingState("paused");
+      } else if (recordingStatePart.state === "stop") {
+        setWorkflowRecordingState("idle");
+      }
+    }
+
+    // Process system-event parts for agent switching
+    const systemEventPart = currentMessage.parts.find(part => part.type === "system-event");
+    if (systemEventPart && systemEventPart.type === "system-event" && systemEventPart.event === "agent-switching") {
+      setIsAgentSwitching(true);
+      setAgentSwitchingText(`Switching to ${systemEventPart.metadata?.targetAgent || 'Agent'}...`);
+
+      // Hide the switching animation after a delay
+      setTimeout(() => {
+        setIsAgentSwitching(false);
+        setAgentSwitchingText("");
+      }, 3000);
+    }
+
+    // Broadcast the completed message
+    if (updateSourceRef.current === 'self' && broadcastInstance) {
+      broadcastInstance.broadcastMessage({
+        type: 'DEMO_PROGRESS',
+        payload: {
+          newIndex,
+          newMessage: currentMessage,
+          status: "ready",
+          isUserMessageInPlaceholder: false
+        }
+      });
+    }
+  }, [currentMessageIndex, demoModeActive, appendMessage, broadcastInstance]);
+
+  // Keyboard event listener for "0" key to progress AI messages
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "0" && waitingForManualProgression && demoModeActive) {
+        event.preventDefault();
+        progressAIMessage();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [waitingForManualProgression, demoModeActive, progressAIMessage]);
 
   // Detect if running inside extension iframe via URL param
   useEffect(() => {
@@ -944,129 +1085,8 @@ const ChatBotDemo = () => {
         });
       }
 
-      const thinkingTimer = setTimeout(() => {
-        // Mark that this is a demo progress action - should be saved to API
-        saveToAPIRef.current = true;
-
-        const newIndex = currentMessageIndex + 1;
-        setStatus("ready");
-        appendMessage(currentMessage);
-        setCurrentMessageIndex(newIndex);
-
-        // Check if message contains open-sidebar action and trigger it
-        const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
-        if (hasOpenSidebar) {
-          // Send postMessage to current window for content script to receive
-          window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
-        }
-
-        // Process summary-added parts
-        const summaryAddedPart = currentMessage.parts.find(part => part.type === "summary-added");
-        if (summaryAddedPart && summaryAddedPart.type === "summary-added") {
-          setSummaryData({
-            heading: summaryAddedPart.heading,
-            subheading: summaryAddedPart.subheading
-          });
-          setShowSummary(true);
-          setSummaryMessages([]);
-        }
-
-        // Process summary-updated parts
-        const summaryUpdatedPart = currentMessage.parts.find(part => part.type === "summary-updated");
-        if (summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
-          setSummaryMessages(prev => [...prev, ...summaryUpdatedPart.messages]);
-        }
-
-        // Process app-event parts
-        const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
-        if (appEventPart && appEventPart.type === "app-event") {
-          setAppStatuses(appEventPart.apps.map(app => ({ ...app, connecting: false })));
-          setShowApps(true);
-        }
-
-        // Process new-workflow parts
-        const newWorkflowParts = currentMessage.parts
-          .map((part, partIndex) => ({ part, partIndex }))
-          .filter(
-            (entry): entry is {
-              part: Extract<MessagePart, { type: "new-workflow" }>;
-              partIndex: number;
-            } => entry.part.type === "new-workflow"
-          );
-
-        if (newWorkflowParts.length > 0) {
-          setWorkflows(prev => {
-            const next = [...prev];
-
-            newWorkflowParts.forEach(({ part, partIndex }) => {
-              const workflowId = createWorkflowId(currentMessage.id, currentMessageIndex, partIndex);
-              const baseData = {
-                id: workflowId,
-                workflow: part.workflow,
-                category: part.category || "default",
-                isPretrained: false as const
-              };
-
-              const existingIndex = next.findIndex(item => item.id === workflowId);
-
-              if (existingIndex >= 0) {
-                next[existingIndex] = {
-                  ...next[existingIndex],
-                  ...baseData,
-                  isNew: true
-                };
-              } else {
-                next.push({
-                  ...baseData,
-                  isNew: true
-                });
-              }
-            });
-
-            return next;
-          });
-          setShowWorkflows(true);
-        }
-
-        // Process recording-state parts
-        const recordingStatePart = currentMessage.parts.find(part => part.type === "recording-state");
-        if (recordingStatePart && recordingStatePart.type === "recording-state") {
-          if (recordingStatePart.state === "start") {
-            setWorkflowRecordingState("recording");
-          } else if (recordingStatePart.state === "pause") {
-            setWorkflowRecordingState("paused");
-          } else if (recordingStatePart.state === "stop") {
-            setWorkflowRecordingState("idle");
-          }
-        }
-
-        // Process system-event parts for agent switching
-        const systemEventPart = currentMessage.parts.find(part => part.type === "system-event");
-        if (systemEventPart && systemEventPart.type === "system-event" && systemEventPart.event === "agent-switching") {
-          setIsAgentSwitching(true);
-          setAgentSwitchingText(`Switching to ${systemEventPart.metadata?.targetAgent || 'Agent'}...`);
-
-          // Hide the switching animation after a delay
-          setTimeout(() => {
-            setIsAgentSwitching(false);
-            setAgentSwitchingText("");
-          }, 3000);
-        }
-
-        // Broadcast the completed message
-        if (updateSourceRef.current === 'self' && broadcastInstance) {
-          broadcastInstance.broadcastMessage({
-            type: 'DEMO_PROGRESS',
-            payload: {
-              newIndex,
-              newMessage: currentMessage,
-              status: "ready",
-              isUserMessageInPlaceholder: false
-            }
-          });
-        }
-      }, 3000);
-      return () => clearTimeout(thinkingTimer);
+      // Set manual progression state - wait for "0" key press
+      setWaitingForManualProgression(true);
     }
   }, [currentMessageIndex, demoModeActive, isInitialized, appendMessage]);
 
@@ -1857,6 +1877,15 @@ const ChatBotDemo = () => {
                   <Conversation className="flex-1 min-h-0">
                     <ConversationContent>
                       {renderConversationMessages()}
+                      {/* Manual progression indicator */}
+                      {/* {waitingForManualProgression && (
+                        <div className="flex justify-center py-4 opacity-20">
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-2 text-blue-700">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium">Press "0" to continue</span>
+                          </div>
+                        </div>
+                      )} */}
                       <AutoScrollHandler />
                     </ConversationContent>
                     <ConversationScrollButton />
@@ -1969,6 +1998,15 @@ const ChatBotDemo = () => {
               <Conversation className="flex-1 min-h-0">
                 <ConversationContent>
                   {renderConversationMessages()}
+                  {/* Manual progression indicator */}
+                  {/* {waitingForManualProgression && (
+                    <div className="flex justify-center py-4 opacity-20">
+                      <div className="opacity-20 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-2 text-blue-700">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium">Press "0" to continue</span>
+                      </div>
+                    </div>
+                  )} */}
                   <AutoScrollHandler />
                 </ConversationContent>
                 <ConversationScrollButton />
