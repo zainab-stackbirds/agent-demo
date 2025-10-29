@@ -46,7 +46,7 @@ export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
 // Update your types
 type MessagePart =
   | { type: "text"; text: string }
-  | { type: "reasoning"; text: string; state?: "done" }
+  | { type: "reasoning"; text: string; status?: "start" | "done" | "streaming" }
   | { type: "source-url"; url: string }
   | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created" | "agent-switching"; metadata?: Record<string, any> }
   | { type: "voice"; dummyText: string; recordingDuration: number }
@@ -280,14 +280,20 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-5",
+    id: "msg-4b",
     role: "ai-agent",
     parts: [
       {
         type: "reasoning",
         text: "Analyzing business context",
-        state: "done",
+        status: "streaming",
       },
+    ],
+  },
+  {
+    id: "msg-5",
+    role: "ai-agent",
+    parts: [
       {
         type: "text",
         text: "Here is what I understand:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n\nAm I missing anything?"
@@ -303,6 +309,17 @@ const mockConversation: CustomUIMessage[] = [
         dummyText: "No",
         recordingDuration: 1000
       },
+    ],
+  },
+  {
+    id: "msg-6a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Planning business profile storage and agent coordination",
+        status: "streaming",
+      }
     ],
   },
   {
@@ -352,6 +369,17 @@ const mockConversation: CustomUIMessage[] = [
         dummyText: "I manage my leads on Thumbtack",
         recordingDuration: 2000
       },
+    ],
+  },
+  {
+    id: "msg-10a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Processing lead management platform information",
+        status: "streaming",
+      }
     ],
   },
   {
@@ -680,8 +708,8 @@ const ChatBotDemo = () => {
     const scrollToBottom = useCallback(() => {
       // Find the conversation container and scroll it
       const conversationElement = document.querySelector('[data-conversation-content]') ||
-                                  document.querySelector('.conversation-content') ||
-                                  document.querySelector('[data-testid="conversation-content"]');
+        document.querySelector('.conversation-content') ||
+        document.querySelector('[data-testid="conversation-content"]');
 
       if (conversationElement) {
         conversationElement.scrollTop = conversationElement.scrollHeight;
@@ -1621,20 +1649,15 @@ const ChatBotDemo = () => {
                     </MessageContent>
                   </Message>
                 );
-              case "reasoning":
+              case 'reasoning':
                 return (
                   <Reasoning
                     key={`${message.id}-${i}`}
                     className="w-full"
-                    isStreaming={
-                      status ===
-                      "streaming"
-                    }
+                    isStreaming={status === 'streaming' && i === message.parts.length - 1 && message.id === messages.at(-1)?.id}
                   >
                     <ReasoningTrigger />
-                    <ReasoningContent>
-                      {part.text}
-                    </ReasoningContent>
+                    <ReasoningContent>{part.text}</ReasoningContent>
                   </Reasoning>
                 );
               default:

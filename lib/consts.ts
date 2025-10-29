@@ -148,6 +148,17 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
+        id: "msg-openphone-11a",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "reasoning",
+                text: "Understanding template selection workflow",
+                status: "streaming",
+            }
+        ],
+    },
+    {
         id: "msg-openphone-12",
         role: "ai-agent",
         parts: [
@@ -197,6 +208,17 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 
 
     {
+        id: "msg-openphone-15a",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "reasoning",
+                text: "Analyzing follow-up strategy and timing recommendations",
+                status: "streaming",
+            }
+        ],
+    },
+    {
         id: "msg-openphone-16",
         role: "ai-agent",
         parts: [
@@ -230,6 +252,17 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
 
+    {
+        id: "msg-openphone-18a",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "reasoning",
+                text: "Planning automated reporting and lead summary workflows",
+                status: "streaming",
+            }
+        ],
+    },
     {
         id: "msg-openphone-19",
         role: "ai-agent",
