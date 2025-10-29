@@ -35,8 +35,8 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
       className="mb-3"
     >
       <Card className="border-primary/10 bg-gradient-to-br from-background/95 via-background to-muted/10">
-        <CardContent className="px-3 py-3 sm:px-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        <CardContent className="px-3 py-2 sm:px-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
             Required Apps
           </h3>
           <div className="flex flex-wrap gap-1.5 sm:gap-2.5">
@@ -122,22 +122,6 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                       <span className="sr-only">
                         {isConnected ? `${metadata.name} connected` : `${metadata.name} not connected`}
                       </span>
-
-                      {/* Status Accent */}
-                      <motion.span
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                          duration: 0.3,
-                          delay: index * 0.12 + 0.24
-                        }}
-                        aria-hidden={true}
-                        className="h-2 w-2 rounded-full border border-white/60 shadow-inner transition-opacity duration-300"
-                        style={{
-                          backgroundColor: isConnected ? accentColor : undefined,
-                          opacity: isConnected ? 0.75 : 0.35
-                        }}
-                      />
                     </div>
                   </motion.div>
                 );

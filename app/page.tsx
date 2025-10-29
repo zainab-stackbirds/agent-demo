@@ -818,6 +818,30 @@ const ChatBotDemo = () => {
           window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
         }
 
+        // Process summary-added parts
+        const summaryAddedPart = currentMessage.parts.find(part => part.type === "summary-added");
+        if (summaryAddedPart && summaryAddedPart.type === "summary-added") {
+          setSummaryData({
+            heading: summaryAddedPart.heading,
+            subheading: summaryAddedPart.subheading
+          });
+          setShowSummary(true);
+          setSummaryMessages([]);
+        }
+
+        // Process summary-updated parts
+        const summaryUpdatedPart = currentMessage.parts.find(part => part.type === "summary-updated");
+        if (summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
+          setSummaryMessages(prev => [...prev, ...summaryUpdatedPart.messages]);
+        }
+
+        // Process app-event parts
+        const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
+        if (appEventPart && appEventPart.type === "app-event") {
+          setAppStatuses(appEventPart.apps);
+          setShowApps(true);
+        }
+
         // Broadcast the completed message
         if (updateSourceRef.current === 'self' && broadcastInstance) {
           broadcastInstance.broadcastMessage({
@@ -847,6 +871,44 @@ const ChatBotDemo = () => {
 
     // Broadcast instance is automatically initialized when created
   }, [demoModeActive]);
+
+  // Process existing messages to extract summary and app data
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    // Process all messages to find the latest summary and app state
+    let latestSummaryData: { heading: string; subheading: string } | null = null;
+    let latestSummaryMessages: string[] = [];
+    let latestAppStatuses: Array<{ app_id: string; enabled: boolean }> = [];
+
+    messages.forEach(message => {
+      message.parts.forEach(part => {
+        if (part.type === "summary-added") {
+          latestSummaryData = {
+            heading: part.heading,
+            subheading: part.subheading
+          };
+          latestSummaryMessages = [];
+        } else if (part.type === "summary-updated") {
+          latestSummaryMessages = [...latestSummaryMessages, ...part.messages];
+        } else if (part.type === "app-event") {
+          latestAppStatuses = part.apps;
+        }
+      });
+    });
+
+    // Update state with the latest data
+    if (latestSummaryData) {
+      setSummaryData(latestSummaryData);
+      setShowSummary(true);
+      setSummaryMessages(latestSummaryMessages);
+    }
+
+    if (latestAppStatuses.length > 0) {
+      setAppStatuses(latestAppStatuses);
+      setShowApps(true);
+    }
+  }, [messages]);
 
   // Handle broadcast messages from other tabs/iframes
   useEffect(() => {
@@ -911,39 +973,6 @@ const ChatBotDemo = () => {
     }
   }, [messages, currentMessageIndex, status, isUserMessageInPlaceholder, demoModeActive, broadcastInstance]);
 
-  const handleSubmit = (message: PromptInputMessage) => {
-    if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
-
-    const currentMessage = mockConversation[currentMessageIndex];
-
-    // Only process if we're waiting for a user message
-    if (currentMessage.role === "user" && isUserMessageInPlaceholder) {
-      // Mark that this is a user action - should be saved to API
-      saveToAPIRef.current = true;
-      
-      // Add the user's actual input as a message
-      const userMessage: CustomUIMessage = {
-        id: `user-${Date.now()}`,
-        role: "user",
-        parts: [{ type: "text", text: message.text || "" }],
-      };
-
-      const newIndex = currentMessageIndex + 1;
-
-      setIsUserMessageInPlaceholder(false);
-      appendMessage(userMessage);
-      setCurrentMessageIndex(newIndex);
-      setInput(""); // Clear input
-
-      // Broadcast the user message submission
-      if (updateSourceRef.current === 'self' && broadcastInstance) {
-        broadcastInstance.broadcastMessage({
-          type: 'USER_MESSAGE_SUBMITTED',
-          payload: { message: userMessage, newIndex }
-        });
-      }
-    }
-  };
 
   const handleStartRecording = async () => {
     if (!demoModeActive || currentMessageIndex >= mockConversation.length) return;
@@ -1164,7 +1193,6 @@ const ChatBotDemo = () => {
                               className="ml-2"
                             >
                               <path d="M7 7h10v10" />
-                              <path d="m6 6 12 12" />
                             </svg>
                           </a>
                         </div>
@@ -1208,12 +1236,12 @@ const ChatBotDemo = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="flex items-center justify-center"
+                  className="flex items-center justify-center relative"
                 >
                   <button
                     onClick={handleStartRecording}
                     disabled={!shouldShowInput || status === "streaming"}
-                    className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
                     aria-label="Start recording"
                   >
                     <motion.svg
@@ -1227,8 +1255,8 @@ const ChatBotDemo = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       className="origin-center"
-                      animate={isUserTurnToSpeak ? { rotate: [0, -6, 6, -6, 0] } : { rotate: 0 }}
-                      transition={isUserTurnToSpeak ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                      animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
+                      transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
                     >
                       <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                       <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -1255,7 +1283,7 @@ const ChatBotDemo = () => {
                   </div>
                   <button
                     onClick={handleCrossButtonClick}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-500 transition-all shadow-md hover:shadow-lg border-green-500"
                     aria-label="Send voice message"
                   >
                     <svg
@@ -1265,12 +1293,11 @@ const ChatBotDemo = () => {
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <path d="M18 6 6 18" />
-                      <path d="m6 6 12 12" />
+                      <path d="M20 6 9 17l-5-5" />
                     </svg>
                   </button>
                 </motion.div>
