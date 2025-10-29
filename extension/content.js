@@ -14,10 +14,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Listen for postMessage from the app (localhost or deployed)
 window.addEventListener("message", (event) => {
-	console.log("📨 [CONTENT.JS] Received postMessage:", {
-		origin: event.origin,
-		data: event.data
-	});
 
 	// Verify the origin is from localhost or deployed app
 	const allowedOrigins = [
@@ -27,15 +23,12 @@ window.addEventListener("message", (event) => {
 	];
 
 	if (!allowedOrigins.includes(event.origin)) {
-		console.warn("⚠️ [CONTENT.JS] Origin not allowed:", event.origin);
 		return;
 	}
 
-	console.log("✅ [CONTENT.JS] Origin verified:", event.origin);
 
 	// Handle open sidebar request
 	if (event.data && event.data.action === "openSidebar") {
-		console.log("🎯 [CONTENT.JS] Received openSidebar trigger");
 
 		// If sidebar doesn't exist yet, create it first
 		if (!sidebarContainer) {
@@ -45,8 +38,6 @@ window.addEventListener("message", (event) => {
 		// Reveal the sidebar if it's hidden
 		if (!sidebarVisible) {
 			revealSidebar();
-		} else {
-			console.log("ℹ️ [CONTENT.JS] Sidebar already visible");
 		}
 	}
 });

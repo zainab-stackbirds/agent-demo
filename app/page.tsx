@@ -250,7 +250,7 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "voice",
-        dummyText: "Yes, you can visit  www.sallypilatesstudio.com",
+        dummyText: "Great. I am the founder of Eat Cook Joy. I am a solo entrepreneur and run the business in texas. My goal is to help every chef in the country get help to start and run their business. Our key value prop is helping chefs provide convenience, affordability and personalization all together. My website is www.eatcookjoy.com. Let me know if you need anything else.",
         recordingDuration: 4000
       },
     ],
@@ -259,9 +259,40 @@ const mockConversation: CustomUIMessage[] = [
     id: "msg-6",
     role: "ai-agent",
     parts: [
+       {
+        type: "reasoning",
+        text: "Analyzing business context",
+        state: "done",
+      },
       {
         type: "text",
-        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. Where do you manage your leads?"
+        text: "Here is what I understand: \n **Business Name**: Eat Cook Joy \n**Value Prop**: Chef tool providing personalization + convenience + affordability \n **Location**: Texas Services: Meal Prep, Events \nAm I missing anything?"
+      },
+    ]
+  },
+  {
+    id: "msg-7",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "No",
+        recordingDuration: 4000
+      },
+    ],
+  },
+    {
+    id: "msg-8",
+    role: "ai-agent",
+    parts: [
+       {
+        type: "reasoning",
+        text: "Analyzing business context",
+        state: "done",
+      },
+      {
+        type: "text",
+        text: "Got it. I will store this information and share with your other agents in the future so you don’t have to go through this step again. You can find and update this information anytime from the sidebar."
       },
       // Trigger sidebar when the business context is provided
       { type: "open-sidebar" },
@@ -273,19 +304,29 @@ const mockConversation: CustomUIMessage[] = [
       },
     ]
   },
-  {
-    id: "msg-7",
+    {
+    id: "msg-9",
     role: "ai-agent",
     parts: [
       {
         type: "summary-updated",
-        messages: ['Gathered business details from www.sallypilatesstudio.com'],
+        messages: ['Business Name: Eat Cook Joy \nValue Prop: Chef tool providing personalization + convenience + affordability \n Location: Texas Services: Meal Prep'],
         id: "sales_agent_summary"
       },
     ]
   },
   {
-    id: "msg-8",
+    id: "msg-10",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Alright, can you now walk me through how you manage leads?"
+      },
+    ],
+  },
+    {
+    id: "msg-11",
     role: "user",
     parts: [
       {
@@ -296,7 +337,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-9",
+    id: "msg-12",
     role: "ai-agent",
     parts: [
       {
@@ -308,7 +349,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-10",
+    id: "msg-13",
     role: "ai-agent",
     parts: [
       {
@@ -318,7 +359,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-11",
+    id: "msg-14",
     role: "ai-agent",
     parts: [
       {
@@ -329,89 +370,20 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
 
-  //   {
-  //   id: "msg-6",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text",
-  //       text: "Give me a few seconds, let me review your thumbtack setup. "
-  //     },
-  //   ],
-  // },
-  {
-    id: "msg-12",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "Yes. Feel free to use this. I want you to respond immediately to a lead when it comes in. Timing matters so I want to get to the customer, before someone else does", recordingDuration: 2000 }],
-  },
-  {
-    id: "msg-12a",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "app-event",
-        apps: [
-          { app_id: "thumbtack", enabled: true },
-          { app_id: "openphone", enabled: false },
-        ]
-      },
-    ],
-  },
-  {
-    id: "msg-13",
+    {
+    id: "msg-15",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Great, now lets go to Openphone"
-      },
-    ],
-  },
-  {
-    id: "msg-14",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "link",
-        text: "Connect to OpenPhone",
-        url: "https://openphone.com",
-      },
-      {
-        type: "app-event",
-        apps: [
-          { app_id: "thumbtack", enabled: true },
-          { app_id: "openphone", enabled: false },
-        ]
-      },
-    ],
-  },
-  {
-    id: "msg-15",
-    role: "user",
-    parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
-  },
-  {
-    id: "msg-15a",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "app-event",
-        apps: [
-          { app_id: "thumbtack", enabled: true },
-          { app_id: "openphone", enabled: true },
-        ]
+        text: "Next, lets figure out how you manage leads so I can start supporting you. In as much detail as possible, can you walk me through the steps? "
       },
     ],
   },
   {
     id: "msg-16",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Great. To summarize:"
-      },
-    ],
+    role: "user",
+    parts: [{ type: "voice", dummyText: "Ok so first I got to Thumbtack. and then I go to jobs. This is where I see the leads. I will click on a lead, then send them a template message.", recordingDuration: 2000 }],
   },
   {
     id: "msg-17",
@@ -419,45 +391,131 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "You first go to Thumbtack. Then you msg leads with your template You then switch to Openphone. Then you create contact and send them the template. "
+        text: "Do you respond to all leads?"
       },
     ],
   },
   {
     id: "msg-18",
+    role: "user",
+    parts: [{ type: "voice", dummyText: "Yes, I respond to all my leads.", recordingDuration: 2000 }],
+  },
+  {
+    id: "msg-19",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "I will now manage your lead responses and update you. Where would you like to be updated? I will be recording my tasks in Stackbirds, but I can ping you if you want? "
-      },
-    ],
-  },
-  {
-    id: "msg-19",
-    role: "user",
-    parts: [
-      {
-        type: "voice",
-        dummyText: "Ok great, just send me a text when you respond. ",
-        recordingDuration: 4000
+        text: "Got it. I will make sure to watch out for incoming leads and send them a templated message. Would you like me to get your approval or just send the message?"
       },
     ],
   },
   {
     id: "msg-20",
+    role: "user",
+    parts: [{ type: "voice", dummyText: "Get my approval and then we can adjust over time?", recordingDuration: 2000 }],
+  },
+  {
+    id: "msg-21",
     role: "ai-agent",
     parts: [
       {
-        type: "reasoning",
-        text: "Proposal logic: Fetch menus from Google Sheets → Match by event type → Adjust for allergens. Requires user confirmation before sending."
-      },
-      {
         type: "text",
-        text: "Ok got it. Stackbirds Sales Agent is ready to go "
+        text: "Sure. Your preference has been recorded"
       },
     ],
   },
+  // {
+  //   id: "msg-22",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "link",
+  //       text: "Connect to OpenPhone",
+  //       url: "https://openphone.com",
+  //     },
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //         { app_id: "openphone", enabled: false },
+  //       ]
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-23",
+  //   role: "user",
+  //   parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
+  // },
+  // {
+  //   id: "msg-24",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //         { app_id: "openphone", enabled: true },
+  //       ]
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-25",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "Great. To summarize:"
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-26",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "You first go to Thumbtack. Then you msg leads with your template You then switch to Openphone. Then you create contact and send them the template. "
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-27",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text",
+  //       text: "I will now manage your lead responses and update you. Where would you like to be updated? I will be recording my tasks in Stackbirds, but I can ping you if you want? "
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-28",
+  //   role: "user",
+  //   parts: [
+  //     {
+  //       type: "voice",
+  //       dummyText: "Ok great, just send me a text when you respond. ",
+  //       recordingDuration: 4000
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "msg-29",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "reasoning",
+  //       text: "Proposal logic: Fetch menus from Google Sheets → Match by event type → Adjust for allergens. Requires user confirmation before sending."
+  //     },
+  //     {
+  //       type: "text",
+  //       text: "Ok got it. Stackbirds Sales Agent is ready to go "
+  //     },
+  //   ],
+  // },
   // {
   //   id: "msg-20a",
   //   role: "ai-agent",
@@ -579,7 +637,7 @@ const mockConversation: CustomUIMessage[] = [
   // },
 ];
 
-// Helper function to render text with clickable links
+// Helper function to render text with clickable links and preserve newlines
 const TextWithLinks = ({ text }: { text: string }) => {
   // Regex to detect URLs in text
   const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/g;
@@ -588,7 +646,12 @@ const TextWithLinks = ({ text }: { text: string }) => {
   const matches = text.match(urlRegex);
 
   if (!matches) {
-    return <Response>{text}</Response>;
+    // No URLs found - wrap Response in a div with whitespace-pre-wrap to preserve newlines
+    return (
+      <div className="whitespace-pre-wrap">
+        <Response>{text}</Response>
+      </div>
+    );
   }
 
   return (
