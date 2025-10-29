@@ -1501,7 +1501,17 @@ const ChatBotDemo = () => {
                           setCurrentMessageIndex(prev => prev + 1);
                         }
                       }}
-                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: '#365ccd',
+                        '--hover-color': '#2d4bb8'
+                      } as React.CSSProperties & { '--hover-color': string }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#2d4bb8';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#365ccd';
+                      }}
                     >
                       {part.text}
                       {part.url && (
@@ -1533,7 +1543,17 @@ const ChatBotDemo = () => {
                       href={part.url || `https://${part.text}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: '#365ccd',
+                        '--hover-color': '#2d4bb8'
+                      } as React.CSSProperties & { '--hover-color': string }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#2d4bb8';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#365ccd';
+                      }}
                     >
                       {part.text}
                       <svg
@@ -1558,27 +1578,46 @@ const ChatBotDemo = () => {
                   <Message
                     key={`${message.id}-${i}`}
                     from="ai-agent"
+                    className="mb-2"
                   >
+                    {/* Avatar with pulsing red border */}
+                    <div className="relative">
+                      <motion.div
+                        className="absolute -inset-0.5 rounded-full"
+                        animate={{
+                          scale: [1, 1.15, 1],
+                          opacity: [0.5, 0.8, 0.5]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <div className="w-full h-full rounded-full bg-red-500 blur-sm" />
+                      </motion.div>
+                      <motion.div
+                        className="absolute -inset-1 rounded-full border-2 border-red-500"
+                        animate={{
+                          scale: [1, 1.1, 1],
+                          opacity: [0.6, 1, 0.6]
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                      <MessageAvatar
+                        src=""
+                        name="SA"
+                        className="relative z-10"
+                      />
+                    </div>
+
+                    {/* Subtle message content */}
                     <MessageContent>
-                      <div className="flex items-center gap-2">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="12" y1="8" x2="12" y2="12" />
-                          <line x1="12" y1="16" x2="12.01" y2="16" />
-                        </svg>
-                        <span className="font-medium">Agent Interrupt</span>
-                      </div>
-                      <p className="mt-1">{part.message}</p>
+                      <TextWithLinks text={part.message} />
                     </MessageContent>
                   </Message>
                 );
