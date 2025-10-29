@@ -675,63 +675,49 @@ const ChatBotDemo = () => {
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
   const workflowsHydratedRef = useRef(false); // Used to decide when to mark workflows as newly learned
 
-  // Component to handle auto-scrolling within the Conversation context
+  // Simple direct scroll to bottom - bypass the library
   const AutoScrollHandler = () => {
-    const { scrollToBottom } = useStickToBottomContext();
-    const messagesLengthRef = useRef<number | null>(null);
-    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const isInitialMountRef = useRef(true);
+    const scrollToBottom = useCallback(() => {
+      // Find the conversation container and scroll it
+      const conversationElement = document.querySelector('[data-conversation-content]') ||
+                                  document.querySelector('.conversation-content') ||
+                                  document.querySelector('[data-testid="conversation-content"]');
 
+      if (conversationElement) {
+        conversationElement.scrollTop = conversationElement.scrollHeight;
+      } else {
+        // Fallback: scroll the window
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    }, []);
+
+    // Scroll on initial load
     useEffect(() => {
-      const performScroll = () => {
-        // Clear any pending scroll
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-
-        // Use requestAnimationFrame to ensure DOM is updated, then wait for layout
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // Add a delay to allow animations to start and layout to settle
-            // The delay accounts for the motion.div layout animation (1s duration)
-            scrollTimeoutRef.current = setTimeout(() => {
-              scrollToBottom();
-              scrollTimeoutRef.current = null;
-            }, 200);
-          });
-        });
-      };
-
-      // On initial mount, scroll to bottom if messages exist
-      if (isInitialMountRef.current) {
-        isInitialMountRef.current = false;
-        messagesLengthRef.current = messages.length;
-        if (messages.length > 0) {
-          performScroll();
-        }
-        return;
+      if (messages.length > 0 && isInitialized) {
+        // Multiple attempts with increasing delays to handle all rendering scenarios
+        setTimeout(scrollToBottom, 100);
+        setTimeout(scrollToBottom, 300);
+        setTimeout(scrollToBottom, 600);
+        setTimeout(scrollToBottom, 1200); // After motion animations complete
       }
+    }, [isInitialized, scrollToBottom]);
 
-      // Only scroll if a new message was added (not on removal)
-      const hasNewMessage = messagesLengthRef.current !== null &&
-        messages.length > messagesLengthRef.current;
-
-      if (hasNewMessage) {
-        performScroll();
+    // Scroll when new messages are added
+    useEffect(() => {
+      if (messages.length > 0) {
+        setTimeout(scrollToBottom, 100);
+        setTimeout(scrollToBottom, 300);
       }
-
-      messagesLengthRef.current = messages.length;
-
-      // Cleanup timeout on unmount or dependency change
-      return () => {
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-          scrollTimeoutRef.current = null;
-        }
-      };
     }, [messages.length, scrollToBottom]);
 
-    return null; // This component renders nothing
+    // Scroll when AI finishes responding
+    useEffect(() => {
+      if (status === 'ready' && messages.length > 0) {
+        setTimeout(scrollToBottom, 100);
+      }
+    }, [status, messages.length, scrollToBottom]);
+
+    return null;
   };
 
   const appendMessage = useCallback((message: CustomUIMessage) => {
