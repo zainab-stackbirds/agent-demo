@@ -5,7 +5,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import { Message, MessageContent, MessageAvatar } from "@/components/ai-elements/message";
 import { Fragment, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Response } from "@/components/ai-elements/response";
 import {
@@ -1317,10 +1317,29 @@ const ChatBotDemo = () => {
                   >
                     <Message
                       from={message.role}
+                      className="mb-2"
                     >
-                      <MessageContent>
-                        <TextWithLinks text={part.text} />
-                      </MessageContent>
+                      {message.role === "user" ? (
+                        <>
+                          <MessageContent>
+                            <TextWithLinks text={part.text} />
+                          </MessageContent>
+                          <MessageAvatar
+                            src=""
+                            name="ZG"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <MessageAvatar
+                            src=""
+                            name="A"
+                          />
+                          <MessageContent>
+                            <TextWithLinks text={part.text} />
+                          </MessageContent>
+                        </>
+                      )}
                     </Message>
                   </Fragment>
                 );
@@ -1328,7 +1347,7 @@ const ChatBotDemo = () => {
                 return (
                   <div
                     key={`${message.id}-${i}`}
-                    className="flex flex-wrap gap-2 mb-4 justify-start"
+                    className="flex flex-wrap gap-2 mb-6 ml-10"
                   >
                     {part.options.map((option, optionIndex) => (
                       <motion.button
@@ -1379,7 +1398,7 @@ const ChatBotDemo = () => {
                             }
                           }
                         }}
-                        className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent text-foreground transition-colors"
+                        className="px-4 py-2 text-sm font-medium rounded-md border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
                         {option.label}
                       </motion.button>
@@ -1390,7 +1409,7 @@ const ChatBotDemo = () => {
                 return (
                   <div
                     key={`${message.id}-${i}`}
-                    className="flex justify-start mb-4"
+                    className="flex justify-start mb-6 ml-10"
                   >
                     <button
                       onClick={() => {
@@ -1435,14 +1454,14 @@ const ChatBotDemo = () => {
                           setCurrentMessageIndex(prev => prev + 1);
                         }
                       }}
-                      className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                       {part.text}
                       {part.url && (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
+                          width="14"
+                          height="14"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -1461,19 +1480,19 @@ const ChatBotDemo = () => {
                 return (
                   <div
                     key={`${message.id}-${i}`}
-                    className="flex justify-start mb-4"
+                    className="flex justify-start mb-6 ml-10"
                   >
                     <a
                       href={part.url || `https://${part.text}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                       {part.text}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
+                        width="14"
+                        height="14"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"

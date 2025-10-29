@@ -15,12 +15,12 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
-      "group flex w-full items-end gap-2 py-1",
+      "group flex w-full items-center gap-2 py-1",
       from === "user"
         ? "is-user justify-end"
         : from === "ai-agent"
           ? "is-ai-agent justify-start" // New: align left for ai-agent
-          : "is-assistant flex-row-reverse justify-end",
+          : "is-assistant justify-start",
       className
     )}
     {...props}
@@ -36,12 +36,12 @@ const messageContentVariants = cva(
           "max-w-[80%] px-4 py-3",
           "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground",
           "group-[.is-assistant]:bg-secondary group-[.is-assistant]:text-foreground",
-          "group-[.is-ai-agent]:bg-blue-100 group-[.is-ai-agent]:text-blue-900 group-[.is-ai-agent]:border-2 group-[.is-ai-agent]:border-blue-300", // New: distinct styling for ai-agent
+          "group-[.is-ai-agent]:bg-secondary group-[.is-ai-agent]:text-foreground", // Clean OpenAI style
         ],
         flat: [
           "group-[.is-user]:max-w-[80%] group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
           "group-[.is-assistant]:text-foreground",
-          "group-[.is-ai-agent]:max-w-[80%] group-[.is-ai-agent]:bg-blue-50 group-[.is-ai-agent]:px-4 group-[.is-ai-agent]:py-3 group-[.is-ai-agent]:text-blue-900 group-[.is-ai-agent]:border-l-4 group-[.is-ai-agent]:border-blue-500", // New
+          "group-[.is-ai-agent]:max-w-[80%] group-[.is-ai-agent]:bg-secondary group-[.is-ai-agent]:px-4 group-[.is-ai-agent]:py-3 group-[.is-ai-agent]:text-foreground", // Clean OpenAI style
         ],
       },
     },
