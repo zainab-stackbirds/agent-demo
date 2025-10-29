@@ -34,6 +34,8 @@ import { nanoid } from "nanoid";
 import { AudioVisualizer } from "@/components/ui/audio-visualizer";
 import { AnimatePresence, motion } from "motion/react";
 import { fetchConversationState, updateConversationState, clearConversationState, setupSSEConnection } from "@/lib/api-client";
+import { ExtensionSummary } from "@/components/extension/extension-summary";
+import { AppIntegrations } from "@/components/extension/app-integrations";
 
 type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -48,6 +50,10 @@ type MessagePart =
   | { type: "system-event"; event: "agent-joined" | "agent-left" | "task-created"; metadata?: Record<string, any> }
   | { type: "voice"; dummyText: string; recordingDuration: number }
   | { type: "link"; text: string; url?: string }
+  | { type: "open-sidebar" }
+  | { type: "summary-added"; heading: string; subheading: string; id:string }
+  | { type: "summary-updated"; messages: string[]; id:string }
+  | { type: "app-event"; apps: Array<{ app_id: string; enabled: boolean }> }
 
 // Broadcast Channel types for cross-tab synchronization
 type BroadcastMessage = {
@@ -218,7 +224,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-2b",
+    id: "msg-3",
     role: "assistant", // Role doesn't matter for system events, but keep it for type safety
     parts: [
       {
@@ -229,7 +235,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-3",
+    id: "msg-4",
     role: "ai-agent",
     parts: [
       {
@@ -239,7 +245,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-4",
+    id: "msg-5",
     role: "user",
     parts: [
       {
@@ -250,17 +256,36 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-5",
+    id: "msg-6",
     role: "ai-agent",
     parts: [
       {
         type: "text",
         text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. Where do you manage your leads?"
-      }
+      },
+      // Trigger sidebar when the business context is provided
+      { type: "open-sidebar" },
+      {
+        type: "summary-added",
+        heading: "Agent Configuration Summary",
+        subheading: "Sales Agent is now learning about your workflow",
+        id: "sales_agent_summary"
+      },
     ]
   },
   {
-    id: "msg-6",
+    id: "msg-7",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "summary-updated",
+        messages: ['Gathered business details from www.sallypilatesstudio.com'],
+        id: "sales_agent_summary"
+      },
+    ]
+  },
+  {
+    id: "msg-8",
     role: "user",
     parts: [
       {
@@ -271,7 +296,24 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-6",
+    id: "msg-9",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "summary-updated",
+        id: "sales_agent_summary",
+        messages: ["Identified thumbtack integration requirement"]
+      },
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: false },
+        ]
+      },
+    ],
+  },
+  {
+    id: "msg-10",
     role: "ai-agent",
     parts: [
       {
@@ -281,7 +323,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-7",
+    id: "msg-11",
     role: "ai-agent",
     parts: [
       {
@@ -303,12 +345,25 @@ const mockConversation: CustomUIMessage[] = [
   //   ],
   // },
   {
-    id: "msg-10",
+    id: "msg-12",
     role: "user",
     parts: [{ type: "voice", dummyText: "Yes. Feel free to use this. I want you to respond immediately to a lead when it comes in. Timing matters so I want to get to the customer, before someone else does", recordingDuration: 2000 }],
   },
   {
-    id: "msg-11",
+    id: "msg-12a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: true },
+          { app_id: "openphone", enabled: false },
+        ]
+      },
+    ],
+  },
+  {
+    id: "msg-13",
     role: "ai-agent",
     parts: [
       {
@@ -318,7 +373,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-7",
+    id: "msg-14",
     role: "ai-agent",
     parts: [
       {
@@ -326,15 +381,35 @@ const mockConversation: CustomUIMessage[] = [
         text: "Connect to OpenPhone",
         url: "https://openphone.com",
       },
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: true },
+          { app_id: "openphone", enabled: false },
+        ]
+      },
     ],
   },
   {
-    id: "msg-14",
+    id: "msg-15",
     role: "user",
     parts: [{ type: "voice", dummyText: "Thats all I do and then wait to get response. At this point you can let me handle it. ", recordingDuration: 2000 }],
   },
   {
-    id: "msg-11",
+    id: "msg-15a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: true },
+          { app_id: "openphone", enabled: true },
+        ]
+      },
+    ],
+  },
+  {
+    id: "msg-16",
     role: "ai-agent",
     parts: [
       {
@@ -344,7 +419,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-11",
+    id: "msg-17",
     role: "ai-agent",
     parts: [
       {
@@ -354,7 +429,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-11",
+    id: "msg-18",
     role: "ai-agent",
     parts: [
       {
@@ -364,7 +439,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-12",
+    id: "msg-19",
     role: "user",
     parts: [
       {
@@ -375,7 +450,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13",
+    id: "msg-20",
     role: "ai-agent",
     parts: [
       {
@@ -388,6 +463,20 @@ const mockConversation: CustomUIMessage[] = [
       },
     ],
   },
+  // {
+  //   id: "msg-20a",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //         { app_id: "openphone", enabled: true },
+  //         { app_id: "google-docs", enabled: true }
+  //       ]
+  //     },
+  //   ],
+  // },
   // {
   //   id: "msg-14",
   //   role: "user",
@@ -535,6 +624,23 @@ const ChatBotDemo = () => {
   const [input, setInput] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Check if running inside extension iframe
+  const [isExtension, setIsExtension] = useState(false);
+  const [isOnOwnDomain, setIsOnOwnDomain] = useState(false);
+
+  // Summary state for extension view
+  const [summaryData, setSummaryData] = useState<{
+    heading: string;
+    subheading: string;
+  } | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
+
+  const [summaryMessages, setSummaryMessages] = useState<string[]>([])
+
+  // App integrations state
+  const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean }>>([])
+  const [showApps, setShowApps] = useState(false)
+
   // Initialize state from API
   const [messages, setMessages] = useState<CustomUIMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>("ready");
@@ -550,6 +656,28 @@ const ChatBotDemo = () => {
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
+
+  // Detect if running inside extension iframe via URL param
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isExtensionParam = urlParams.get('isExtension');
+      setIsExtension(isExtensionParam === 'true');
+
+      // Check if parent window (where extension is loaded) is on our own domain
+      if (isExtensionParam === 'true' && window.parent !== window) {
+        try {
+          const parentHostname = window.parent.location.hostname;
+          const isOwnDomain = parentHostname.includes('localhost') ||
+                             parentHostname.includes('agent-demo-pied.vercel.app');
+          setIsOnOwnDomain(isOwnDomain);
+        } catch (e) {
+          // Cross-origin error, means we're on a different domain
+          setIsOnOwnDomain(false);
+        }
+      }
+    }
+  }, []);
 
   // Initialize state from API on mount
   useEffect(() => {
@@ -677,6 +805,48 @@ const ChatBotDemo = () => {
         setStatus("ready");
         setMessages(prev => [...prev, currentMessage]);
         setCurrentMessageIndex(newIndex);
+
+        // Check if message contains open-sidebar action and trigger it
+        const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
+        if (hasOpenSidebar) {
+          // Send postMessage to current window for content script to receive
+          window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
+        }
+
+        // Check if message contains summary-added and trigger it with delay (extension only)
+        const summaryPart = currentMessage.parts.find(part => part.type === "summary-added");
+        if (summaryPart && summaryPart.type === "summary-added") {
+          // Wait 1-2 seconds before showing summary
+          const summaryDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
+          setTimeout(() => {
+            setShowSummary(true);
+            // Initialize with heading and subheading, but empty messages
+            setSummaryData({
+              heading: summaryPart.heading,
+              subheading: summaryPart.subheading,
+            });
+          }, summaryDelay);
+        }
+        // Check if message contains summary-added and trigger it with delay (extension only)
+        const summaryUpdatedPart = currentMessage.parts.find(part => part.type === "summary-updated");
+        if (summaryUpdatedPart && summaryUpdatedPart.type === "summary-updated") {
+          // Wait 1-2 seconds before showing summary
+          const summaryDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
+          setTimeout(() => {
+            setSummaryMessages((prev) => [...prev, ...(summaryUpdatedPart.messages) ])
+          }, summaryDelay);
+        }
+
+        // Check if message contains app-event and trigger it with delay
+        const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
+        if (appEventPart && appEventPart.type === "app-event") {
+          // Wait 1-2 seconds before showing apps
+          const appDelay = 1000 + Math.random() * 1000; // Random delay between 1-2 seconds
+          setTimeout(() => {
+            setShowApps(true);
+            setAppStatuses(appEventPart.apps);
+          }, appDelay);
+        }
 
         // Broadcast the completed message
         if (updateSourceRef.current === 'self' && broadcastInstance) {
@@ -897,10 +1067,30 @@ const ChatBotDemo = () => {
     (currentMessage?.role === "assistant" || currentMessage?.role === "ai-agent");
 
   return (
-    <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
-      <div className="flex flex-col h-full">
-        <Conversation className="h-full">
-          <ConversationContent>
+    <div className={`max-w-4xl mx-auto p-6 relative size-full h-screen ${isExtension && showSummary ? 'flex flex-col' : ''}`}>
+      {/* Extension-only content - sticky at top */}
+      {isExtension && showSummary && summaryData && (
+        <div className="flex-shrink-0 mb-4">
+          <ExtensionSummary
+            heading={summaryData.heading}
+            subheading={summaryData.subheading}
+            messages={summaryMessages}
+          />
+        </div>
+      )}
+
+      {/* App Integrations - shown below summary */}
+      {isExtension && showApps && appStatuses.length > 0 && (
+        <div className="flex-shrink-0 mb-4">
+          <AppIntegrations apps={appStatuses} />
+        </div>
+      )}
+
+      {/* Hide conversation when extension is on localhost/deployed app */}
+      {!(isExtension && isOnOwnDomain) && (
+        <div className={`flex flex-col ${isExtension && showSummary ? 'flex-1 min-h-0' : 'h-full'}`}>
+          <Conversation className="h-full">
+            <ConversationContent>
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4 max-w-md px-6">
@@ -1037,7 +1227,7 @@ const ChatBotDemo = () => {
 
         {showMicSection && (
           // Voice message mode - show mic button or audio visualizer in same location
-          <div className="mt-4 relative">
+          <div className="flex-shrink-0 mt-4 relative">
             <AnimatePresence mode="wait">
               {!isRecording ? (
                 // Show mic button with fade animation
@@ -1114,7 +1304,8 @@ const ChatBotDemo = () => {
             </AnimatePresence>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

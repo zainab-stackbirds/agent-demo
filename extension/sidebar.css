@@ -16,6 +16,21 @@
 		sans-serif;
 	overflow: hidden;
 	box-shadow: -4px 0 10px rgba(0, 0, 0, 0.05);
+	transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Hidden state - sidebar is loaded but invisible */
+#stackbirds-sidebar.stackbirds-hidden {
+	transform: translateX(100%);
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Visible state - sidebar is shown */
+#stackbirds-sidebar.stackbirds-visible {
+	transform: translateX(0);
+	opacity: 1;
+	pointer-events: auto;
 }
 
 /* Push content when sidebar is visible */
