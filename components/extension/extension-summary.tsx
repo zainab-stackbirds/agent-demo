@@ -19,8 +19,12 @@ export const ExtensionSummary = ({ heading, subheading, messages }: ExtensionSum
     >
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">{heading}</CardTitle>
-          <CardDescription className="text-sm">{subheading}</CardDescription>
+          <CardTitle className="text-lg font-semibold whitespace-pre-line">
+            {heading.replace(/\\n/g, "\n")}
+          </CardTitle>
+          <CardDescription className="text-sm whitespace-pre-line">
+            {subheading.replace(/\\n/g, "\n")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -36,12 +40,14 @@ export const ExtensionSummary = ({ heading, subheading, messages }: ExtensionSum
                     delay: index * 0.1,
                     ease: "easeOut"
                   }}
-                  className="flex items-start gap-2 p-2 rounded-md bg-background/50"
+                  className="flex items-start gap-2 rounded-md bg-background/50 p-2"
                 >
                   <div className="mt-1.5 flex-shrink-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   </div>
-                  <p className="text-sm text-foreground/90 leading-relaxed">{message}</p>
+                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line break-words">
+                    {message.replace(/\\n/g, "\n")}
+                  </p>
                 </motion.div>
               ))}
             </AnimatePresence>

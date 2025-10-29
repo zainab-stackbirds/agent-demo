@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatePresence, motion } from "motion/react";
-import { CheckCircle2, Circle } from "lucide-react";
 
 interface AppIntegrationsProps {
   apps: Array<{ app_id: string; enabled: boolean }>;
@@ -33,150 +32,96 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="mb-4"
+      className="mb-3"
     >
-      <Card className="border-primary/20 bg-gradient-to-br from-background to-muted/20">
-        <CardContent className="pt-6">
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              Required Apps
-            </h3>
+      <Card className="border-primary/10 bg-gradient-to-br from-background/95 via-background to-muted/10">
+        <CardContent className="px-3 py-2 sm:px-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
+            Required Apps
+          </h3>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2.5">
             <AnimatePresence mode="popLayout">
               {apps.map((app, index) => {
                 const metadata = APP_METADATA[app.app_id];
                 if (!metadata) return null;
 
+                const accentColor = metadata.color;
+                const isConnected = app.enabled;
+
                 return (
                   <motion.div
                     key={app.app_id}
-                    initial={{ opacity: 0, x: -20, scale: 0.9 }}
+                    initial={{ opacity: 0, x: -16, scale: 0.95 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                    exit={{ opacity: 0, x: 16, scale: 0.95 }}
                     transition={{
-                      duration: 0.4,
-                      delay: index * 0.15,
-                      ease: [0.23, 1, 0.32, 1], // Custom easing for smooth animation
+                      duration: 0.35,
+                      delay: index * 0.12,
+                      ease: [0.23, 1, 0.32, 1],
                     }}
-                    className="relative"
+                    // className="w-[8.5rem]"
                   >
                     <div
-                      className={`
-                        flex items-center gap-4 p-4 rounded-lg
-                        transition-all duration-300
-                        ${app.enabled
-                          ? 'bg-primary/10 border-2 border-primary/30 shadow-sm'
-                          : 'bg-muted/50 border-2 border-muted/50'
+                      aria-disabled={!isConnected}
+                      className={`group relative flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-all duration-300 backdrop-blur
+                        ${isConnected
+                          ? 'border-primary/30 bg-primary/5 opacity-90 hover:opacity-100'
+                          : 'border-muted/40 bg-muted/60 opacity-45 cursor-not-allowed'
                         }
                       `}
+                      style={{
+                        boxShadow: isConnected ? `0 6px 16px -12px ${accentColor}` : undefined,
+                        borderColor: isConnected ? `${accentColor}33` : undefined
+                      }}
                     >
-                      {/* App Logo with animation */}
-                      <motion.div
-                        initial={{ rotate: -10, scale: 0.8 }}
-                        animate={{ rotate: 0, scale: 1 }}
-                        transition={{
-                          duration: 0.5,
-                          delay: index * 0.15 + 0.2,
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 15
-                        }}
-                        className="relative"
-                      >
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-white shadow-md"
-                          style={{
-                            borderColor: metadata.color,
-                            borderWidth: app.enabled ? '2px' : '0px'
+                      <div className="flex flex-col items-center gap-1.5">
+                        {/* App Logo with animation */}
+                        <motion.div
+                          initial={{ rotate: -8, scale: 0.9 }}
+                          animate={{ rotate: 0, scale: 1 }}
+                          transition={{
+                            duration: 0.45,
+                            delay: index * 0.12 + 0.18,
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 16
                           }}
+                          className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white/90 shadow-sm ring-1 ring-black/5"
+                          style={{ border: isConnected ? `1px solid ${accentColor}` : undefined }}
                         >
                           <img
                             src={metadata.logo}
                             alt={metadata.name}
-                            className="w-8 h-8 object-contain"
+                            className="h-6 w-6 object-contain"
                             onError={(e) => {
                               // Fallback to first letter if logo fails to load
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
                               const fallback = document.createElement('div');
                               fallback.textContent = metadata.name.charAt(0);
-                              fallback.className = 'w-full h-full flex items-center justify-center text-xl font-bold';
+                              fallback.className = 'w-full h-full flex items-center justify-center text-lg font-semibold';
                               fallback.style.color = metadata.color;
                               target.parentElement?.appendChild(fallback);
                             }}
                           />
-                        </div>
+                        </motion.div>
 
-                        {/* Animated ring on enabled */}
-                        {app.enabled && (
-                          <motion.div
-                            initial={{ scale: 1, opacity: 0.8 }}
-                            animate={{
-                              scale: [1, 1.2, 1],
-                              opacity: [0.8, 0.3, 0]
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              ease: "easeOut"
-                            }}
-                            className="absolute inset-0 rounded-xl"
-                            style={{
-                              border: `2px solid ${metadata.color}`,
-                            }}
-                          />
-                        )}
-                      </motion.div>
-
-                      {/* App Name */}
-                      <div className="flex-1">
                         <motion.h4
-                          initial={{ opacity: 0, y: 5 }}
+                          initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{
-                            duration: 0.3,
-                            delay: index * 0.15 + 0.3
+                            duration: 0.25,
+                            delay: index * 0.12 + 0.24
                           }}
-                          className="font-semibold text-foreground"
+                          className="max-w-[5.5rem] text-center text-[0.72rem] font-medium leading-tight text-foreground"
                         >
                           {metadata.name}
                         </motion.h4>
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{
-                            duration: 0.3,
-                            delay: index * 0.15 + 0.4
-                          }}
-                          className={`text-sm ${app.enabled ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          {app.enabled ? 'Connected' : 'Not connected'}
-                        </motion.p>
                       </div>
 
-                      {/* Status Icon with animation */}
-                      <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{
-                          duration: 0.5,
-                          delay: index * 0.15 + 0.3,
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 15
-                        }}
-                      >
-                        {app.enabled ? (
-                          <CheckCircle2
-                            className="w-6 h-6 text-primary"
-                            strokeWidth={2.5}
-                          />
-                        ) : (
-                          <Circle
-                            className="w-6 h-6 text-muted-foreground"
-                            strokeWidth={2}
-                          />
-                        )}
-                      </motion.div>
+                      <span className="sr-only">
+                        {isConnected ? `${metadata.name} connected` : `${metadata.name} not connected`}
+                      </span>
                     </div>
                   </motion.div>
                 );
