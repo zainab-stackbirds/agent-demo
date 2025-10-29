@@ -1,7 +1,7 @@
 // content.js
 let sidebarVisible = false;
 let sidebarContainer = null;
-const debug = true
+const debug = false
 
 // Listen for extension icon click
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
