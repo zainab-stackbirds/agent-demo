@@ -940,6 +940,7 @@ const ChatBotDemo = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMediaStream(stream);
       setIsRecording(true);
+      setRecordingState("recording");
 
       // Recording will continue until user clicks the cross button
       // No auto-stop timer - demo presenter is in control
@@ -947,12 +948,14 @@ const ChatBotDemo = () => {
       console.error("Error accessing microphone:", error);
       // If microphone access fails, just show the mic button again
       setIsRecording(false);
+      setRecordingState("idle");
     }
   };
 
   const handleStopRecording = (transcribedText: string) => {
     // Stop the recording
     setIsRecording(false);
+    setRecordingState("idle");
 
     // Stop all tracks in the media stream
     if (mediaStream) {
