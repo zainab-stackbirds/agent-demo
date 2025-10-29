@@ -816,8 +816,24 @@ const ChatBotDemo = () => {
     // Process app-event parts
     const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
     if (appEventPart && appEventPart.type === "app-event") {
-      setAppStatuses(appEventPart.apps.map(app => ({ ...app, connecting: false })));
+      const updatedApps = appEventPart.apps.map(app => ({ ...app, connecting: false }));
+      setAppStatuses(updatedApps);
       setShowApps(true);
+
+      // Update connection states based on app statuses (preserve existing states)
+      setConnectionStates(prev => {
+        const newStates = { ...prev };
+        updatedApps.forEach(app => {
+          if (app.enabled) {
+            newStates[app.app_id] = 'connected';
+          } else if (app.connecting) {
+            newStates[app.app_id] = 'connecting';
+          } else {
+            newStates[app.app_id] = 'idle';
+          }
+        });
+        return newStates;
+      });
     }
 
     // Process new-workflow parts
@@ -1132,8 +1148,9 @@ const ChatBotDemo = () => {
   }, [demoModeActive, currentMessageIndex, messages.length]);
 
   // Process existing messages to extract summary and app data
+  const messagesProcessedRef = useRef(false);
   useEffect(() => {
-    if (messages.length === 0) return;
+    if (messages.length === 0 || messagesProcessedRef.current) return;
 
     // Process all messages to find the latest summary and app state
     let latestSummaryData: { heading: string; subheading: string } | null = null;
@@ -1185,18 +1202,20 @@ const ChatBotDemo = () => {
       setAppStatuses(latestAppStatuses);
       setShowApps(true);
 
-      // Initialize connection states based on app statuses
-      const connectionStates: Record<string, 'idle' | 'connecting' | 'connected'> = {};
-      latestAppStatuses.forEach(app => {
-        if (app.enabled) {
-          connectionStates[app.app_id] = 'connected';
-        } else if (app.connecting) {
-          connectionStates[app.app_id] = 'connecting';
-        } else {
-          connectionStates[app.app_id] = 'idle';
-        }
+      // Initialize connection states based on app statuses (preserve existing states)
+      setConnectionStates(prev => {
+        const newStates = { ...prev };
+        latestAppStatuses.forEach(app => {
+          if (app.enabled) {
+            newStates[app.app_id] = 'connected';
+          } else if (app.connecting) {
+            newStates[app.app_id] = 'connecting';
+          } else {
+            newStates[app.app_id] = 'idle';
+          }
+        });
+        return newStates;
       });
-      setConnectionStates(connectionStates);
     }
 
     if (newWorkflows.length > 0) {
@@ -1228,6 +1247,9 @@ const ChatBotDemo = () => {
     if (!workflowsHydratedRef.current) {
       workflowsHydratedRef.current = true;
     }
+
+    // Mark messages as processed to prevent re-running
+    messagesProcessedRef.current = true;
   }, [messages]);
 
   // Handle broadcast messages from other tabs/iframes
@@ -1592,8 +1614,7 @@ const ChatBotDemo = () => {
                                   : app
                               )
                             );
-                            // Progress to next message after connection is complete
-                            setCurrentMessageIndex(prev => prev + 1);
+                            // Don't automatically progress - let the connection state persist
                           }, 3000);
                         } else if (["navigate_thumbtack", "navigate_openphone"].includes(part.action)) {
                           // Open Thumbtack in new tab/window
@@ -1773,6 +1794,31 @@ const ChatBotDemo = () => {
                     link={part.link}
                     className="mb-2"
                   />
+                );
+              case "voice":
+                return (
+                  <Fragment key={`${message.id}-${i}`}>
+                    <Message from={message.role} className="mb-2">
+                      {message.role === "user" ? (
+                        <>
+                          <MessageContent>
+                            <TextWithLinks text={part.dummyText} />
+                          </MessageContent>
+                          <MessageAvatar src="" name="ZG" />
+                        </>
+                      ) : (
+                        <>
+                          <MessageAvatar
+                            src=""
+                            name={message.role === "ai-agent" ? "SA" : "A"}
+                          />
+                          <MessageContent>
+                            <TextWithLinks text={part.dummyText} />
+                          </MessageContent>
+                        </>
+                      )}
+                    </Message>
+                  </Fragment>
                 );
               default:
                 return null;
