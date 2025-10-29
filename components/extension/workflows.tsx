@@ -70,6 +70,15 @@ const WORKFLOW_CATEGORIES: Record<string, { color: string; icon: React.ReactNode
 export const Workflows = ({ workflows }: WorkflowsProps) => {
   if (workflows.length === 0) return null;
 
+  // Sort workflows: newly learned first, then previously learned, then pre-trained
+  const sortedWorkflows = [...workflows].sort((a, b) => {
+    if (a.isNew && !b.isNew) return -1;
+    if (!a.isNew && b.isNew) return 1;
+    if (!a.isPretrained && b.isPretrained) return -1;
+    if (a.isPretrained && !b.isPretrained) return 1;
+    return 0;
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -84,7 +93,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
           </h3>
           <div className="space-y-1.5">
             <AnimatePresence mode="popLayout">
-              {workflows.map((workflow, index) => {
+              {sortedWorkflows.map((workflow, index) => {
                 const category = WORKFLOW_CATEGORIES[workflow.category || "default"];
                 const isRecent = workflow.isNew === true;
                 const isPretrained = workflow.isPretrained === true;
@@ -104,15 +113,15 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                     <div
                       className={`group relative flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all duration-300 backdrop-blur
                         ${isRecent
-                          ? 'border-primary/40 bg-primary/8 shadow-sm'
+                          ? 'border-primary/50 bg-gradient-to-r from-primary/12 to-primary/8 shadow-md ring-1 ring-primary/20'
                           : isPretrained
-                          ? 'border-muted/30 bg-muted/20'
-                          : 'border-muted/20 bg-muted/10'
+                          ? 'border-muted/25 bg-muted/15 opacity-75'
+                          : 'border-muted/30 bg-muted/12'
                         }
                       `}
                       style={{
-                        boxShadow: isRecent ? `0 4px 12px -8px ${category.color}` : undefined,
-                        borderColor: isRecent ? `${category.color}33` : undefined
+                        boxShadow: isRecent ? `0 6px 16px -8px ${category.color}40` : undefined,
+                        borderColor: isRecent ? `${category.color}50` : undefined
                       }}
                     >
                       {/* Category Icon */}
@@ -126,10 +135,17 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                           stiffness: 200,
                           damping: 16
                         }}
-                        className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-sm shadow-sm ring-1 ring-black/5"
+                        className={`flex h-7 w-7 items-center justify-center rounded-md text-sm shadow-sm ring-1
+                          ${isRecent
+                            ? 'bg-white/95 ring-primary/30 shadow-md'
+                            : isPretrained
+                            ? 'bg-white/70 ring-black/5'
+                            : 'bg-white/85 ring-black/10'
+                          }`}
                         style={{
-                          backgroundColor: isRecent ? `${category.color}15` : undefined,
-                          borderColor: isRecent ? `${category.color}33` : undefined
+                          backgroundColor: isRecent ? `${category.color}20` : undefined,
+                          borderColor: isRecent ? `${category.color}40` : undefined,
+                          color: isRecent ? category.color : isPretrained ? '#6b7280' : category.color
                         }}
                       >
                         {category.icon}
@@ -144,7 +160,13 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                             duration: 0.25,
                             delay: index * 0.08 + 0.18
                           }}
-                          className="text-[0.78rem] leading-tight text-foreground/90 font-medium"
+                          className={`text-[0.78rem] leading-tight font-medium
+                            ${isRecent
+                              ? 'text-foreground font-semibold'
+                              : isPretrained
+                              ? 'text-foreground/70'
+                              : 'text-foreground/85'
+                            }`}
                         >
                           {workflow.workflow}
                         </motion.p>
@@ -157,14 +179,20 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                             duration: 0.2,
                             delay: index * 0.08 + 0.24
                           }}
-                          className="text-[0.65rem] text-muted-foreground/70 font-medium mt-0.5 block"
+                          className={`text-[0.65rem] font-medium mt-0.5 block
+                            ${isRecent
+                              ? 'text-muted-foreground/80'
+                              : isPretrained
+                              ? 'text-muted-foreground/60'
+                              : 'text-muted-foreground/70'
+                            }`}
                         >
                           {category.label}
                         </motion.span>
                       </div>
 
                       {/* Status indicators */}
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         {isRecent && (
                           <motion.div
                             initial={{ scale: 0, opacity: 0 }}
@@ -176,12 +204,12 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                               stiffness: 400,
                               damping: 20
                             }}
-                            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary"
+                            className="flex items-center gap-1 rounded-full bg-green-100/80 px-2 py-0.5 text-green-700"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              width="10"
-                              height="10"
+                              width="8"
+                              height="8"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -191,10 +219,11 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                             >
                               <polyline points="20,6 9,17 4,12" />
                             </svg>
+                            <span className="text-[0.6rem] font-medium">NEW</span>
                           </motion.div>
                         )}
 
-                        {isPretrained && (
+                        {isPretrained && !isRecent && (
                           <motion.div
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -205,18 +234,50 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                               stiffness: 400,
                               damping: 20
                             }}
-                            className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/10 text-muted-foreground/60"
+                            className="flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5 text-muted-foreground/70"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              width="10"
-                              height="10"
+                              width="8"
+                              height="8"
                               viewBox="0 0 24 24"
                               fill="currentColor"
                               stroke="none"
                             >
-                              <circle cx="12" cy="12" r="8" />
+                              <circle cx="12" cy="12" r="3" />
                             </svg>
+                            <span className="text-[0.6rem] font-medium">PRE-TRAINED</span>
+                          </motion.div>
+                        )}
+
+                        {!isPretrained && !isRecent && (
+                          <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: index * 0.08 + 0.3,
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 20
+                            }}
+                            className="flex items-center gap-1 rounded-full bg-blue-100/60 px-2 py-0.5 text-blue-600/80"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="8"
+                              height="8"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            </svg>
+                            <span className="text-[0.6rem] font-medium">LEARNED</span>
                           </motion.div>
                         )}
                       </div>

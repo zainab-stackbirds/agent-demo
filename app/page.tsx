@@ -888,14 +888,16 @@ const ChatBotDemo = () => {
         const newWorkflowPart = currentMessage.parts.find(part => part.type === "new-workflow");
         if (newWorkflowPart && newWorkflowPart.type === "new-workflow") {
           setWorkflows(prev => [
-            ...prev,
+            // Add new workflow at the top
             {
               id: `workflow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               workflow: newWorkflowPart.workflow,
               category: newWorkflowPart.category || "default",
               isNew: true,
               isPretrained: false
-            }
+            },
+            // Mark existing new workflows as no longer "new"
+            ...prev.map(w => w.isNew ? { ...w, isNew: false } : w)
           ]);
           setShowWorkflows(true);
         }
@@ -1007,9 +1009,9 @@ const ChatBotDemo = () => {
 
     if (newWorkflows.length > 0) {
       setWorkflows(prev => {
-        // Get pre-trained workflows and add new ones
+        // Get pre-trained workflows and put learned ones first
         const pretrainedWorkflows = prev.filter(w => w.isPretrained);
-        return [...pretrainedWorkflows, ...newWorkflows];
+        return [...newWorkflows, ...pretrainedWorkflows];
       });
       setShowWorkflows(true);
     }
