@@ -52,6 +52,16 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
+        id: "msg-openphone-4a",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "recording-state",
+                state: "pause"
+            }
+        ],
+    },
+    {
         id: "msg-openphone-5",
         role: "user",
         parts: [
@@ -70,6 +80,10 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
                 type: "agent-interrupt",
                 message: "Do you use the number from thumbtack lead here"
             },
+            {
+                type: "recording-state",
+                state: "pause"
+            }
         ],
     },
     {
@@ -91,6 +105,10 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
                 type: "text",
                 text: "Got it. I'll remember this"
             },
+            {
+                type: "recording-state",
+                state: "start"
+            }
         ],
     },
     {
@@ -112,6 +130,10 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
                 type: "agent-interrupt",
                 message: "Which template should I use?"
             },
+            {
+                type: "recording-state",
+                state: "pause"
+            }
         ],
     },
     {
@@ -133,6 +155,10 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
                 type: "text",
                 text: "Sure! I'll do this when picking a template"
             },
+            {
+                type: "recording-state",
+                state: "start"
+            }
         ],
     },
     {

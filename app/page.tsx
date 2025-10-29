@@ -33,6 +33,7 @@ import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Hero from "@/components/UnitComponents/Hero";
 import Header from "@/components/UnitComponents/Header";
+import RecordingIndicator from "@/components/extension/recording-indicator";
 
 export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -614,6 +615,7 @@ const ChatBotDemo = () => {
   // App integrations state
   const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean; connecting?: boolean }>>([])
   const [showApps, setShowApps] = useState(false)
+  const [workflowRecordingState, setWorkflowRecordingState] = useState('not_started')
 
   // Workflows state
   const [workflows, setWorkflows] = useState<Array<{
@@ -954,11 +956,11 @@ const ChatBotDemo = () => {
         const recordingStatePart = currentMessage.parts.find(part => part.type === "recording-state");
         if (recordingStatePart && recordingStatePart.type === "recording-state") {
           if (recordingStatePart.state === "start") {
-            setRecordingState("recording");
+            setWorkflowRecordingState("recording");
           } else if (recordingStatePart.state === "pause") {
-            setRecordingState("paused");
+            setWorkflowRecordingState("paused");
           } else if (recordingStatePart.state === "stop") {
-            setRecordingState("idle");
+            setWorkflowRecordingState("idle");
           }
         }
 
@@ -1701,6 +1703,10 @@ const ChatBotDemo = () => {
             </TabsContent>
 
             <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
+                   {/* Recording animation */}
+                {isMobile && isExtension ? (
+                  <RecordingIndicator recordingState={workflowRecordingState} />
+                ) : null}
               {/* Business Profile content */}
               {showSummary && summaryData ? (
                 <>
