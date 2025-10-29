@@ -266,7 +266,7 @@ const mockConversation: CustomUIMessage[] = [
       },
       {
         type: "text",
-        text: "Here is what I understand: \n **Business Name**: Eat Cook Joy \n**Value Prop**: Chef tool providing personalization + convenience + affordability \n **Location**: Texas Services: Meal Prep, Events \nAm I missing anything?"
+        text: "Here is what I understand: \n **Business Name**: Eat Cook Joy \n**Value Prop**: Chef tool providing personalization + convenience + affordability \n **Location**: Texas \n **Services**: Meal Prep, Events \nAm I missing anything?"
       },
     ]
   },
@@ -310,7 +310,7 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "summary-updated",
-        messages: ['Business Name: Eat Cook Joy \nValue Prop: Chef tool providing personalization + convenience + affordability \n Location: Texas Services: Meal Prep'],
+        messages: ['Business Name: Eat Cook Joy \nValue Prop: Chef tool providing personalization + convenience + affordability \n Location: Texas \nServices: Meal Prep, Events'],
         id: "sales_agent_summary"
       },
     ]
