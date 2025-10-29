@@ -1394,7 +1394,7 @@ const ChatBotDemo = () => {
                         <>
                           <MessageAvatar
                             src=""
-                            name="A"
+                            name={message.role === "ai-agent" ? "SA" : "A"}
                           />
                           <MessageContent>
                             <TextWithLinks text={part.text} />

@@ -34,14 +34,14 @@ const messageContentVariants = cva(
       variant: {
         contained: [
           "max-w-[80%] px-4 py-3",
-          "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground",
-          "group-[.is-assistant]:bg-secondary group-[.is-assistant]:text-foreground",
-          "group-[.is-ai-agent]:bg-secondary group-[.is-ai-agent]:text-foreground", // Clean OpenAI style
+          "group-[.is-user]:bg-secondary group-[.is-user]:text-foreground", // Switched to secondary
+          "group-[.is-assistant]:bg-primary group-[.is-assistant]:text-primary-foreground", // Switched to primary
+          "group-[.is-ai-agent]:text-foreground", // Plain text - no background
         ],
         flat: [
-          "group-[.is-user]:max-w-[80%] group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
+          "group-[.is-user]:max-w-[80%] group-[.is-user]:bg-primary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground", // Switched to primary
           "group-[.is-assistant]:text-foreground",
-          "group-[.is-ai-agent]:max-w-[80%] group-[.is-ai-agent]:bg-secondary group-[.is-ai-agent]:px-4 group-[.is-ai-agent]:py-3 group-[.is-ai-agent]:text-foreground", // Clean OpenAI style
+          "group-[.is-ai-agent]:text-foreground", // Plain text - no background
         ],
       },
     },
