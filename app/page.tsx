@@ -29,6 +29,7 @@ import { fetchConversationState, updateConversationState, clearConversationState
 import { ExtensionSummary } from "@/components/extension/extension-summary";
 import { AppIntegrations } from "@/components/extension/app-integrations";
 import { openPhoneConversation } from "@/lib/consts";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -558,6 +559,10 @@ const ChatBotDemo = () => {
   const [isExtension, setIsExtension] = useState(false);
   const [isOnOwnDomain, setIsOnOwnDomain] = useState(false);
 
+  // Mobile responsive state
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+
   // Summary state for extension view
   const [summaryData, setSummaryData] = useState<{
     heading: string;
@@ -622,6 +627,22 @@ const ChatBotDemo = () => {
         }
       }
     }
+  }, []);
+
+  // Mobile responsive detection
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768); // Tailwind md breakpoint
+    };
+
+    // Check on mount
+    checkIsMobile();
+
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIsMobile);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
   // Initialize state from API on mount
@@ -1055,10 +1076,471 @@ const ChatBotDemo = () => {
   const showMicSection = isVoiceMessage || isRecording ||
     (currentMessage?.role === "assistant" || currentMessage?.role === "ai-agent");
 
+  // Render conversation messages
+  const renderConversationMessages = () => (
+    <>
+      {messages.map((message) => (
+        <div key={message.id}>
+
+          {message.parts
+            .filter((part) => part.type === "system-event")
+            .map((part, i) => (
+              <SystemEvent
+                key={`${message.id}-event-${i}`}
+                event={part.event}
+                agentName={part.metadata?.agentName}
+                metadata={part.metadata}
+              />
+            ))}
+
+          {message.role === "assistant" &&
+            message.parts.filter(
+              (part) => part.type === "source-url"
+            ).length > 0 && (
+              <Sources>
+                <SourcesTrigger
+                  count={
+                    message.parts.filter(
+                      (part) =>
+                        part.type ===
+                        "source-url"
+                    ).length
+                  }
+                />
+                {message.parts
+                  .filter(
+                    (part) =>
+                      part.type ===
+                      "source-url"
+                  )
+                  .map((part, i) => (
+                    <SourcesContent
+                      key={`${message.id}-${i}`}
+                    >
+                      <Source
+                        key={`${message.id}-${i}`}
+                        href={part.url}
+                        title={part.url}
+                      />
+                    </SourcesContent>
+                  ))}
+              </Sources>
+            )}
+          {message.parts.map((part, i) => {
+            switch (part.type) {
+              case "text":
+                return (
+                  <Fragment
+                    key={`${message.id}-${i}`}
+                  >
+                    <Message
+                      from={message.role}
+                    >
+                      <MessageContent>
+                        <TextWithLinks text={part.text} />
+                      </MessageContent>
+                    </Message>
+                  </Fragment>
+                );
+              case "options":
+                return (
+                  <div
+                    key={`${message.id}-${i}`}
+                    className="flex flex-wrap gap-2 mb-4 justify-start"
+                  >
+                    {part.options.map((option, optionIndex) => (
+                      <button
+                        key={optionIndex}
+                        onClick={() => {
+                          // Handle option selection - add user message and progress conversation
+                          if (option.action === "select_sales") {
+                            // Mark as user action
+                            saveToAPIRef.current = true;
+
+                            // Add user message for the selected option
+                            const userMessage: CustomUIMessage = {
+                              id: `user-${Date.now()}`,
+                              role: "user",
+                              parts: [{ type: "text", text: option.label }],
+                            };
+
+                            // Add the user message and progress to next AI message
+                            appendMessage(userMessage);
+                            const newIndex = currentMessageIndex + 1;
+                            setCurrentMessageIndex(newIndex);
+
+                            // Broadcast the user message and progress
+                            if (updateSourceRef.current === 'self' && broadcastInstance) {
+                              broadcastInstance.broadcastMessage({
+                                type: 'USER_MESSAGE_SUBMITTED',
+                                payload: { message: userMessage, newIndex }
+                              });
+                            }
+                          }
+                        }}
+                        className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent text-foreground transition-colors"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                );
+              case "button":
+                return (
+                  <div
+                    key={`${message.id}-${i}`}
+                    className="flex justify-start mb-4"
+                  >
+                    <button
+                      onClick={() => {
+                        if (["connect_thumbtack", "connect_openphone"].includes(part.action)) {
+                          const appId = part.action.split('_')[1]
+                          // Mark as user action
+                          saveToAPIRef.current = true;
+
+                          // Set connecting state for Thumbtack
+                          setAppStatuses(prev => {
+                            const existingApp = prev.find(app => app.app_id === appId);
+                            if (existingApp) {
+                              return prev.map(app =>
+                                app.app_id === appId
+                                  ? { ...app, connecting: true, enabled: false }
+                                  : app
+                              );
+                            } else {
+                              // If app doesn't exist yet, add it
+                              return [...prev, { app_id: appId, enabled: false, connecting: true }];
+                            }
+                          });
+
+                          // After 10 seconds, mark as connected and progress to next message
+                          setTimeout(() => {
+                            saveToAPIRef.current = true;
+                            setAppStatuses(prev =>
+                              prev.map(app =>
+                                app.app_id === appId
+                                  ? { ...app, connecting: false, enabled: true }
+                                  : app
+                              )
+                            );
+                            // Progress to next message after connection is complete
+                            setCurrentMessageIndex(prev => prev + 1);
+                          }, 10000);
+                        } else if (["navigate_thumbtack", "navigate_openphone"].includes(part.action)) {
+                          // Open Thumbtack in new tab/window
+                          window.open(part.url, '_blank');
+                          // Progress to next message
+                          saveToAPIRef.current = true;
+                          setCurrentMessageIndex(prev => prev + 1);
+                        }
+                      }}
+                      className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      {part.text}
+                      {part.url && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="ml-2"
+                        >
+                          <path d="M7 7h10v10" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                );
+              case "link":
+                return (
+                  <div
+                    key={`${message.id}-${i}`}
+                    className="flex justify-start mb-4"
+                  >
+                    <a
+                      href={part.url || `https://${part.text}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      {part.text}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="ml-2"
+                      >
+                        <path d="M7 7h10v10" />
+                      </svg>
+                    </a>
+                  </div>
+                );
+              case "agent-interrupt":
+                return (
+                  <Message
+                    key={`${message.id}-${i}`}
+                    from="ai-agent"
+                  >
+                    <MessageContent>
+                      <div className="flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span className="font-medium">Agent Interrupt</span>
+                      </div>
+                      <p className="mt-1">{part.message}</p>
+                    </MessageContent>
+                  </Message>
+                );
+              case "reasoning":
+                return (
+                  <Reasoning
+                    key={`${message.id}-${i}`}
+                    className="w-full"
+                    isStreaming={
+                      status ===
+                      "streaming"
+                    }
+                  >
+                    <ReasoningTrigger />
+                    <ReasoningContent>
+                      {part.text}
+                    </ReasoningContent>
+                  </Reasoning>
+                );
+              default:
+                return null;
+            }
+          })}
+        </div>
+      ))}
+      {status === "submitted" && <Loader />}
+    </>
+  );
+
+  // Render mic section
+  const renderMicSection = () => (
+    showMicSection && (
+      <div className="flex-shrink-0 mt-4 relative">
+        <AnimatePresence mode="wait">
+          {recordingState === "idle" ? (
+            // Show mic button with fade animation
+            <motion.div
+              key="mic-button"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="flex items-center justify-center relative"
+            >
+              <button
+                onClick={handleStartRecording}
+                disabled={!shouldShowInput || status === "streaming"}
+                className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
+                aria-label="Start recording"
+              >
+                <motion.svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="origin-center"
+                  animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
+                  transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                >
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" x2="12" y1="19" y2="22" />
+                </motion.svg>
+              </button>
+            </motion.div>
+          ) : recordingState === "paused" ? (
+            // Show recording paused state
+            <motion.div
+              key="recording-paused"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="flex items-center justify-center relative"
+            >
+              <button
+                onClick={handleStartRecording}
+                disabled={!shouldShowInput || status === "streaming"}
+                className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
+                aria-label="Resume recording"
+              >
+                <motion.svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="origin-center"
+                  animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
+                  transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                >
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" x2="12" y1="19" y2="22" />
+                </motion.svg>
+              </button>
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-lg text-sm font-medium border border-yellow-200">
+                Recording Paused
+              </div>
+            </motion.div>
+          ) : (
+            // Show audio visualizer when recording
+            <motion.div
+              key="audio-visualizer"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="flex items-center gap-3"
+            >
+              <div className="flex-1 h-32">
+                <AudioVisualizer
+                  stream={mediaStream}
+                  isRecording={recordingState === "recording"}
+                  onClick={() => { }}
+                />
+              </div>
+              <button
+                onClick={handleCrossButtonClick}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-500 transition-all shadow-md hover:shadow-lg border-green-500"
+                aria-label="Send voice message"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  );
+
   return (
-    <div className={`max-w-4xl mx-auto p-6 relative size-full h-screen ${isExtension && showSummary ? 'flex flex-col' : ''}`}>
-      {/* Extension-only content - sticky at top */}
-      {isExtension && showSummary && summaryData && (
+    <div className={`max-w-4xl mx-auto p-6 relative size-full h-screen ${isExtension && showSummary || isMobile ? 'flex flex-col' : ''}`}>
+      {/* Mobile Tabs - Show on mobile width (including narrow extension sidebars) */}
+      {isMobile && (
+        <div className="flex flex-col h-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full">
+            <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="profile">Business Profile</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
+              <div className="flex flex-col h-full">
+                <Conversation className="flex-1">
+                  <ConversationContent>
+                    {renderConversationMessages()}
+                  </ConversationContent>
+                  <ConversationScrollButton />
+                </Conversation>
+
+                {renderMicSection()}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="profile" className="mt-4 flex-1 flex flex-col min-h-0">
+              {/* Business Profile content */}
+              {showSummary && summaryData ? (
+                <>
+                  <ExtensionSummary
+                    heading={summaryData.heading}
+                    subheading={summaryData.subheading}
+                    messages={summaryMessages}
+                  />
+                  {showApps && appStatuses.length > 0 && (
+                    <div className="mt-4">
+                      <AppIntegrations apps={appStatuses} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-muted-foreground mb-4"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="m22 2-5 10-7-5" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-foreground mb-2">No Business Profile Yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                    Start a conversation with the assistant to create your business profile.
+                    Your information will appear here once it's collected.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab("chat")}
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    Start Chat
+                  </button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
+
+      {/* Extension mode only - Show summary and apps at top when in extension and desktop width */}
+      {!isMobile && isExtension && showSummary && summaryData && (
         <div className="flex-shrink-0 mb-4">
           <ExtensionSummary
             heading={summaryData.heading}
@@ -1068,401 +1550,23 @@ const ChatBotDemo = () => {
         </div>
       )}
 
-      {/* App Integrations - shown below summary */}
-      {isExtension && showApps && appStatuses.length > 0 && (
+      {!isMobile && isExtension && showApps && appStatuses.length > 0 && (
         <div className="flex-shrink-0 mb-4">
           <AppIntegrations apps={appStatuses} />
         </div>
       )}
 
-      {/* Hide conversation when extension is on localhost/deployed app */}
-      {!(isExtension && isOnOwnDomain) && (
+      {/* Desktop conversation - Hide on mobile and when extension is on localhost/deployed app */}
+      {!isMobile && !(isExtension && isOnOwnDomain) && (
         <div className={`flex flex-col ${isExtension && showSummary ? 'flex-1 min-h-0' : 'h-full'}`}>
           <Conversation className="h-full">
             <ConversationContent>
-              {messages.map((message) => (
-                <div key={message.id}>
-
-                  {message.parts
-                    .filter((part) => part.type === "system-event")
-                    .map((part, i) => (
-                      <SystemEvent
-                        key={`${message.id}-event-${i}`}
-                        event={part.event}
-                        agentName={part.metadata?.agentName}
-                        metadata={part.metadata}
-                      />
-                    ))}
-
-                  {message.role === "assistant" &&
-                    message.parts.filter(
-                      (part) => part.type === "source-url"
-                    ).length > 0 && (
-                      <Sources>
-                        <SourcesTrigger
-                          count={
-                            message.parts.filter(
-                              (part) =>
-                                part.type ===
-                                "source-url"
-                            ).length
-                          }
-                        />
-                        {message.parts
-                          .filter(
-                            (part) =>
-                              part.type ===
-                              "source-url"
-                          )
-                          .map((part, i) => (
-                            <SourcesContent
-                              key={`${message.id}-${i}`}
-                            >
-                              <Source
-                                key={`${message.id}-${i}`}
-                                href={part.url}
-                                title={part.url}
-                              />
-                            </SourcesContent>
-                          ))}
-                      </Sources>
-                    )}
-                  {message.parts.map((part, i) => {
-                    switch (part.type) {
-                      case "text":
-                        return (
-                          <Fragment
-                            key={`${message.id}-${i}`}
-                          >
-                            <Message
-                              from={message.role}
-                            >
-                              <MessageContent>
-                                <TextWithLinks text={part.text} />
-                              </MessageContent>
-                            </Message>
-                          </Fragment>
-                        );
-                      case "options":
-                        return (
-                          <div
-                            key={`${message.id}-${i}`}
-                            className="flex flex-wrap gap-2 mb-4 justify-start"
-                          >
-                            {part.options.map((option, optionIndex) => (
-                              <button
-                                key={optionIndex}
-                                onClick={() => {
-                                  // Handle option selection - add user message and progress conversation
-                                  if (option.action === "select_sales") {
-                                    // Mark as user action
-                                    saveToAPIRef.current = true;
-
-                                    // Add user message for the selected option
-                                    const userMessage: CustomUIMessage = {
-                                      id: `user-${Date.now()}`,
-                                      role: "user",
-                                      parts: [{ type: "text", text: option.label }],
-                                    };
-
-                                    // Add the user message and progress to next AI message
-                                    appendMessage(userMessage);
-                                    const newIndex = currentMessageIndex + 1;
-                                    setCurrentMessageIndex(newIndex);
-
-                                    // Broadcast the user message and progress
-                                    if (updateSourceRef.current === 'self' && broadcastInstance) {
-                                      broadcastInstance.broadcastMessage({
-                                        type: 'USER_MESSAGE_SUBMITTED',
-                                        payload: { message: userMessage, newIndex }
-                                      });
-                                    }
-                                  }
-                                }}
-                                className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent text-foreground transition-colors"
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      case "button":
-                        return (
-                          <div
-                            key={`${message.id}-${i}`}
-                            className="flex justify-start mb-4"
-                          >
-                            <button
-                              onClick={() => {
-                                if (["connect_thumbtack" ,"connect_openphone"].includes(part.action) ) {
-                                  const appId = part.action.split('_')[1]
-                                  // Mark as user action
-                                  saveToAPIRef.current = true;
-
-                                  // Set connecting state for Thumbtack
-                                  setAppStatuses(prev => {
-                                    const existingApp = prev.find(app => app.app_id === appId);
-                                    if (existingApp) {
-                                      return prev.map(app =>
-                                        app.app_id === appId
-                                          ? { ...app, connecting: true, enabled: false }
-                                          : app
-                                      );
-                                    } else {
-                                      // If app doesn't exist yet, add it
-                                      return [...prev, { app_id: appId, enabled: false, connecting: true }];
-                                    }
-                                  });
-
-                                  // After 10 seconds, mark as connected and progress to next message
-                                  setTimeout(() => {
-                                    saveToAPIRef.current = true;
-                                    setAppStatuses(prev =>
-                                      prev.map(app =>
-                                        app.app_id === appId
-                                          ? { ...app, connecting: false, enabled: true }
-                                          : app
-                                      )
-                                    );
-                                    // Progress to next message after connection is complete
-                                    setCurrentMessageIndex(prev => prev + 1);
-                                  }, 10000);
-                                } else if (["navigate_thumbtack" ,"navigate_openphone"].includes(part.action) ) {
-                                  // Open Thumbtack in new tab/window
-                                  window.open(part.url, '_blank');
-                                  // Progress to next message
-                                  saveToAPIRef.current = true;
-                                  setCurrentMessageIndex(prev => prev + 1);
-                                }
-                              }}
-                              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-                            >
-                              {part.text}
-                              {part.url && (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="ml-2"
-                                >
-                                  <path d="M7 7h10v10" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                        );
-                      case "link":
-                        return (
-                          <div
-                            key={`${message.id}-${i}`}
-                            className="flex justify-start mb-4"
-                          >
-                            <a
-                              href={part.url || `https://${part.text}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-                            >
-                              {part.text}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="ml-2"
-                              >
-                                <path d="M7 7h10v10" />
-                              </svg>
-                            </a>
-                          </div>
-                        );
-                      case "agent-interrupt":
-                        return (
-                          <Message
-                            key={`${message.id}-${i}`}
-                            from="ai-agent"
-                          >
-                            <MessageContent>
-                              <div className="flex items-center gap-2">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="12" cy="12" r="10" />
-                                  <line x1="12" y1="8" x2="12" y2="12" />
-                                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
-                                <span className="font-medium">Agent Interrupt</span>
-                              </div>
-                              <p className="mt-1">{part.message}</p>
-                            </MessageContent>
-                          </Message>
-                        );
-                      case "reasoning":
-                        return (
-                          <Reasoning
-                            key={`${message.id}-${i}`}
-                            className="w-full"
-                            isStreaming={
-                              status ===
-                              "streaming"
-                            }
-                          >
-                            <ReasoningTrigger />
-                            <ReasoningContent>
-                              {part.text}
-                            </ReasoningContent>
-                          </Reasoning>
-                        );
-                      default:
-                        return null;
-                    }
-                  })}
-                </div>
-              ))}
-              {status === "submitted" && <Loader />}
+              {renderConversationMessages()}
             </ConversationContent>
             <ConversationScrollButton />
           </Conversation>
 
-          {showMicSection && (
-            // Voice message mode - show mic button or audio visualizer in same location
-            <div className="flex-shrink-0 mt-4 relative">
-              <AnimatePresence mode="wait">
-                {recordingState === "idle" ? (
-                  // Show mic button with fade animation
-                  <motion.div
-                    key="mic-button"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="flex items-center justify-center relative"
-                  >
-                    <button
-                      onClick={handleStartRecording}
-                      disabled={!shouldShowInput || status === "streaming"}
-                      className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
-                      aria-label="Start recording"
-                    >
-                      <motion.svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="origin-center"
-                        animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
-                        transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                      >
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" x2="12" y1="19" y2="22" />
-                      </motion.svg>
-                    </button>
-                  </motion.div>
-                ) : recordingState === "paused" ? (
-                  // Show recording paused state
-                  <motion.div
-                    key="recording-paused"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="flex items-center justify-center relative"
-                  >
-                    <button
-                      onClick={handleStartRecording}
-                      disabled={!shouldShowInput || status === "streaming"}
-                      className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative z-10"
-                      aria-label="Resume recording"
-                    >
-                      <motion.svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="origin-center"
-                        animate={isUserTurnToSpeak ? { rotate: [0, -8, 8, -8, 0] } : { rotate: 0 }}
-                        transition={isUserTurnToSpeak ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                      >
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" x2="12" y1="19" y2="22" />
-                      </motion.svg>
-                    </button>
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-lg text-sm font-medium border border-yellow-200">
-                      Recording Paused
-                    </div>
-                  </motion.div>
-                ) : (
-                  // Show audio visualizer when recording
-                  <motion.div
-                    key="audio-visualizer"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="flex items-center gap-3"
-                  >
-                    <div className="flex-1 h-32">
-                      <AudioVisualizer
-                        stream={mediaStream}
-                        isRecording={recordingState === "recording"}
-                        onClick={() => { }}
-                      />
-                    </div>
-                    <button
-                      onClick={handleCrossButtonClick}
-                      className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-500 transition-all shadow-md hover:shadow-lg border-green-500"
-                      aria-label="Send voice message"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M20 6 9 17l-5-5" />
-                      </svg>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+          {renderMicSection()}
         </div>
       )}
     </div>
