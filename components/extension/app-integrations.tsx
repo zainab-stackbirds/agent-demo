@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AnimatePresence, motion } from "motion/react";
 
 interface AppIntegrationsProps {
-  apps: Array<{ app_id: string; enabled: boolean }>;
+  apps: Array<{ app_id: string; enabled: boolean; connecting?: boolean }>;
 }
 
 // App metadata with logos and names
@@ -47,6 +47,7 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
 
                 const accentColor = metadata.color;
                 const isConnected = app.enabled;
+                const isConnecting = app.connecting === true;
 
                 return (
                   <motion.div
@@ -62,32 +63,38 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                     // className="w-[8.5rem]"
                   >
                     <div
-                      aria-disabled={!isConnected}
+                      aria-disabled={!isConnected && !isConnecting}
                       className={`group relative flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-all duration-300 backdrop-blur
                         ${isConnected
                           ? 'border-primary/30 bg-primary/5 opacity-90 hover:opacity-100'
+                          : isConnecting
+                          ? 'border-primary/50 bg-primary/10 opacity-75'
                           : 'border-muted/40 bg-muted/60 opacity-45 cursor-not-allowed'
                         }
                       `}
                       style={{
-                        boxShadow: isConnected ? `0 6px 16px -12px ${accentColor}` : undefined,
-                        borderColor: isConnected ? `${accentColor}33` : undefined
+                        boxShadow: isConnected ? `0 6px 16px -12px ${accentColor}` : isConnecting ? `0 4px 12px -8px ${accentColor}` : undefined,
+                        borderColor: isConnected ? `${accentColor}33` : isConnecting ? `${accentColor}66` : undefined
                       }}
                     >
                       <div className="flex flex-col items-center gap-1.5">
                         {/* App Logo with animation */}
                         <motion.div
                           initial={{ rotate: -8, scale: 0.9 }}
-                          animate={{ rotate: 0, scale: 1 }}
+                          animate={{ 
+                            rotate: isConnecting ? [0, 360] : 0, 
+                            scale: 1 
+                          }}
                           transition={{
-                            duration: 0.45,
+                            duration: isConnecting ? 1.5 : 0.45,
+                            repeat: isConnecting ? Infinity : 0,
                             delay: index * 0.12 + 0.18,
-                            type: "spring",
+                            type: isConnecting ? "linear" : "spring",
                             stiffness: 200,
                             damping: 16
                           }}
                           className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white/90 shadow-sm ring-1 ring-black/5"
-                          style={{ border: isConnected ? `1px solid ${accentColor}` : undefined }}
+                          style={{ border: (isConnected || isConnecting) ? `1px solid ${accentColor}` : undefined }}
                         >
                           <img
                             src={metadata.logo}
@@ -115,12 +122,12 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                           }}
                           className="max-w-[5.5rem] text-center text-[0.72rem] font-medium leading-tight text-foreground"
                         >
-                          {metadata.name}
+                          {isConnecting ? 'Connecting...' : metadata.name}
                         </motion.h4>
                       </div>
 
                       <span className="sr-only">
-                        {isConnected ? `${metadata.name} connected` : `${metadata.name} not connected`}
+                        {isConnected ? `${metadata.name} connected` : isConnecting ? `Connecting ${metadata.name}` : `${metadata.name} not connected`}
                       </span>
                     </div>
                   </motion.div>

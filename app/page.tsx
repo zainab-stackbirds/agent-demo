@@ -336,6 +336,18 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
+    id: "msg-10b",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: false },
+        ]
+      },
+    ],
+  },
+  {
     id: "msg-11",
     role: "ai-agent",
     parts: [
@@ -535,7 +547,7 @@ const ChatBotDemo = () => {
   const [summaryMessages, setSummaryMessages] = useState<string[]>([])
 
   // App integrations state
-  const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean }>>([])
+  const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean; connecting?: boolean }>>([])
   const [showApps, setShowApps] = useState(false)
 
   // Initialize state from API
@@ -768,7 +780,7 @@ const ChatBotDemo = () => {
         // Process app-event parts
         const appEventPart = currentMessage.parts.find(part => part.type === "app-event");
         if (appEventPart && appEventPart.type === "app-event") {
-          setAppStatuses(appEventPart.apps);
+          setAppStatuses(appEventPart.apps.map(app => ({ ...app, connecting: false })));
           setShowApps(true);
         }
 
@@ -844,7 +856,8 @@ const ChatBotDemo = () => {
         } else if (part.type === "summary-updated") {
           latestSummaryMessages = [...latestSummaryMessages, ...part.messages];
         } else if (part.type === "app-event") {
-          latestAppStatuses = part.apps;
+          // When processing existing messages, clear connecting state
+          latestAppStatuses = part.apps.map(app => ({ ...app, connecting: false }));
         }
       });
     });
@@ -1161,9 +1174,37 @@ const ChatBotDemo = () => {
                             <button
                               onClick={() => {
                                 if (part.action === "connect_thumbtack") {
-                                  // Handle connect thumbtack - progress to next message
+                                  // Mark as user action
                                   saveToAPIRef.current = true;
-                                  setCurrentMessageIndex(prev => prev + 1);
+
+                                  // Set connecting state for Thumbtack
+                                  setAppStatuses(prev => {
+                                    const thumbtackApp = prev.find(app => app.app_id === "thumbtack");
+                                    if (thumbtackApp) {
+                                      return prev.map(app => 
+                                        app.app_id === "thumbtack" 
+                                          ? { ...app, connecting: true, enabled: false }
+                                          : app
+                                      );
+                                    } else {
+                                      // If app doesn't exist yet, add it
+                                      return [...prev, { app_id: "thumbtack", enabled: false, connecting: true }];
+                                    }
+                                  });
+
+                                  // After 3 seconds, mark as connected and progress to next message
+                                  setTimeout(() => {
+                                    saveToAPIRef.current = true;
+                                    setAppStatuses(prev => 
+                                      prev.map(app => 
+                                        app.app_id === "thumbtack" 
+                                          ? { ...app, connecting: false, enabled: true }
+                                          : app
+                                      )
+                                    );
+                                    // Progress to next message after connection is complete
+                                    setCurrentMessageIndex(prev => prev + 1);
+                                  }, 3000);
                                 } else if (part.action === "navigate_thumbtack") {
                                   // Open Thumbtack in new tab/window
                                   window.open(part.url, '_blank');
