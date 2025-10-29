@@ -708,16 +708,28 @@ const ChatBotDemo = () => {
     const initializeState = async () => {
       try {
         const state = await loadFromAPI();
-        // For demo mode, start fresh - don't load old state that might interfere
-        setMessages([]);
-        setCurrentMessageIndex(0);
-        setStatus('ready');
-        setIsUserMessageInPlaceholder(false);
-        setDemoModeActive(true); // Always start in demo mode
+
+        // Check if there's existing state to preserve
+        if (state && state.messages && state.messages.length > 0) {
+          // Use existing state - don't reset for demo mode
+          setMessages(state.messages);
+          setCurrentMessageIndex(state.currentMessageIndex || 0);
+          setStatus(state.status || 'ready');
+          setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
+          setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : false);
+        } else {
+          // No existing state - start fresh in demo mode
+          setMessages([]);
+          setCurrentMessageIndex(0);
+          setStatus('ready');
+          setIsUserMessageInPlaceholder(false);
+          setDemoModeActive(true); // Only start demo mode when there's no existing state
+        }
+
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing state:', error);
-        // Even on error, start in demo mode
+        // On error, start in demo mode
         setMessages([]);
         setCurrentMessageIndex(0);
         setStatus('ready');
@@ -738,29 +750,24 @@ const ChatBotDemo = () => {
 
       if (data.type === 'state_update') {
         const state = data.data;
-        // Don't override demo state when demo mode is active
-        // Demo mode controls the conversation flow locally
-        if (!demoModeActive) {
-          setMessages(state.messages || []);
-          setCurrentMessageIndex(state.currentMessageIndex || 0);
-          setStatus(state.status || 'ready');
-          setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
-          setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : true);
-        }
+        // Always sync state updates for real-time synchronization
+        setMessages(state.messages || []);
+        setCurrentMessageIndex(state.currentMessageIndex || 0);
+        setStatus(state.status || 'ready');
+        setIsUserMessageInPlaceholder(state.isUserMessageInPlaceholder || false);
+        setDemoModeActive(state.demoModeActive !== undefined ? state.demoModeActive : false);
       } else if (data.type === 'clear') {
-        // Don't clear demo state when demo mode is active
-        if (!demoModeActive) {
-          setMessages([]);
-          setCurrentMessageIndex(0);
-          setStatus('ready');
-          setIsUserMessageInPlaceholder(false);
-          setDemoModeActive(true);
-        }
+        // Only clear if explicitly requested (not during normal operation)
+        setMessages([]);
+        setCurrentMessageIndex(0);
+        setStatus('ready');
+        setIsUserMessageInPlaceholder(false);
+        setDemoModeActive(true);
       }
     });
 
     return cleanup;
-  }, [demoModeActive]);
+  }, []);
 
   // Handle clear action from URL query params
   useEffect(() => {
