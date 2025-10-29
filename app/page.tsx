@@ -641,6 +641,9 @@ const ChatBotDemo = () => {
   // App integrations state
   const [appStatuses, setAppStatuses] = useState<Array<{ app_id: string; enabled: boolean; connecting?: boolean }>>([])
   const [showApps, setShowApps] = useState(false)
+
+  // Connection states for individual apps
+  const [connectionStates, setConnectionStates] = useState<Record<string, 'idle' | 'connecting' | 'connected'>>({})
   const [workflowRecordingState, setWorkflowRecordingState] = useState('not_started')
 
   // Workflows state
@@ -1121,7 +1124,7 @@ const ChatBotDemo = () => {
     // Process all messages to find the latest summary and app state
     let latestSummaryData: { heading: string; subheading: string } | null = null;
     let latestSummaryMessages: string[] = [];
-    let latestAppStatuses: Array<{ app_id: string; enabled: boolean }> = [];
+    let latestAppStatuses: Array<{ app_id: string; enabled: boolean; connecting?: boolean }> = [];
     let newWorkflows: Array<{
       id: string;
       workflow: string;
@@ -1167,6 +1170,19 @@ const ChatBotDemo = () => {
     if (latestAppStatuses.length > 0) {
       setAppStatuses(latestAppStatuses);
       setShowApps(true);
+
+      // Initialize connection states based on app statuses
+      const connectionStates: Record<string, 'idle' | 'connecting' | 'connected'> = {};
+      latestAppStatuses.forEach(app => {
+        if (app.enabled) {
+          connectionStates[app.app_id] = 'connected';
+        } else if (app.connecting) {
+          connectionStates[app.app_id] = 'connecting';
+        } else {
+          connectionStates[app.app_id] = 'idle';
+        }
+      });
+      setConnectionStates(connectionStates);
     }
 
     if (newWorkflows.length > 0) {
@@ -1527,6 +1543,12 @@ const ChatBotDemo = () => {
                           // Mark as user action
                           saveToAPIRef.current = true;
 
+                          // Set connecting state
+                          setConnectionStates(prev => ({
+                            ...prev,
+                            [appId]: 'connecting'
+                          }));
+
                           // Set connecting state for Thumbtack
                           setAppStatuses(prev => {
                             const existingApp = prev.find(app => app.app_id === appId);
@@ -1542,9 +1564,13 @@ const ChatBotDemo = () => {
                             }
                           });
 
-                          // After 10 seconds, mark as connected and progress to next message
+                          // After 3 seconds, mark as connected and progress to next message
                           setTimeout(() => {
                             saveToAPIRef.current = true;
+                            setConnectionStates(prev => ({
+                              ...prev,
+                              [appId]: 'connected'
+                            }));
                             setAppStatuses(prev =>
                               prev.map(app =>
                                 app.app_id === appId
@@ -1554,7 +1580,7 @@ const ChatBotDemo = () => {
                             );
                             // Progress to next message after connection is complete
                             setCurrentMessageIndex(prev => prev + 1);
-                          }, 10000);
+                          }, 3000);
                         } else if (["navigate_thumbtack", "navigate_openphone"].includes(part.action)) {
                           // Open Thumbtack in new tab/window
                           window.open(part.url, '_blank');
@@ -1563,19 +1589,48 @@ const ChatBotDemo = () => {
                           setCurrentMessageIndex(prev => prev + 1);
                         }
                       }}
-                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                      style={{
+                      className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connected'
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        : (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connecting'
+                          ? 'bg-blue-400 text-white cursor-wait'
+                          : 'text-white'
+                        }`}
+                      style={(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle' ? {
+                        backgroundColor: '#365ccd',
+                        '--hover-color': '#2d4bb8'
+                      } as React.CSSProperties & { '--hover-color': string } : (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') ? {} : {
                         backgroundColor: '#365ccd',
                         '--hover-color': '#2d4bb8'
                       } as React.CSSProperties & { '--hover-color': string }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#2d4bb8';
+                        if ((part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle') {
+                          e.currentTarget.style.backgroundColor = '#2d4bb8';
+                        } else if (!(part.action === 'connect_thumbtack' || part.action === 'connect_openphone')) {
+                          e.currentTarget.style.backgroundColor = '#2d4bb8';
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#365ccd';
+                        if ((part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle') {
+                          e.currentTarget.style.backgroundColor = '#365ccd';
+                        } else if (!(part.action === 'connect_thumbtack' || part.action === 'connect_openphone')) {
+                          e.currentTarget.style.backgroundColor = '#365ccd';
+                        }
                       }}
+                      disabled={(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && (connectionStates[part.action.split('_')[1]] === 'connecting' || connectionStates[part.action.split('_')[1]] === 'connected')}
                     >
-                      {part.text}
+                      {(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connecting' ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Connecting...
+                        </>
+                      ) : (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connected' ? (
+                        `Connected to ${part.text.replace('Connect ', '')}`
+                      ) : (
+                        part.text
+                      )}
                       {part.url && (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
