@@ -133,6 +133,29 @@ body.stackbirds-recording-border {
 	}
 }
 
+/* Pause border animation for OpenPhone page */
+body.stackbirds-pause-border {
+	box-sizing: border-box;
+	border: 2px solid #f59e0b !important;
+	animation: pausePulse 0.5s ease-in-out;
+	margin: 10px
+}
+
+@keyframes pausePulse {
+	0% {
+		border-color: #f59e0b;
+		box-shadow: 0 0 0 rgba(245, 158, 11, 0.7);
+	}
+	50% {
+		border-color: #d97706;
+		box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+	}
+	100% {
+		border-color: #f59e0b;
+		box-shadow: 0 0 0 rgba(245, 158, 11, 0.7);
+	}
+}
+
 .stackbirds-recording-overlay {
 	position: fixed;
 	top: 50%;
@@ -168,4 +191,41 @@ body.stackbirds-recording-border {
 	opacity: 0;
 	transform: translate(-50%, -50%) scale(0.85);
 	box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.stackbirds-pause-overlay {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.85);
+	width: 120px;
+	height: 120px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 9999px;
+	background: rgba(245, 158, 11, 0.95);
+	color: #fff;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	text-transform: none;
+	text-align: center;
+	pointer-events: none;
+	opacity: 0;
+	box-shadow: 0 0 30px rgba(245, 158, 11, 0.45);
+	z-index: 2147483647;
+	transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stackbirds-pause-overlay-visible {
+	opacity: 1;
+	transform: translate(-50%, -50%) scale(1);
+	box-shadow: 0 0 45px rgba(245, 158, 11, 0.55);
+}
+
+.stackbirds-pause-overlay-fade {
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(0.85);
+	box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }

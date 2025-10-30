@@ -1,84 +1,156 @@
 // content.js
 let sidebarVisible = false;
 let sidebarContainer = null;
-const debug = false
+let defaultTab = "chat"; // Default tab for sidebar iframe
+const debug = true;
 
-const RECORDING_OVERLAY_ID = "stackbirds-recording-overlay"
-let recordingOverlayTimeoutId = null
-let recordingOverlayRemovalTimeoutId = null
+const RECORDING_OVERLAY_ID = "stackbirds-recording-overlay";
+let recordingOverlayTimeoutId = null;
+let recordingOverlayRemovalTimeoutId = null;
+
+const PAUSE_OVERLAY_ID = "stackbirds-pause-overlay";
+let pauseOverlayTimeoutId = null;
+let pauseOverlayRemovalTimeoutId = null;
 
 function getPageContentCenterX() {
-	const computedStyles = window.getComputedStyle(document.body)
-	const marginRightValue = parseFloat(computedStyles.marginRight || "0") || 0
-	const contentWidth = Math.max(window.innerWidth - marginRightValue, 0)
-	return contentWidth / 2
+	const computedStyles = window.getComputedStyle(document.body);
+	const marginRightValue = parseFloat(computedStyles.marginRight || "0") || 0;
+	const contentWidth = Math.max(window.innerWidth - marginRightValue, 0);
+	return contentWidth / 2;
 }
 
 function showRecordingOverlay(duration = 2000) {
 	if (!document || !document.body) {
-		return
+		return;
 	}
 
-	const existingOverlay = document.getElementById(RECORDING_OVERLAY_ID)
-	const overlay = existingOverlay || document.createElement("div")
+	const existingOverlay = document.getElementById(RECORDING_OVERLAY_ID);
+	const overlay = existingOverlay || document.createElement("div");
 
 	if (!existingOverlay) {
-		overlay.id = RECORDING_OVERLAY_ID
-		overlay.className = "stackbirds-recording-overlay"
-		overlay.textContent = "recording"
-		document.body.appendChild(overlay)
+		overlay.id = RECORDING_OVERLAY_ID;
+		overlay.className = "stackbirds-recording-overlay";
+		overlay.textContent = "recording";
+		document.body.appendChild(overlay);
 	} else {
-		overlay.classList.remove("stackbirds-recording-overlay-fade")
-		overlay.classList.remove("stackbirds-recording-overlay-visible")
+		overlay.classList.remove("stackbirds-recording-overlay-fade");
+		overlay.classList.remove("stackbirds-recording-overlay-visible");
 	}
 
-	const centerX = getPageContentCenterX()
-	overlay.style.left = `${centerX}px`
-	overlay.style.right = "auto"
-	overlay.style.top = "50%"
+	const centerX = getPageContentCenterX();
+	overlay.style.left = `${centerX}px`;
+	overlay.style.right = "auto";
+	overlay.style.top = "50%";
 
 	if (recordingOverlayRemovalTimeoutId) {
-		clearTimeout(recordingOverlayRemovalTimeoutId)
-		recordingOverlayRemovalTimeoutId = null
+		clearTimeout(recordingOverlayRemovalTimeoutId);
+		recordingOverlayRemovalTimeoutId = null;
 	}
 
 	requestAnimationFrame(() => {
-		overlay.classList.add("stackbirds-recording-overlay-visible")
-	})
+		overlay.classList.add("stackbirds-recording-overlay-visible");
+	});
 
 	if (recordingOverlayTimeoutId) {
-		clearTimeout(recordingOverlayTimeoutId)
+		clearTimeout(recordingOverlayTimeoutId);
 	}
 
 	recordingOverlayTimeoutId = window.setTimeout(() => {
-		hideRecordingOverlay()
-	}, duration)
+		hideRecordingOverlay();
+	}, duration);
 }
 
 function hideRecordingOverlay() {
 	if (recordingOverlayTimeoutId) {
-		clearTimeout(recordingOverlayTimeoutId)
-		recordingOverlayTimeoutId = null
+		clearTimeout(recordingOverlayTimeoutId);
+		recordingOverlayTimeoutId = null;
 	}
 
-	const overlay = document.getElementById(RECORDING_OVERLAY_ID)
+	const overlay = document.getElementById(RECORDING_OVERLAY_ID);
 	if (!overlay) {
-		return
+		return;
 	}
 
-	overlay.classList.remove("stackbirds-recording-overlay-visible")
-	overlay.classList.add("stackbirds-recording-overlay-fade")
+	overlay.classList.remove("stackbirds-recording-overlay-visible");
+	overlay.classList.add("stackbirds-recording-overlay-fade");
 
 	if (recordingOverlayRemovalTimeoutId) {
-		clearTimeout(recordingOverlayRemovalTimeoutId)
+		clearTimeout(recordingOverlayRemovalTimeoutId);
 	}
 
 	recordingOverlayRemovalTimeoutId = setTimeout(() => {
 		if (overlay.parentElement) {
-			overlay.remove()
+			overlay.remove();
 		}
-		recordingOverlayRemovalTimeoutId = null
-	}, 250)
+		recordingOverlayRemovalTimeoutId = null;
+	}, 250);
+}
+
+function showPauseOverlay(duration = 2000) {
+	if (!document || !document.body) {
+		return;
+	}
+
+	const existingOverlay = document.getElementById(PAUSE_OVERLAY_ID);
+	const overlay = existingOverlay || document.createElement("div");
+
+	if (!existingOverlay) {
+		overlay.id = PAUSE_OVERLAY_ID;
+		overlay.className = "stackbirds-pause-overlay";
+		overlay.textContent = "paused";
+		document.body.appendChild(overlay);
+	} else {
+		overlay.classList.remove("stackbirds-pause-overlay-fade");
+		overlay.classList.remove("stackbirds-pause-overlay-visible");
+	}
+
+	const centerX = getPageContentCenterX();
+	overlay.style.left = `${centerX}px`;
+	overlay.style.right = "auto";
+	overlay.style.top = "50%";
+
+	if (pauseOverlayRemovalTimeoutId) {
+		clearTimeout(pauseOverlayRemovalTimeoutId);
+		pauseOverlayRemovalTimeoutId = null;
+	}
+
+	requestAnimationFrame(() => {
+		overlay.classList.add("stackbirds-pause-overlay-visible");
+	});
+
+	if (pauseOverlayTimeoutId) {
+		clearTimeout(pauseOverlayTimeoutId);
+	}
+
+	pauseOverlayTimeoutId = window.setTimeout(() => {
+		hidePauseOverlay();
+	}, duration);
+}
+
+function hidePauseOverlay() {
+	if (pauseOverlayTimeoutId) {
+		clearTimeout(pauseOverlayTimeoutId);
+		pauseOverlayTimeoutId = null;
+	}
+
+	const overlay = document.getElementById(PAUSE_OVERLAY_ID);
+	if (!overlay) {
+		return;
+	}
+
+	overlay.classList.remove("stackbirds-pause-overlay-visible");
+	overlay.classList.add("stackbirds-pause-overlay-fade");
+
+	if (pauseOverlayRemovalTimeoutId) {
+		clearTimeout(pauseOverlayRemovalTimeoutId);
+	}
+
+	pauseOverlayRemovalTimeoutId = setTimeout(() => {
+		if (overlay.parentElement) {
+			overlay.remove();
+		}
+		pauseOverlayRemovalTimeoutId = null;
+	}, 250);
 }
 
 // Listen for extension icon click
@@ -92,24 +164,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Listen for postMessage from the app (localhost or deployed)
 window.addEventListener("message", (event) => {
-
 	// Verify the origin is from localhost or deployed app
 	const allowedOrigins = [
 		"http://localhost:3000",
-		"https://agent-demo-pied.vercel.app"
+		"https://agent-demo-pied.vercel.app",
 	];
 
 	if (!allowedOrigins.includes(event.origin)) {
 		return;
 	}
 
-
 	// Handle open sidebar request
 	if (event.data && event.data.action === "openSidebar") {
+		// Set default tab if provided
+		const previousTab = defaultTab;
+		if (event.data.defaultTab) {
+			defaultTab = event.data.defaultTab;
+		}
 
 		// If sidebar doesn't exist yet, create it first
 		if (!sidebarContainer) {
 			createSidebarHidden();
+		} else if (previousTab !== defaultTab) {
+			// Update iframe src if tab changed
+			const iframe = sidebarContainer.querySelector("#stackbirds-iframe");
+			if (iframe) {
+				const hostname = window.location.hostname;
+				const iframeUrl =
+					hostname.includes("localhost") || debug
+						? "http://localhost:3000"
+						: "https://agent-demo-pied.vercel.app";
+				iframe.src = `${iframeUrl}?isExtension=true&tab=${defaultTab}`;
+			}
 		}
 
 		// Reveal the sidebar if it's hidden
@@ -119,7 +205,11 @@ window.addEventListener("message", (event) => {
 	}
 
 	// Handle recording started event - show border on OpenPhone page
-	if (event.data && event.data.action === "recordingStarted" && event.data.source === "stackbirds-app") {
+	if (
+		event.data &&
+		event.data.action === "recordingStarted" &&
+		event.data.source === "stackbirds-app"
+	) {
 		// Add border class to body
 		document.body.classList.add("stackbirds-recording-border");
 		showRecordingOverlay();
@@ -128,6 +218,23 @@ window.addEventListener("message", (event) => {
 		setTimeout(() => {
 			document.body.classList.remove("stackbirds-recording-border");
 			hideRecordingOverlay();
+		}, 2000);
+	}
+
+	// Handle recording paused event - show pause overlay
+	if (
+		event.data &&
+		event.data.action === "recordingPaused" &&
+		event.data.source === "stackbirds-app"
+	) {
+		// Add yellow border class to body
+		document.body.classList.add("stackbirds-pause-border");
+		showPauseOverlay();
+
+		// Remove border after 2 seconds
+		setTimeout(() => {
+			document.body.classList.remove("stackbirds-pause-border");
+			hidePauseOverlay();
 		}, 2000);
 	}
 });
@@ -148,7 +255,9 @@ function isAutoOpenDomain() {
 function saveSidebarState(isVisible) {
 	if (isAutoOpenDomain()) {
 		const hostname = window.location.hostname;
-		const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+		const isLocalOrDeployed =
+			hostname.includes("localhost") ||
+			hostname.includes("agent-demo-pied.vercel.app");
 
 		// Don't save state for localhost/deployed app - it should always start hidden
 		if (isLocalOrDeployed) {
@@ -174,7 +283,9 @@ function saveSidebarState(isVisible) {
 	}
 
 	const hostname = window.location.hostname;
-	const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+	const isLocalOrDeployed =
+		hostname.includes("localhost") ||
+		hostname.includes("agent-demo-pied.vercel.app");
 
 	if (isLocalOrDeployed) {
 		// For localhost/deployed app: always create sidebar but start hidden
@@ -204,9 +315,10 @@ function createSidebarHidden() {
 
 	// Determine iframe URL based on hostname
 	const hostname = window.location.hostname;
-	const iframeUrl = hostname.includes("localhost") || debug
-		? "http://localhost:3000"
-		: "https://agent-demo-pied.vercel.app";
+	const iframeUrl =
+		hostname.includes("localhost") || debug
+			? "http://localhost:3000"
+			: "https://agent-demo-pied.vercel.app";
 
 	// Create sidebar container
 	sidebarContainer = document.createElement("div");
@@ -220,7 +332,7 @@ function createSidebarHidden() {
     </div>
     <iframe
       id="stackbirds-iframe"
-      src="${iframeUrl}?isExtension=true&tab=chat"
+      src="${iframeUrl}?isExtension=true&tab=${defaultTab}"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
@@ -229,7 +341,9 @@ function createSidebarHidden() {
 	document.body.appendChild(sidebarContainer);
 
 	// Add close button listener
-	document.getElementById("stackbirds-close-btn").addEventListener("click", hideSidebar);
+	document
+		.getElementById("stackbirds-close-btn")
+		.addEventListener("click", hideSidebar);
 
 	// Add draggable functionality
 	makeResizable();
@@ -251,7 +365,6 @@ function revealSidebar() {
 	// Set margin based on sidebar width (1/3 of viewport)
 	const currentWidth = sidebarContainer.offsetWidth || window.innerWidth / 3;
 	document.body.style.marginRight = currentWidth + "px";
-
 }
 
 function toggleSidebar() {
@@ -261,9 +374,15 @@ function toggleSidebar() {
 		// For localhost/deployed domains, sidebar is created hidden with CSS classes
 		// so we need to use revealSidebar instead of showSidebar
 		const hostname = window.location.hostname;
-		const isLocalOrDeployed = hostname.includes("localhost") || hostname.includes("agent-demo-pied.vercel.app");
+		const isLocalOrDeployed =
+			hostname.includes("localhost") ||
+			hostname.includes("agent-demo-pied.vercel.app");
 
-		if (isLocalOrDeployed && sidebarContainer && sidebarContainer.classList.contains("stackbirds-hidden")) {
+		if (
+			isLocalOrDeployed &&
+			sidebarContainer &&
+			sidebarContainer.classList.contains("stackbirds-hidden")
+		) {
 			revealSidebar();
 		} else {
 			showSidebar();
@@ -277,16 +396,18 @@ function showSidebar() {
 		sidebarVisible = true;
 		document.body.classList.add("stackbirds-sidebar-open");
 		// Set initial margin based on current width (1/3 of viewport)
-		const currentWidth = sidebarContainer.offsetWidth || window.innerWidth / 3;
+		const currentWidth =
+			sidebarContainer.offsetWidth || window.innerWidth / 3;
 		document.body.style.marginRight = currentWidth + "px";
 		saveSidebarState(true);
 		return;
 	}
 
 	const hostname = window.location.hostname;
-	const iframeUrl = hostname.includes("localhost") || debug
-		? "http://localhost:3000"
-		: "https://agent-demo-pied.vercel.app";
+	const iframeUrl =
+		hostname.includes("localhost") || debug
+			? "http://localhost:3000"
+			: "https://agent-demo-pied.vercel.app";
 
 	// Create sidebar container
 	sidebarContainer = document.createElement("div");
@@ -298,7 +419,7 @@ function showSidebar() {
     </div>
     <iframe
       id="stackbirds-iframe"
-      src="${iframeUrl}?isExtension=true&tab=chat"
+      src="${iframeUrl}?isExtension=true&tab=${defaultTab}"
       frameborder="0"
       allow="clipboard-write; microphone"
     ></iframe>
@@ -364,7 +485,7 @@ function makeResizable() {
 		const offsetRight =
 			document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
 		const minWidth = window.innerWidth * 0.25; // 25% minimum
-		const maxWidth = window.innerWidth * 0.5;  // 50% maximum
+		const maxWidth = window.innerWidth * 0.5; // 50% maximum
 		const newWidth = Math.min(Math.max(offsetRight, minWidth), maxWidth);
 		sidebar.style.width = newWidth + "px";
 		// Update body margin to match new width

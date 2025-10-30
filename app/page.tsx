@@ -220,7 +220,7 @@ const getBroadcastSync = () => {
   return broadcastSync;
 };
 
-const mockConversation : CustomUIMessage[] = [
+const mockConversation: CustomUIMessage[] = [
   ...thumbtackConversation,
   ...openPhoneConversation
 ]
@@ -426,7 +426,12 @@ const ChatBotDemo = () => {
     const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
     if (hasOpenSidebar) {
       // Send postMessage to current window for content script to receive
-      window.postMessage({ action: "openSidebar", source: "stackbirds-app" }, "*");
+      // After business profile gathering, open sidebar with profile tab
+      window.postMessage({
+        action: "openSidebar",
+        source: "stackbirds-app",
+        defaultTab: "profile"
+      }, "*");
     }
 
     // Process summary-added parts
@@ -1420,6 +1425,14 @@ const ChatBotDemo = () => {
                                   onClick={() => {
                                     saveToAPIRef.current = true;
                                     setWorkflowRecordingState("paused");
+
+                                    // Send message to content script to show pause overlay
+                                    if (window.parent && window.parent !== window) {
+                                      window.parent.postMessage({
+                                        action: "recordingPaused",
+                                        source: "stackbirds-app"
+                                      }, "*");
+                                    }
                                   }}
                                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                   title="Pause"
