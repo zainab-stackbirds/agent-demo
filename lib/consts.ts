@@ -665,12 +665,8 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         role: "ai-agent",
         parts: [
             {
-                type: "agent-interrupt",
-                message: " Okay. And would you like me to keep track of the leads and follows up somewhere?"
-            },
-            {
-                type: "recording-state",
-                state: "pause"
+                type: "text",
+                text: " Okay. And would you like me to keep track of the leads and follows up somewhere?"
             }
         ],
     },
