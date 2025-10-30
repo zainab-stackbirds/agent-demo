@@ -233,6 +233,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Jobs",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -243,6 +244,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Views",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -253,6 +255,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Leads",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -308,6 +311,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on View details",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -318,6 +322,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "View Contacted Pros",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -328,6 +333,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Go back",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -338,6 +344,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Messages",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -348,6 +355,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on highlight",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -358,6 +366,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Use your quick reply",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -403,6 +412,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Thank you for your inquiry…",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -466,6 +476,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Settings",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -476,6 +487,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on navigation sidebar",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -486,6 +498,7 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Click on Weekly budget",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -623,6 +636,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 			{
 				type: "text",
 				text: "Click on Send a message",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -633,6 +647,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 			{
 				type: "text",
 				text: "Click on Commands",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -643,6 +658,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 			{
 				type: "text",
 				text: "Click on /snippets",
+				displayAvatar: false,
 			},
 		],
 	},
@@ -653,6 +669,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 			{
 				type: "text",
 				text: "Click on Post Thumbtack Outreach For Meal Prep…",
+				displayAvatar: false,
 			},
 		],
 	},
