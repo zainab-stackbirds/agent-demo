@@ -1,7 +1,7 @@
 // content.js
 let sidebarVisible = false;
 let sidebarContainer = null;
-const debug = false
+const debug = true
 
 const RECORDING_OVERLAY_ID = "stackbirds-recording-overlay"
 let recordingOverlayTimeoutId = null

@@ -267,7 +267,7 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "I need to understand your business first. Tell me about your business. Do you have a website, facebook, instagram or google business profile?"
+        text: "Hi! I’m the Sales Agent, pre-trained for sales and lead management, so I will first need to understand your business and then understand your sales workflows. \n\nTell me about your business. For e.g. do you have a website, facebook, instagram or google business profile?"
       },
     ],
   },
@@ -288,30 +288,30 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "reasoning",
-        text: "Analyzing business context",
+        text: "Analyzing website and business details",
         status: "streaming",
       },
     ],
   },
-  {
-    id: "msg-5",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text-image",
-        text: "After searching I found this website, does this look yours?",
-        url: "/www_eatcookjoy_com.png",
-        link: "https://www.eatcookjoy.com"
-      },
-    ],
-  },
+  // {
+  //   id: "msg-5",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "text-image",
+  //       text: "After searching I found this website, does this look yours?",
+  //       url: "/www_eatcookjoy_com.png",
+  //       link: "https://www.eatcookjoy.com"
+  //     },
+  //   ],
+  // },
   {
     id: "msg-6",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Here is what I understand:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n\nAm I missing anything?"
+        text: "Here is what I understand about your business:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n\nAm I missing anything?"
       },
     ]
   },
@@ -366,12 +366,22 @@ const mockConversation: CustomUIMessage[] = [
     ]
   },
   {
+    id: "msg-8a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue."
+      },
+    ],
+  },
+  {
     id: "msg-9",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Ok, let's continue. Where do you manage your leads?"
+        text: "Where do you manage your leads? Feel free to share in chat or over voice."
       },
     ],
   },
@@ -424,38 +434,26 @@ const mockConversation: CustomUIMessage[] = [
       }
     ],
   },
-  {
-    id: "msg-12",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "app-event",
-        apps: [
-          { app_id: "thumbtack", enabled: true },
-        ]
-      },
-    ],
-  },
+  // {
+  //   id: "msg-12",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //       ]
+  //     },
+  //   ],
+  // },
   {
     id: "msg-13",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Now that I can access Thumbtack, lets walk through how you manage your leads there."
+        text: "Now that I can access Thumbtack, lets walk through how you manage your leads there. Can you go to Thumbtack and show me how you do things?"
       },
-    ],
-  },
-  {
-    id: "msg-13b",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "button",
-        text: "Go To Thumbtack",
-        action: "navigate_thumbtack",
-        url: "https://thumbtack.com"
-      }
     ],
   },
   {
@@ -463,17 +461,13 @@ const mockConversation: CustomUIMessage[] = [
     role: "ai-agent",
     parts: [
       {
-        type: "text",
-        text: "Great. Now that you are on Thumbtack, lets begin capturing your workflows"
-      },
-      {
         type: "button",
         text: "Start capture",
         action: "start_capture"
       }
     ],
   },
-    {
+  {
     id: "msg-13d",
     role: "ai-agent",
     parts: [
@@ -507,10 +501,6 @@ const mockConversation: CustomUIMessage[] = [
     id: "msg-14",
     role: "user",
     parts: [
-      {
-        type: "recording-state",
-        state: "start"
-      },
       {
         type: "voice",
         dummyText: "Ok so first I got to Thumbtack. and then I go to jobs. This is where I see the leads. I will click on a lead, then send them a template message.",
@@ -555,7 +545,30 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "text",
-        text: "Got it. I will make sure to watch out for incoming leads and send them a templated message. Would you like me to get your approval or just send the message?"
+        text: "Thanks, please continue"
+      }, {
+        type: "recording-state",
+        state: "start"
+      }
+    ],
+  },
+  {
+    id: "msg-13f",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Thank you for your inquiry…"
+      }
+    ],
+  },
+  {
+    id: "msg-17",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Cool. I have saved your workflow. Do you have a weekly budget set for your leads? Most private chef companies choose to set a weekly budget and pay for opportunities additionally. Is that how you do this? "
       },
     ],
   },
@@ -565,8 +578,71 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "voice",
-        dummyText: "Get my approval and then we can adjust over time?",
+        dummyText: "yes",
         recordingDuration: 3000
+      },
+    ],
+  },
+  {
+    id: "msg-17",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Can you show me your setup?"
+      },
+    ],
+  },
+  {
+    id: "msg-13c",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "button",
+        text: "Start capture",
+        action: "start_capture"
+      }
+    ],
+  },
+  {
+    id: "msg-19",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "**1**. Click on Settings\n**2**. Click on navigation sidebar**3**. Click on Weekly budget"
+      },
+    ],
+  },
+  {
+    id: "msg-6a",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Analyzed and stored steps in memory",
+        status: "streaming",
+      }
+    ],
+  },
+  {
+    id: "msg-19",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I will make sure to watch out for incoming leads and send them a templated message as long as it meets your weekly budget. Would you like me to get your approval or just send the message?"
+      },
+    ],
+  },
+  {
+    id: "msg-21",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Get my approval and then we can adjust over time?",
+        recordingDuration: 4000
       },
     ],
   },
@@ -578,47 +654,6 @@ const mockConversation: CustomUIMessage[] = [
         type: "text",
         text: "Sure. Your preference has been recorded"
       },
-      {
-        type: "new-workflow",
-        workflow: "Respond to all incoming leads automatically",
-        category: "lead-management"
-      },
-      {
-        type: "new-workflow",
-        workflow: "Get user approval before sending templated messages",
-        category: "communication"
-      },
-    ],
-  },
-  {
-    id: "msg-19b",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "recording-state",
-        state: "pause"
-      }
-    ],
-  },
-  {
-    id: "msg-20",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "agent-interrupt",
-        message: "Ok so I see your templates, these are the ones you want me to use?"
-      }
-    ],
-  },
-  {
-    id: "msg-21",
-    role: "user",
-    parts: [
-      {
-        type: "voice",
-        dummyText: "Yes. Feel free to use this. After Thumbtack message is sent I continue the conversation on Openphone.",
-        recordingDuration: 4000
-      },
     ],
   },
   {
@@ -627,13 +662,18 @@ const mockConversation: CustomUIMessage[] = [
     parts: [
       {
         type: "new-workflow",
-        workflow: "Use approved templates for initial lead responses",
+        workflow: "Manage leads on Thumbtack",
         category: "communication"
       },
       {
         type: "new-workflow",
-        workflow: "Continue conversations on OpenPhone after Thumbtack",
+        workflow: "Respond to all leads via template",
         category: "communication"
+      },
+      {
+        type: "new-workflow",
+        workflow: "Respond to all leads via template",
+        category: "Approval required"
       },
     ],
   },
@@ -1900,21 +1940,21 @@ const ChatBotDemo = () => {
                                   onClick={() => {
                                     saveToAPIRef.current = true;
                                     setWorkflowRecordingState("recording");
-                                                              if (window.parent && window.parent !== window) {
-                                    window.parent.postMessage({
-                                      action: "recordingStarted",
-                                      source: "stackbirds-app"
-                                    }, "*");
-                                  }
+                                    if (window.parent && window.parent !== window) {
+                                      window.parent.postMessage({
+                                        action: "recordingStarted",
+                                        source: "stackbirds-app"
+                                      }, "*");
+                                    }
 
-                                  if (updateSourceRef.current === 'self' && broadcastInstance) {
-                                    broadcastInstance.broadcastMessage({
-                                      type: 'WORKFLOW_RECORDING_STATE',
-                                      payload: {
-                                        state: 'recording'
-                                      }
-                                    });
-                                  }
+                                    if (updateSourceRef.current === 'self' && broadcastInstance) {
+                                      broadcastInstance.broadcastMessage({
+                                        type: 'WORKFLOW_RECORDING_STATE',
+                                        payload: {
+                                          state: 'recording'
+                                        }
+                                      });
+                                    }
                                   }}
                                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                   title="Resume"
