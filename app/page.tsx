@@ -33,6 +33,7 @@ import { openPhoneConversation } from "@/lib/consts";
 import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Header from "@/components/UnitComponents/Header";
+import RecordingIndicator from "@/components/extension/recording-indicator";
 
 export type CustomUIMessage = Omit<UIMessage, 'role' | 'parts'> & {
   role: "assistant" | "user" | "ai-agent";
@@ -453,6 +454,51 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
+    id: "msg-13c",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Great. Now that you are on Thumbtack, lets begin capturing your workflows"
+      },
+      {
+        type: "button",
+        text: "Start capture",
+        action: "start_capture"
+      }
+    ],
+  },
+  {
+    id: "msg-13d",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Jobs"
+      }
+    ],
+  },
+  {
+    id: "msg-13e",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Leads"
+      }
+    ],
+  },
+  {
+    id: "msg-13f",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on View details"
+      }
+    ],
+  },
+  {
     id: "msg-14",
     role: "user",
     parts: [
@@ -659,6 +705,7 @@ const ChatBotDemo = () => {
   // Connection states for individual apps
   const [connectionStates, setConnectionStates] = useState<Record<string, 'idle' | 'connecting' | 'connected'>>({})
   const [workflowRecordingState, setWorkflowRecordingState] = useState('not_started')
+  const [navigationButtonClicked, setNavigationButtonClicked] = useState<Record<string, boolean>>({})
 
   // Workflows state
   const [workflows, setWorkflows] = useState<Array<{
@@ -1570,7 +1617,7 @@ const ChatBotDemo = () => {
                 return (
                   <div
                     key={`${message.id}-${i}`}
-                    className="flex justify-start mb-6 ml-10"
+                    className="flex items-center gap-3 justify-start mb-6 ml-10"
                   >
                     <button
                       onClick={() => {
@@ -1617,41 +1664,100 @@ const ChatBotDemo = () => {
                             // Don't automatically progress - let the connection state persist
                           }, 3000);
                         } else if (["navigate_thumbtack", "navigate_openphone"].includes(part.action)) {
-                          // Open Thumbtack in new tab/window
-                          window.open(part.url, '_blank');
-                          // Progress to next message
+                          // Mark button as clicked FIRST
+                          setNavigationButtonClicked(prev => ({
+                            ...prev,
+                            [part.action]: true
+                          }));
+
+                          // Open URL in new tab if provided
+                          if (part.url) {
+                            window.open(part.url, '_blank');
+                          }
+
+                          // Use a small delay to ensure state updates before progressing
+                          setTimeout(() => {
+                            // Progress to next message and show it automatically
+                            saveToAPIRef.current = true;
+                            const nextIndex = currentMessageIndex + 1;
+                            if (nextIndex < mockConversation.length) {
+                              const nextMessage = mockConversation[nextIndex];
+                              setStatus("ready");
+                              appendMessage(nextMessage);
+                              setCurrentMessageIndex(nextIndex);
+
+                              // Broadcast the progress
+                              if (updateSourceRef.current === 'self' && broadcastInstance) {
+                                broadcastInstance.broadcastMessage({
+                                  type: 'DEMO_PROGRESS',
+                                  payload: {
+                                    newIndex: nextIndex,
+                                    newMessage: nextMessage,
+                                    status: "ready",
+                                    isUserMessageInPlaceholder: false
+                                  }
+                                });
+                              }
+                            }
+                          }, 100);
+                        } else if (part.action === "start_capture") {
+                          // Start capture - show recording indicator
                           saveToAPIRef.current = true;
-                          setCurrentMessageIndex(prev => prev + 1);
+                          setWorkflowRecordingState("recording");
                         }
                       }}
                       className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connected'
                         ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                         : (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connecting'
                           ? 'bg-blue-400 text-white cursor-wait'
-                          : 'text-white'
+                          : (part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && navigationButtonClicked[part.action]
+                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                            : part.action === 'start_capture' && workflowRecordingState !== 'not_started'
+                              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                              : 'text-white'
                         }`}
-                      style={(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle' ? {
-                        backgroundColor: '#365ccd',
-                        '--hover-color': '#2d4bb8'
-                      } as React.CSSProperties & { '--hover-color': string } : (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') ? {} : {
-                        backgroundColor: '#365ccd',
-                        '--hover-color': '#2d4bb8'
-                      } as React.CSSProperties & { '--hover-color': string }}
+                      style={
+                        (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle' ? {
+                          backgroundColor: '#365ccd',
+                          '--hover-color': '#2d4bb8'
+                        } as React.CSSProperties & { '--hover-color': string }
+                          : (part.action === 'connect_thumbtack' || part.action === 'connect_openphone') ? {}
+                            : (part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && navigationButtonClicked[part.action] ? {}
+                              : part.action === 'start_capture' && workflowRecordingState !== 'not_started' ? {}
+                                : {
+                                  backgroundColor: '#365ccd',
+                                  '--hover-color': '#2d4bb8'
+                                } as React.CSSProperties & { '--hover-color': string }
+                      }
                       onMouseEnter={(e) => {
                         if ((part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle') {
                           e.currentTarget.style.backgroundColor = '#2d4bb8';
-                        } else if (!(part.action === 'connect_thumbtack' || part.action === 'connect_openphone')) {
+                        } else if ((part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && !navigationButtonClicked[part.action]) {
+                          e.currentTarget.style.backgroundColor = '#2d4bb8';
+                        } else if (part.action === 'start_capture' && workflowRecordingState === 'not_started') {
+                          e.currentTarget.style.backgroundColor = '#2d4bb8';
+                        } else if (!(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && !(part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && part.action !== 'start_capture') {
                           e.currentTarget.style.backgroundColor = '#2d4bb8';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if ((part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'idle') {
                           e.currentTarget.style.backgroundColor = '#365ccd';
-                        } else if (!(part.action === 'connect_thumbtack' || part.action === 'connect_openphone')) {
+                        } else if ((part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && !navigationButtonClicked[part.action]) {
+                          e.currentTarget.style.backgroundColor = '#365ccd';
+                        } else if (part.action === 'start_capture' && workflowRecordingState === 'not_started') {
+                          e.currentTarget.style.backgroundColor = '#365ccd';
+                        } else if (!(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && !(part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && part.action !== 'start_capture') {
                           e.currentTarget.style.backgroundColor = '#365ccd';
                         }
                       }}
-                      disabled={(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && (connectionStates[part.action.split('_')[1]] === 'connecting' || connectionStates[part.action.split('_')[1]] === 'connected')}
+                      disabled={
+                        ((part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && (connectionStates[part.action.split('_')[1]] === 'connecting' || connectionStates[part.action.split('_')[1]] === 'connected'))
+                        ||
+                        ((part.action === 'navigate_thumbtack' || part.action === 'navigate_openphone') && navigationButtonClicked[part.action])
+                        ||
+                        (part.action === 'start_capture' && workflowRecordingState !== 'not_started')
+                      }
                     >
                       {(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connecting' ? (
                         <>
@@ -1683,6 +1789,150 @@ const ChatBotDemo = () => {
                         </svg>
                       )}
                     </button>
+
+                    {/* Recording Control Bar - Show inline with Start capture button */}
+                    {part.action === 'start_capture' && (
+                      <AnimatePresence>
+                        {workflowRecordingState === "recording" && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                              <motion.div
+                                className="w-2.5 h-2.5 bg-red-600 rounded-full"
+                                animate={{
+                                  opacity: [1, 0.3, 1],
+                                }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: "easeInOut"
+                                }}
+                              />
+                              <span className="text-sm font-semibold text-red-600">
+                                Recording
+                              </span>
+                              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-300 dark:border-gray-600">
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current = true;
+                                    setWorkflowRecordingState("paused");
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Pause"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <rect x="6" y="4" width="4" height="16" />
+                                    <rect x="14" y="4" width="4" height="16" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current = true;
+                                    setWorkflowRecordingState("not_started");
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Stop"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <rect x="6" y="6" width="12" height="12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {workflowRecordingState === "paused" && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                              <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
+                              <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-500">
+                                Paused
+                              </span>
+                              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-300 dark:border-gray-600">
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current = true;
+                                    setWorkflowRecordingState("recording");
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Resume"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current = true;
+                                    setWorkflowRecordingState("not_started");
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Stop"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <rect x="6" y="6" width="12" height="12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    )}
                   </div>
                 );
               case "link":
@@ -2048,6 +2298,7 @@ const ChatBotDemo = () => {
                 {/* Business Profile content */}
                 {showSummary && summaryData ? (
                   <>
+                    <RecordingIndicator recordingState={workflowRecordingState} />
                     <ExtensionSummary
                       heading={summaryData.heading}
                       subheading={summaryData.subheading}
@@ -2117,6 +2368,8 @@ const ChatBotDemo = () => {
 
             {/* Sidebar - 1/3 width */}
             <div className="w-1/3 flex-shrink-0 flex flex-col min-h-0">
+              <RecordingIndicator recordingState={workflowRecordingState} />
+
               {showSummary && summaryData && (
                 <div className="flex-shrink-0 mb-4">
                   <ExtensionSummary
