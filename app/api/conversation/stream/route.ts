@@ -2,13 +2,17 @@ import { NextRequest } from 'next/server';
 import { getSubscriberRedis, getConversationState } from '@/lib/redis';
 
 export async function GET(request: NextRequest) {
+  // Get userId from query params
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId') || 'default';
+
   // Create a ReadableStream for SSE
   const encoder = new TextEncoder();
-  
+
   const stream = new ReadableStream({
     async start(controller) {
       let isClosed = false;
-      
+
       const send = (data: string) => {
         if (isClosed) return;
         try {
@@ -31,27 +35,28 @@ export async function GET(request: NextRequest) {
 
       try {
         const subscriberRedis = getSubscriberRedis();
-        
-        // Subscribe to conversation updates
-        await subscriberRedis.subscribe('conversation:updates');
-        
+        const userChannel = `conversation:updates:${userId}`;
+
+        // Subscribe to user-specific conversation updates
+        await subscriberRedis.subscribe(userChannel);
+
         // Send initial state
-        const initialState = await getConversationState();
+        const initialState = await getConversationState(userId);
         send(JSON.stringify({ type: 'initial', data: initialState }));
-        
+
         // Listen for updates
         subscriberRedis.on('message', (channel, message) => {
-          if (channel === 'conversation:updates') {
+          if (channel === userChannel) {
             send(message);
           }
         });
-        
+
         // Cleanup on client disconnect
         request.signal.addEventListener('abort', async () => {
           if (isClosed) return; // Already cleaned up
           isClosed = true;
           try {
-            await subscriberRedis.unsubscribe('conversation:updates');
+            await subscriberRedis.unsubscribe(userChannel);
             // Check if controller is not already closed
             if (controller.desiredSize !== null) {
               controller.close();

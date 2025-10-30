@@ -1295,9 +1295,7 @@ const ChatBotDemo = () => {
       workflowsHydratedRef.current = true;
     }
 
-    // Mark messages as processed to prevent re-running
-    messagesProcessedRef.current = true;
-  }, [messages]);
+  }, [messages, isExtension]);
 
   // Handle broadcast messages from other tabs/iframes
   useEffect(() => {
@@ -2295,57 +2293,59 @@ const ChatBotDemo = () => {
               </TabsContent>
 
               <TabsContent value="profile" className="mt-0 flex-1 flex flex-col min-h-0 transition-all duration-200 ease-in-out">
-                {/* Business Profile content */}
-                {showSummary && summaryData ? (
-                  <>
-                    <RecordingIndicator recordingState={workflowRecordingState} />
-                    <ExtensionSummary
-                      heading={summaryData.heading}
-                      subheading={summaryData.subheading}
-                      messages={summaryMessages}
-                    />
-                    {showApps && appStatuses.length > 0 && (
-                      <div className="mt-4">
-                        <AppIntegrations apps={appStatuses} />
-                      </div>
-                    )}
-                    {showWorkflows && workflows.length > 0 && (
-                      <div className="mt-4">
-                        <Workflows workflows={workflows} />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-muted-foreground mb-4"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="m22 2-5 10-7-5" />
-                    </svg>
-                    <h3 className="text-lg font-medium text-foreground mb-2">No Business Profile Yet</h3>
-                    <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                      Start a conversation with the assistant to create your business profile.
-                      Your information will appear here once it's collected.
-                    </p>
-                    <button
-                      onClick={() => setActiveTab("chat")}
-                      className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      Start Chat
-                    </button>
-                  </div>
-                )}
+                {/* Business Profile content - wrapped in scrollable container for consistency */}
+                <div className="flex-1 overflow-y-auto px-4 py-4">
+                  {showSummary && summaryData ? (
+                    <>
+                      <RecordingIndicator recordingState={workflowRecordingState} />
+                      <ExtensionSummary
+                        heading={summaryData.heading}
+                        subheading={summaryData.subheading}
+                        messages={summaryMessages}
+                      />
+                      {showApps && appStatuses.length > 0 && (
+                        <div className="mt-4">
+                          <AppIntegrations apps={appStatuses} />
+                        </div>
+                      )}
+                      {showWorkflows && workflows.length > 0 && (
+                        <div className="mt-4">
+                          <Workflows workflows={workflows} />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center min-h-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="48"
+                        height="48"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-muted-foreground mb-4"
+                      >
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="m22 2-5 10-7-5" />
+                      </svg>
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Business Profile Yet</h3>
+                      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                        Start a conversation with the assistant to create your business profile.
+                        Your information will appear here once it's collected.
+                      </p>
+                      <button
+                        onClick={() => setActiveTab("chat")}
+                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        Start Chat
+                      </button>
+                    </div>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
           </div>
