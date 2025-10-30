@@ -633,6 +633,12 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 				type: "text",
 				text: "Got it. Lets connect with Openphone",
 			},
+		],
+	},
+	{
+		id: "msg-openphone-1-1",
+		role: "ai-agent",
+		parts: [
 			{
 				type: "button",
 				text: "Connect OpenPhone",

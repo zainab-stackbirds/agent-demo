@@ -942,6 +942,14 @@ const ChatBotDemo = () => {
   ]);
 
   useEffect(() => {
+    console.log("--------------------------------");
+    console.log("🔍 Demo mode active:", demoModeActive);
+    console.log("🔍 Is initialized:", isInitialized);
+    console.log("🔍 Current message index:", currentMessageIndex);
+    console.log("🔍 Mock conversation length:", mockConversation.length);
+    console.log("🔍 Workflow recording state:", workflowRecordingState);
+    console.log("🔍 Messages:", messages);
+
     if (
       !demoModeActive ||
       !isInitialized ||
@@ -950,17 +958,21 @@ const ChatBotDemo = () => {
       return;
 
     const currentMessage = mockConversation[currentMessageIndex];
+    console.log("🔍 Current message:", currentMessage);
 
     // Check if current message has options - if so, don't auto-progress
     const hasOptions = currentMessage.parts.some(
       (part) => part.type === "options"
     );
+    console.log("🔍 Has options:", hasOptions);
     const requiresAction = currentMessage.parts.some(
       (part) => part.type === "button" && part.action !== undefined
     );
+    console.log("🔍 Requires action:", requiresAction);
 
     if (hasOptions || requiresAction) {
       // Show the message but don't auto-progress
+      console.log("🔍 Showing message with options or requires action");
       setStatus("ready");
       appendMessage(currentMessage);
       return;
@@ -1955,32 +1967,59 @@ const ChatBotDemo = () => {
                           } as React.CSSProperties & {
                             "--hover-color": string;
                           })
-                          : part.action ===
+                          : (part.action ===
                             "connect_thumbtack" ||
                             part.action ===
-                            "connect_openphone"
-                            ? {}
+                            "connect_openphone") &&
+                            connectionStates[
+                            part.action.split("_")[1]
+                            ] === "connected"
+                            ? {
+                              backgroundColor:
+                                "#333",
+                              "--hover-color":
+                                "#2d4bb8",
+                              color: "white",
+                            } as React.CSSProperties & {
+                              "--hover-color": string;
+                            }
                             : (part.action ===
-                              "navigate_thumbtack" ||
+                              "connect_thumbtack" ||
                               part.action ===
-                              "navigate_openphone") &&
-                              navigationButtonClicked[
-                              part.action
-                              ]
-                              ? {}
-                              : part.action ===
-                                "start_capture" &&
-                                workflowRecordingState !==
-                                "not_started"
+                              "connect_openphone") &&
+                              connectionStates[
+                              part.action.split("_")[1]
+                              ] === "connecting"
+                              ? {
+                                backgroundColor:
+                                  "#365ccd",
+                                "--hover-color":
+                                  "#2d4bb8",
+                                color: "white",
+                              } as React.CSSProperties & {
+                                "--hover-color": string;
+                              }
+                              : (part.action ===
+                                "navigate_thumbtack" ||
+                                part.action ===
+                                "navigate_openphone") &&
+                                navigationButtonClicked[
+                                part.action
+                                ]
                                 ? {}
-                                : ({
-                                  backgroundColor:
-                                    "#365ccd",
-                                  "--hover-color":
-                                    "#2d4bb8",
-                                } as React.CSSProperties & {
-                                  "--hover-color": string;
-                                })
+                                : part.action ===
+                                  "start_capture" &&
+                                  workflowRecordingState !==
+                                  "not_started"
+                                  ? {}
+                                  : ({
+                                    backgroundColor:
+                                      "#365ccd",
+                                    "--hover-color":
+                                      "#2d4bb8",
+                                  } as React.CSSProperties & {
+                                    "--hover-color": string;
+                                  })
                       }
                       onMouseEnter={(e) => {
                         if (
@@ -3071,10 +3110,10 @@ const ChatBotDemo = () => {
               onValueChange={setActiveTab}
               className="w-full flex flex-col flex-1 min-h-0"
             >
-              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-0 z-10 bg-background p-0 gap-0 h-12">
+              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-0 z-10 bg-[#ddd] text-white px-2 py-1 gap-0 h-12">
                 <TabsTrigger
                   value="chat"
-                  className="data-[state=active]:bg-[#f5f5f5] data-[state=active]:text-foreground px-4 py-2 transition-all duration-200 ease-in-out"
+                  className="text-black data-[state=active]:text-black data-[state=active]:bg-white px-4 py-2 transition-all duration-200 ease-in-out"
                 >
                   Chat
                 </TabsTrigger>
