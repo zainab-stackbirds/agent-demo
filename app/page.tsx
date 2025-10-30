@@ -1073,7 +1073,7 @@ const ChatBotDemo = () => {
             connecting: false,
           }));
         } else if (part.type === "new-workflow") {
-          newWorkflows.push({
+          newWorkflows.unshift({
             id: createWorkflowId(
               message.id,
               messageIndex,
@@ -1936,7 +1936,7 @@ const ChatBotDemo = () => {
                               "start_capture" &&
                               workflowRecordingState !==
                               "not_started"
-                              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                              ? "border border-border"
                               : "text-white"
                         }`}
                       style={
@@ -2109,11 +2109,7 @@ const ChatBotDemo = () => {
                           "navigate_openphone") &&
                           navigationButtonClicked[
                           part.action
-                          ]) ||
-                        (part.action ===
-                          "start_capture" &&
-                          workflowRecordingState !==
-                          "not_started")
+                          ])
                       }
                     >
                       {(part.action ===

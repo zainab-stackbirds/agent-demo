@@ -46,7 +46,7 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                 if (!metadata) return null;
 
                 const accentColor = metadata.color;
-                const isConnected = app.enabled;
+                const isConnected = true;
                 const isConnecting = app.connecting === true;
 
                 return (
@@ -60,7 +60,7 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                       delay: index * 0.12,
                       ease: [0.23, 1, 0.32, 1],
                     }}
-                    // className="w-[8.5rem]"
+                  // className="w-[8.5rem]"
                   >
                     <div
                       aria-disabled={!isConnected && !isConnecting}
@@ -68,8 +68,8 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                         ${isConnected
                           ? 'border-primary/30 bg-primary/5 opacity-90 hover:opacity-100'
                           : isConnecting
-                          ? 'border-primary/50 bg-primary/10 opacity-75'
-                          : 'border-muted/40 bg-muted/60 opacity-45 cursor-not-allowed'
+                            ? 'border-primary/50 bg-primary/10 opacity-75'
+                            : 'border-muted/40 bg-muted/60 opacity-45 cursor-not-allowed'
                         }
                       `}
                       style={{
@@ -81,9 +81,9 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                         {/* App Logo with animation */}
                         <motion.div
                           initial={{ rotate: -8, scale: 0.9 }}
-                          animate={{ 
-                            rotate: isConnecting ? [0, 360] : 0, 
-                            scale: 1 
+                          animate={{
+                            rotate: isConnecting ? [0, 360] : 0,
+                            scale: 1
                           }}
                           transition={{
                             duration: isConnecting ? 1.5 : 0.45,
