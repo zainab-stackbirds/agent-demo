@@ -1999,7 +1999,7 @@ const ChatBotDemo = () => {
 
   return (
     <LayoutGroup>
-      <div className="max-w-4xl p-4 md:p-0 mx-auto relative size-full min-h-screen flex flex-col">
+      <div className="max-w-7xl p-4 md:p-0 mx-auto relative size-full min-h-screen flex flex-col">
         {/* Show Header always */}
         {!isMobile && !isExtension && <Header />}
 
@@ -2100,26 +2100,45 @@ const ChatBotDemo = () => {
           </div>
         )}
 
-        {/* Extension mode only - Show summary and apps at top when in extension and desktop width */}
-        {!isMobile && isExtension && showSummary && summaryData && (
-          <div className="flex-shrink-0 mb-4">
-            <ExtensionSummary
-              heading={summaryData.heading}
-              subheading={summaryData.subheading}
-              messages={summaryMessages}
-            />
-          </div>
-        )}
+        {/* Extension mode only - Show sidebar layout when in extension and desktop width */}
+        {!isMobile && isExtension && (
+          <div className="flex flex-1 min-h-0 gap-6">
+            {/* Main chat area - 2/3 width */}
+            <div className="w-2/3 flex-shrink-0 flex flex-col min-h-0">
+              <Conversation className="flex-1 min-h-0">
+                <ConversationContent>
+                  {renderConversationMessages()}
+                  <AutoScrollHandler />
+                </ConversationContent>
+                <ConversationScrollButton />
+              </Conversation>
+              {renderInputSection()}
+            </div>
 
-        {!isMobile && isExtension && showApps && appStatuses.length > 0 && (
-          <div className="flex-shrink-0 mb-4">
-            <AppIntegrations apps={appStatuses} />
-          </div>
-        )}
+            {/* Sidebar - 1/3 width */}
+            <div className="w-1/3 flex-shrink-0 flex flex-col min-h-0">
+              {showSummary && summaryData && (
+                <div className="flex-shrink-0 mb-4">
+                  <ExtensionSummary
+                    heading={summaryData.heading}
+                    subheading={summaryData.subheading}
+                    messages={summaryMessages}
+                  />
+                </div>
+              )}
 
-        {!isMobile && isExtension && showWorkflows && workflows.length > 0 && (
-          <div className="flex-shrink-0 mb-4">
-            <Workflows workflows={workflows} />
+              {showApps && appStatuses.length > 0 && (
+                <div className="flex-shrink-0 mb-4">
+                  <AppIntegrations apps={appStatuses} />
+                </div>
+              )}
+
+              {showWorkflows && workflows.length > 0 && (
+                <div className="flex-shrink-0 mb-4">
+                  <Workflows workflows={workflows} />
+                </div>
+              )}
+            </div>
           </div>
         )}
 

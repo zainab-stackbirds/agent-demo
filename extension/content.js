@@ -157,8 +157,8 @@ function revealSidebar() {
 	sidebarVisible = true;
 	document.body.classList.add("stackbirds-sidebar-open");
 
-	// Set margin based on sidebar width
-	const currentWidth = sidebarContainer.offsetWidth || 400;
+	// Set margin based on sidebar width (1/3 of viewport)
+	const currentWidth = sidebarContainer.offsetWidth || window.innerWidth / 3;
 	document.body.style.marginRight = currentWidth + "px";
 
 }
@@ -185,8 +185,8 @@ function showSidebar() {
 		sidebarContainer.style.display = "flex";
 		sidebarVisible = true;
 		document.body.classList.add("stackbirds-sidebar-open");
-		// Set initial margin based on current width
-		const currentWidth = sidebarContainer.offsetWidth || 400;
+		// Set initial margin based on current width (1/3 of viewport)
+		const currentWidth = sidebarContainer.offsetWidth || window.innerWidth / 3;
 		document.body.style.marginRight = currentWidth + "px";
 		saveSidebarState(true);
 		return;
@@ -215,9 +215,9 @@ function showSidebar() {
 
 	document.body.appendChild(sidebarContainer);
 	document.body.classList.add("stackbirds-sidebar-open");
-	
-	// Set initial margin
-	const initialWidth = 400;
+
+	// Set initial margin (1/3 of viewport)
+	const initialWidth = window.innerWidth / 3;
 	document.body.style.marginRight = initialWidth + "px";
 
 	// Add close button listener
@@ -272,8 +272,8 @@ function makeResizable() {
 		if (!isResizing) return;
 		const offsetRight =
 			document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
-		const minWidth = 300;
-		const maxWidth = 800;
+		const minWidth = window.innerWidth * 0.25; // 25% minimum
+		const maxWidth = window.innerWidth * 0.5;  // 50% maximum
 		const newWidth = Math.min(Math.max(offsetRight, minWidth), maxWidth);
 		sidebar.style.width = newWidth + "px";
 		// Update body margin to match new width
