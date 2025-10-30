@@ -251,7 +251,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-2b",
+    id: "msg-3",
     role: "assistant",
     parts: [
       {
@@ -262,17 +262,17 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-3",
+    id: "msg-4",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "I need to understand your business first. Tell me about your business. Do you have a website, facebook, instagram or google business profile?"
+        text: "Hi! I’m the Sales Agent, pre-trained for sales and lead management, so I will first need to understand your business and then understand your sales workflows. \n\nTell me about your business. For e.g. do you have a website, facebook, instagram or google business profile?"
       },
     ],
   },
   {
-    id: "msg-4",
+    id: "msg-5",
     role: "user",
     parts: [
       {
@@ -283,40 +283,28 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-4b",
+    id: "msg-6",
     role: "ai-agent",
     parts: [
       {
         type: "reasoning",
-        text: "Analyzing business context",
+        text: "Browsing the website \nBuilding a summary of Eat Cook Joy \nSearching for social profiles \nAnalyzing available reviews",
         status: "streaming",
       },
     ],
   },
   {
-    id: "msg-5",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text-image",
-        text: "After searching I found this website, does this look yours?",
-        url: "/www_eatcookjoy_com.png",
-        link: "https://www.eatcookjoy.com"
-      },
-    ],
-  },
-  {
-    id: "msg-6",
+    id: "msg-7",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Here is what I understand:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n\nAm I missing anything?"
+        text: "Here is what I understand about your business:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n**Competitors**: Dinner Elf\n\nAm I missing anything?"
       },
     ]
   },
   {
-    id: "msg-6",
+    id: "msg-8",
     role: "user",
     parts: [
       {
@@ -327,18 +315,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-6a",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "reasoning",
-        text: "Planning business profile storage and agent coordination",
-        status: "streaming",
-      }
-    ],
-  },
-  {
-    id: "msg-7",
+    id: "msg-9",
     role: "ai-agent",
     parts: [
       {
@@ -355,28 +332,28 @@ const mockConversation: CustomUIMessage[] = [
     ]
   },
   {
-    id: "msg-8",
+    id: "msg-10",
     role: "ai-agent",
     parts: [
       {
         type: "summary-updated",
-        messages: ['Business Name: Eat Cook Joy\nValue Prop: Chef tool providing personalization + convenience + affordability\nLocation: Texas\nServices: Meal Prep, Events'],
+        messages: ['Business Name: Eat Cook Joy\nValue Prop: Chef tool providing personalization + convenience + affordability\nLocation: Texas\nServices: Meal Prep, Events\nCompetitors: Dinner Elf'],
         id: "business_profile"
       },
     ]
   },
   {
-    id: "msg-9",
+    id: "msg-11",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Ok, let's continue. Where do you manage your leads?"
+        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. \n\nWhere do you manage your leads? Feel free to share in chat or over voice."
       },
     ],
   },
   {
-    id: "msg-10",
+    id: "msg-12",
     role: "user",
     parts: [
       {
@@ -387,18 +364,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-10a",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "reasoning",
-        text: "Processing lead management platform information",
-        status: "streaming",
-      }
-    ],
-  },
-  {
-    id: "msg-10b",
+    id: "msg-13",
     role: "ai-agent",
     parts: [
       {
@@ -410,7 +376,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-11",
+    id: "msg-14",
     role: "ai-agent",
     parts: [
       {
@@ -424,48 +390,32 @@ const mockConversation: CustomUIMessage[] = [
       }
     ],
   },
+  // {
+  //   id: "msg-12",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //       ]
+  //     },
+  //   ],
+  // },
   {
-    id: "msg-12",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "app-event",
-        apps: [
-          { app_id: "thumbtack", enabled: true },
-        ]
-      },
-    ],
-  },
-  {
-    id: "msg-13",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Now that I can access Thumbtack, lets walk through how you manage your leads there."
-      },
-    ],
-  },
-  {
-    id: "msg-13b",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "button",
-        text: "Go To Thumbtack",
-        action: "navigate_thumbtack",
-        url: "https://thumbtack.com"
-      }
-    ],
-  },
-  {
-    id: "msg-13c",
+    id: "msg-15",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Great. Now that you are on Thumbtack, lets begin capturing your workflows"
+        text: "Now that I can access Thumbtack, lets walk through how you manage your leads there. Can you go to Thumbtack and show me how you do things?"
       },
+    ],
+  },
+  {
+    id: "msg-16",
+    role: "ai-agent",
+    parts: [
       {
         type: "button",
         text: "Start capture",
@@ -474,7 +424,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13d",
+    id: "msg-17",
     role: "ai-agent",
     parts: [
       {
@@ -483,8 +433,18 @@ const mockConversation: CustomUIMessage[] = [
       }
     ],
   },
+    {
+    id: "msg-18",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Views"
+      }
+    ],
+  },
   {
-    id: "msg-13e",
+    id: "msg-19",
     role: "ai-agent",
     parts: [
       {
@@ -494,32 +454,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13f",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Click on View details"
-      }
-    ],
-  },
-  {
-    id: "msg-14",
-    role: "user",
-    parts: [
-      {
-        type: "recording-state",
-        state: "start"
-      },
-      {
-        type: "voice",
-        dummyText: "Ok so first I got to Thumbtack. and then I go to jobs. This is where I see the leads. I will click on a lead, then send them a template message.",
-        recordingDuration: 4000
-      },
-    ],
-  },
-  {
-    id: "msg-14b",
+    id: "msg-20",
     role: "ai-agent",
     parts: [
       {
@@ -529,7 +464,7 @@ const mockConversation: CustomUIMessage[] = [
     ]
   },
   {
-    id: "msg-15",
+    id: "msg-21",
     role: "ai-agent",
     parts: [
       {
@@ -539,101 +474,287 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-16",
+    id: "msg-22",
     role: "user",
     parts: [
       {
         type: "voice",
-        dummyText: "Yes, I respond to all my leads.",
+        dummyText: "Yes",
         recordingDuration: 2000
       },
     ],
   },
   {
-    id: "msg-17",
+    id: "msg-23",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Got it. I will make sure to watch out for incoming leads and send them a templated message. Would you like me to get your approval or just send the message?"
+        text: "Thanks, please continue"
+      }, {
+        type: "recording-state",
+        state: "start"
+      }
+    ],
+  },
+    {
+    id: "msg-24",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on View details"
+      }
+    ],
+  },
+   {
+    id: "msg-25",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "View Contacted Pros"
+      }
+    ],
+  },
+   {
+    id: "msg-26",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Go back"
+      }
+    ],
+  },
+   {
+    id: "msg-27",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Messages"
+      }
+    ],
+  },
+   {
+    id: "msg-28",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on highlight"
+      }
+    ],
+  },
+   {
+    id: "msg-29",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Use your quick reply"
+      }
+    ],
+  },
+    {
+    id: "msg-30",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "agent-interrupt",
+        message: "is this where you store all your templates?"
       },
     ],
   },
-  {
-    id: "msg-18",
+    {
+    id: "msg-31",
     role: "user",
     parts: [
       {
         type: "voice",
-        dummyText: "Get my approval and then we can adjust over time?",
+        dummyText: "Yes",
+        recordingDuration: 2000
+      },
+    ],
+  },
+    {
+    id: "msg-32",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Thanks, please continue"
+      }, {
+        type: "recording-state",
+        state: "start"
+      }
+    ],
+  },
+  {
+    id: "msg-33",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Thank you for your inquiry…"
+      }
+    ],
+  },
+    {
+    id: "msg-34",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: " Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
+  {
+    id: "msg-35",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Cool. I have saved your workflow. Do you have a weekly budget set for your leads? Most private chef companies choose to set a weekly budget and pay for opportunities additionally. Is that how you do this? "
+      },
+    ],
+  },
+  {
+    id: "msg-36",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "yes",
         recordingDuration: 3000
       },
     ],
   },
   {
-    id: "msg-19",
+    id: "msg-37",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Can you show me your setup?"
+      },
+    ],
+  },
+  {
+    id: "msg-38",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "button",
+        text: "Start capture",
+        action: "start_capture"
+      }
+    ],
+  },
+  {
+    id: "msg-39",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Settings"
+      },
+    ],
+  },
+  {
+    id: "msg-40",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on navigation sidebar"
+      },
+    ],
+  },
+  {
+    id: "msg-41",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Weekly budget"
+      },
+    ],
+  },
+  {
+    id: "msg-42",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
+  {
+    id: "msg-43",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I will make sure to watch out for incoming leads and send them a templated message as long as it meets your weekly budget. Would you like me to get your approval or just send the message?"
+      },
+    ],
+  },
+  {
+    id: "msg-44",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Get my approval and then we can adjust over time?",
+        recordingDuration: 4000
+      },
+    ],
+  },
+  {
+    id: "msg-45",
     role: "ai-agent",
     parts: [
       {
         type: "text",
         text: "Sure. Your preference has been recorded"
       },
+    ],
+  },
+  {
+    id: "msg-46",
+    role: "ai-agent",
+    parts: [
       {
         type: "new-workflow",
-        workflow: "Respond to all incoming leads automatically",
-        category: "lead-management"
-      },
-      {
-        type: "new-workflow",
-        workflow: "Get user approval before sending templated messages",
+        workflow: "Manage leads on Thumbtack",
         category: "communication"
       },
-    ],
-  },
-  {
-    id: "msg-19b",
-    role: "ai-agent",
-    parts: [
       {
-        type: "recording-state",
-        state: "pause"
-      }
-    ],
-  },
-  {
-    id: "msg-20",
-    role: "ai-agent",
-    parts: [
+        type: "new-workflow",
+        workflow: "Respond to all leads via template",
+        category: "communication"
+      },
       {
-        type: "agent-interrupt",
-        message: "Ok so I see your templates, these are the ones you want me to use?"
-      }
+        type: "new-workflow",
+        workflow: "Respond to all leads via template",
+        category: "Approval required"
+      },
     ],
   },
   {
-    id: "msg-21",
+    id: "msg-47",
     role: "user",
     parts: [
       {
         type: "voice",
-        dummyText: "Yes. Feel free to use this. After Thumbtack message is sent I continue the conversation on Openphone.",
+        dummyText: "Next, I go to Openphone and continue the conversation there. This way I have the details of the client and the SMS feature keeps things easy.",
         recordingDuration: 4000
-      },
-    ],
-  },
-  {
-    id: "msg-22",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "new-workflow",
-        workflow: "Use approved templates for initial lead responses",
-        category: "communication"
-      },
-      {
-        type: "new-workflow",
-        workflow: "Continue conversations on OpenPhone after Thumbtack",
-        category: "communication"
       },
     ],
   },
@@ -762,9 +883,6 @@ const ChatBotDemo = () => {
   // Hero visibility state
   const [showHero, setShowHero] = useState(true);
 
-  // Manual progression state (for keyboard control)
-  const [waitingForManualProgression, setWaitingForManualProgression] = useState(false);
-
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
@@ -839,7 +957,6 @@ const ChatBotDemo = () => {
     setStatus("ready");
     appendMessage(currentMessage);
     setCurrentMessageIndex(newIndex);
-    setWaitingForManualProgression(false);
 
     // Check if message contains open-sidebar action and trigger it
     const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
@@ -971,18 +1088,6 @@ const ChatBotDemo = () => {
     }
   }, [currentMessageIndex, demoModeActive, appendMessage, broadcastInstance]);
 
-  // Keyboard event listener for "0" key to progress AI messages
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "0" && waitingForManualProgression && demoModeActive) {
-        event.preventDefault();
-        progressAIMessage();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [waitingForManualProgression, demoModeActive, progressAIMessage]);
 
   // Detect if running inside extension iframe via URL param
   useEffect(() => {
@@ -1184,10 +1289,12 @@ const ChatBotDemo = () => {
         });
       }
 
-      // Set manual progression state - wait for "0" key press
-      setWaitingForManualProgression(true);
+      // Automatically progress to next message after a delay
+      setTimeout(() => {
+        progressAIMessage();
+      }, 2000); // 2 second delay
     }
-  }, [currentMessageIndex, demoModeActive, isInitialized, appendMessage]);
+  }, [currentMessageIndex, demoModeActive, isInitialized, appendMessage, progressAIMessage]);
 
   // Start demo mode on mount
   useEffect(() => {
@@ -1914,21 +2021,21 @@ const ChatBotDemo = () => {
                                   onClick={() => {
                                     saveToAPIRef.current = true;
                                     setWorkflowRecordingState("recording");
-                                                              if (window.parent && window.parent !== window) {
-                                    window.parent.postMessage({
-                                      action: "recordingStarted",
-                                      source: "stackbirds-app"
-                                    }, "*");
-                                  }
+                                    if (window.parent && window.parent !== window) {
+                                      window.parent.postMessage({
+                                        action: "recordingStarted",
+                                        source: "stackbirds-app"
+                                      }, "*");
+                                    }
 
-                                  if (updateSourceRef.current === 'self' && broadcastInstance) {
-                                    broadcastInstance.broadcastMessage({
-                                      type: 'WORKFLOW_RECORDING_STATE',
-                                      payload: {
-                                        state: 'recording'
-                                      }
-                                    });
-                                  }
+                                    if (updateSourceRef.current === 'self' && broadcastInstance) {
+                                      broadcastInstance.broadcastMessage({
+                                        type: 'WORKFLOW_RECORDING_STATE',
+                                        payload: {
+                                          state: 'recording'
+                                        }
+                                      });
+                                    }
                                   }}
                                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                   title="Resume"
@@ -2343,7 +2450,6 @@ const ChatBotDemo = () => {
                 <div className="flex-1 overflow-y-auto px-4 py-4">
                   {showSummary && summaryData ? (
                     <>
-                      <RecordingIndicator recordingState={workflowRecordingState} />
                       <ExtensionSummary
                         heading={summaryData.heading}
                         subheading={summaryData.subheading}
