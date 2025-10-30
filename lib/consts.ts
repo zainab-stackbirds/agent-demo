@@ -376,6 +376,16 @@ export const thumbtackConversation: CustomUIMessage[] = [
 		],
 	},
 	{
+		id: "msg-29-1",
+		role: "ai-agent",
+		parts: [
+			{
+				type: "recording-state",
+				state: "pause",
+			},
+		],
+	},
+	{
 		id: "msg-30",
 		role: "ai-agent",
 		parts: [
@@ -429,6 +439,16 @@ export const thumbtackConversation: CustomUIMessage[] = [
 				type: "reasoning",
 				text: " Analyzing steps\nSteps stored in memory",
 				status: "streaming",
+			},
+		],
+	},
+	{
+		id: "msg-34-1",
+		role: "ai-agent",
+		parts: [
+			{
+				type: "recording-state",
+				state: "stop",
 			},
 		],
 	},

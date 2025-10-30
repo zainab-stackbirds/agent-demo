@@ -2523,6 +2523,250 @@ const ChatBotDemo = () => {
                         text={part.message}
                       />
                     </MessageContent>
+
+                    <AnimatePresence>
+                      {workflowRecordingState ===
+                        "recording" && (
+                          <motion.div
+                            initial={{
+                              opacity: 0,
+                              x: -10,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              x: 0,
+                            }}
+                            exit={{
+                              opacity: 0,
+                              x: -10,
+                            }}
+                            transition={{
+                              duration: 0.3,
+                            }}
+                          >
+                            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                              <motion.div
+                                className="w-2.5 h-2.5 bg-red-600 rounded-full"
+                                animate={{
+                                  opacity: [
+                                    1, 0.3,
+                                    1,
+                                  ],
+                                }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }}
+                              />
+                              <span className="text-sm font-semibold text-red-600">
+                                Recording
+                              </span>
+                              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-300 dark:border-gray-600">
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current =
+                                      true;
+                                    setWorkflowRecordingState(
+                                      "paused"
+                                    );
+
+                                    // Send message to content script to show pause overlay
+                                    if (
+                                      window.parent &&
+                                      window.parent !==
+                                      window
+                                    ) {
+                                      window.parent.postMessage(
+                                        {
+                                          action: "recordingPaused",
+                                          source: "stackbirds-app",
+                                        },
+                                        "*"
+                                      );
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Pause"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <rect
+                                      x="6"
+                                      y="4"
+                                      width="4"
+                                      height="16"
+                                    />
+                                    <rect
+                                      x="14"
+                                      y="4"
+                                      width="4"
+                                      height="16"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current =
+                                      true;
+                                    setWorkflowRecordingState(
+                                      "not_started"
+                                    );
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Stop"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <rect
+                                      x="6"
+                                      y="6"
+                                      width="12"
+                                      height="12"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                      {workflowRecordingState ===
+                        "paused" && (
+                          <motion.div
+                            initial={{
+                              opacity: 0,
+                              x: -10,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              x: 0,
+                            }}
+                            exit={{
+                              opacity: 0,
+                              x: -10,
+                            }}
+                            transition={{
+                              duration: 0.3,
+                            }}
+                          >
+                            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                              <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
+                              <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-500">
+                                Paused
+                              </span>
+                              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-300 dark:border-gray-600">
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current =
+                                      true;
+                                    setWorkflowRecordingState(
+                                      "recording"
+                                    );
+                                    if (
+                                      window.parent &&
+                                      window.parent !==
+                                      window
+                                    ) {
+                                      window.parent.postMessage(
+                                        {
+                                          action: "recordingStarted",
+                                          source: "stackbirds-app",
+                                        },
+                                        "*"
+                                      );
+                                    }
+
+                                    if (
+                                      updateSourceRef.current ===
+                                      "self" &&
+                                      broadcastInstance
+                                    ) {
+                                      broadcastInstance.broadcastMessage(
+                                        {
+                                          type: "WORKFLOW_RECORDING_STATE",
+                                          payload:
+                                          {
+                                            state: "recording",
+                                          },
+                                        }
+                                      );
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Resume"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    saveToAPIRef.current =
+                                      true;
+                                    setWorkflowRecordingState(
+                                      "not_started"
+                                    );
+                                  }}
+                                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                  title="Stop"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-gray-600 dark:text-gray-400"
+                                  >
+                                    <rect
+                                      x="6"
+                                      y="6"
+                                      width="12"
+                                      height="12"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                    </AnimatePresence>
                   </Message>
                 );
               case "reasoning":
