@@ -742,7 +742,7 @@ const mockConversation: CustomUIMessage[] = [
       },
       {
         type: "new-workflow",
-        workflow: "Respond to all leads via template",
+        workflow: "Approval required",
         category: "automation"
       },
     ],

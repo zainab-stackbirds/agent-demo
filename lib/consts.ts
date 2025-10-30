@@ -162,7 +162,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         parts: [
             {
                 type: "text",
-                text: "To summarize:\n\nYou first go to Thumbtack. Then you msg leads with your template\nYou then switch to Openphone. Then you create contact and send them the template. \nI will now manage your lead responses and update you. Where would you like to be updated? I will be recording my tasks in Stackbirds, but I can text you if you want? "
+                text: "Great. To summarize:\n\nYou first go to Thumbtack. \n\nThen you msg leads with your template\n\nYou then switch to Openphone. \n\nThen you create contact and send them the template. \n\nI will now manage your lead responses and update you. \n\nWhere would you like to be updated? I will be recording my tasks in Stackbirds, but I can text you if you want? "
             },
         ],
     },
