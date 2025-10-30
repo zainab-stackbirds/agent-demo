@@ -473,7 +473,7 @@ const mockConversation: CustomUIMessage[] = [
       }
     ],
   },
-  {
+    {
     id: "msg-13d",
     role: "ai-agent",
     parts: [
@@ -762,9 +762,6 @@ const ChatBotDemo = () => {
   // Hero visibility state
   const [showHero, setShowHero] = useState(true);
 
-  // Manual progression state (for keyboard control)
-  const [waitingForManualProgression, setWaitingForManualProgression] = useState(false);
-
   // Initialize simple broadcast sync (non-hook based to avoid typing interference)
   const [broadcastInstance] = useState(() => getBroadcastSync());
   const updateSourceRef = useRef<string>('self'); // Track if update came from broadcast
@@ -839,7 +836,6 @@ const ChatBotDemo = () => {
     setStatus("ready");
     appendMessage(currentMessage);
     setCurrentMessageIndex(newIndex);
-    setWaitingForManualProgression(false);
 
     // Check if message contains open-sidebar action and trigger it
     const hasOpenSidebar = currentMessage.parts.some(part => part.type === "open-sidebar");
@@ -971,18 +967,6 @@ const ChatBotDemo = () => {
     }
   }, [currentMessageIndex, demoModeActive, appendMessage, broadcastInstance]);
 
-  // Keyboard event listener for "0" key to progress AI messages
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "0" && waitingForManualProgression && demoModeActive) {
-        event.preventDefault();
-        progressAIMessage();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [waitingForManualProgression, demoModeActive, progressAIMessage]);
 
   // Detect if running inside extension iframe via URL param
   useEffect(() => {
@@ -1184,10 +1168,12 @@ const ChatBotDemo = () => {
         });
       }
 
-      // Set manual progression state - wait for "0" key press
-      setWaitingForManualProgression(true);
+      // Automatically progress to next message after a delay
+      setTimeout(() => {
+        progressAIMessage();
+      }, 2000); // 2 second delay
     }
-  }, [currentMessageIndex, demoModeActive, isInitialized, appendMessage]);
+  }, [currentMessageIndex, demoModeActive, isInitialized, appendMessage, progressAIMessage]);
 
   // Start demo mode on mount
   useEffect(() => {
@@ -2343,7 +2329,6 @@ const ChatBotDemo = () => {
                 <div className="flex-1 overflow-y-auto px-4 py-4">
                   {showSummary && summaryData ? (
                     <>
-                      <RecordingIndicator recordingState={workflowRecordingState} />
                       <ExtensionSummary
                         heading={summaryData.heading}
                         subheading={summaryData.subheading}
