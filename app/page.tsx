@@ -747,6 +747,17 @@ const mockConversation: CustomUIMessage[] = [
       },
     ],
   },
+  {
+    id: "msg-47",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Next, I go to Openphone and continue the conversation there. This way I have the details of the client and the SMS feature keeps things easy.",
+        recordingDuration: 4000
+      },
+    ],
+  },
   ...openPhoneConversation
 ];
 

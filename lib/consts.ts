@@ -7,7 +7,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         parts: [
             {
                 type: "text",
-                text: "Great, now lets go to Openphone"
+                text: "Got it. Lets connect with Openphone"
             },
             {
                 type: "button",
@@ -35,268 +35,156 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         parts: [
             {
                 type: "text",
-                text: "Please walk me through how you communicate with leads over openphone"
+                text: "Now that I can access Openphone, lets walk through how you manage your leads there. Can you go to Openphone and show me how you do things?"
             },
         ],
     },
     {
-        id: "msg-openphone-4",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "button",
-                text: "Go To OpenPhone",
-                action: "navigate_openphone",
-                url: "https://openphone.com"
-            }
-        ],
-    },
+    id: "msg-openphone-4",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "button",
+        text: "Start capture",
+        action: "start_capture"
+      }
+    ],
+  },  {
+    id: "msg-openphone-5",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Send a message"
+      },
+    ],
+  },
+  {
+    id: "msg-openphone-6",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Commands"
+      },
+    ],
+  },
+  {
+    id: "msg-openphone-7",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on /snippets"
+      },
+    ],
+  },
+  {
+    id: "msg-openphone-8",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Post Thumbtack Outreach For Meal Prep…"
+      },
+    ],
+  },  {
+    id: "msg-openphone-9",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
     {
-        id: "msg-openphone-5",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "recording-state",
-                state: "pause"
-            }
-        ],
-    },
-    {
-        id: "msg-openphone-6",
-        role: "user",
-        parts: [
-            {
-                type: "voice",
-                dummyText: "I come to openphone and start a new converstaion with a new client",
-                recordingDuration: 2000
-            },
-        ],
-    },
-    {
-        id: "msg-openphone-7",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "agent-interrupt",
-                message: "Do you use the number from thumbtack lead here"
-            },
-            {
-                type: "recording-state",
-                state: "pause"
-            }
-        ],
-    },
-    {
-        id: "msg-openphone-8",
-        role: "user",
-        parts: [
-            {
-                type: "voice",
-                dummyText: "Yes",
-                recordingDuration: 2000
-            },
-        ],
-    },
-    {
-        id: "msg-openphone-9",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "text",
-                text: "Got it. I'll remember this"
-            },
-            {
-                type: "recording-state",
-                state: "start"
-            }
-        ],
-    },
-    {
-        id: "msg-openphone-10",
-        role: "user",
-        parts: [
-            {
-                type: "voice",
-                dummyText: "Next I select a template and send it over",
-                recordingDuration: 2000
-            },
-        ],
-    },
+    id: "msg-openphone-10",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: " Great. I have studied how you use an Openphone, I will follow these steps. Would you like me to follow up with the client in 24 hours if I don't hear back?"
+      },
+    ],
+  },
     {
         id: "msg-openphone-11",
-        role: "ai-agent",
+        role: "user",
         parts: [
             {
-                type: "agent-interrupt",
-                message: "Which template should I use?"
+                type: "voice",
+                dummyText: "Yes please do",
+                recordingDuration: 2000
             },
-            {
-                type: "recording-state",
-                state: "pause"
-            }
         ],
     },
     {
         id: "msg-openphone-12",
+        role: "ai-agent",
+        parts: [
+            {
+                type: "agent-interrupt",
+                message: " Okay. And would you like me to keep track of the leads and follows up somewhere?"
+            },
+            {
+                type: "recording-state",
+                state: "pause"
+            }
+        ],
+    },
+    {
+        id: "msg-openphone-13",
         role: "user",
         parts: [
             {
                 type: "voice",
-                dummyText: "I have named all my templates pick one that suits the best for a lead",
+                dummyText: "Not right now. I don’t do that. For now all I do is message on Openphone and then wait to get a response. Once the user responds you can let me handle it. ",
                 recordingDuration: 2000
             },
         ],
     },
     {
-        id: "msg-openphone-13",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "reasoning",
-                text: "Understanding template selection workflow",
-                status: "streaming",
-            }
-        ],
-    },
-    {
-        id: "msg-openphone-14",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "text",
-                text: "Sure! I'll do this when picking a template"
-            },
-            {
-                type: "recording-state",
-                state: "start"
-            }
-        ],
-    },
+    id: "msg-openphone-14",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
     {
         id: "msg-openphone-15",
         role: "ai-agent",
         parts: [
             {
-                type: "new-workflow",
-                workflow: "Use appropriate OpenPhone template based on lead context and status",
-                category: "communication"
+                type: "text",
+                text: "To summarize:\n\nYou first go to Thumbtack. Then you msg leads with your template\nYou then switch to Openphone. Then you create contact and send them the template. \nI will now manage your lead responses and update you. Where would you like to be updated? I will be recording my tasks in Stackbirds, but I can text you if you want? "
             },
         ],
     },
-
     {
         id: "msg-openphone-16",
-        role: "ai-agent",
+        role: "user",
         parts: [
             {
-                type: "text",
-                text: "After a lead is contacted how often do i need to Follow-up"
+                type: "voice",
+                dummyText: "Ok great, just send me a text when you respond.",
+                recordingDuration: 2000
             },
         ],
     },
     {
         id: "msg-openphone-17",
-        role: "user",
-        parts: [
-            {
-                type: "voice",
-                dummyText: "I don't have a follow up schedule right now",
-                recordingDuration: 2000
-            },
-        ],
-    },
-
-
-    {
-        id: "msg-openphone-18",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "reasoning",
-                text: "Analyzing follow-up strategy and timing recommendations",
-                status: "streaming",
-            }
-        ],
-    },
-    {
-        id: "msg-openphone-19",
         role: "ai-agent",
         parts: [
             {
                 type: "text",
-                text: "Can i suggest to follow up after 24 hours of no response from when client last responded?"
-            },
-        ],
-    },
-
-    {
-        id: "msg-openphone-20",
-        role: "user",
-        parts: [
-            {
-                type: "voice",
-                dummyText: "I like this idea, also can you help me get a brief of all the leads as well on regular basis",
-                recordingDuration: 2000
-            },
-        ],
-    },
-    {
-        id: "msg-openphone-21",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "new-workflow",
-                workflow: "Setup one follow up message 24 hours after last response from client",
-                category: "automation"
-            },
-        ],
-    },
-
-    {
-        id: "msg-openphone-22",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "reasoning",
-                text: "Planning automated reporting and lead summary workflows",
-                status: "streaming",
+                text: "Ok got it. Stackbirds Sales Agent is ready to go. "
             }
         ],
-    },
-    {
-        id: "msg-openphone-23",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "text",
-                text: "How about I generate a brief summary of all the leads of last week on every monday morning?"
-            },
-        ],
-    },
-
-    {
-        id: "msg-openphone-24",
-        role: "user",
-        parts: [
-            {
-                type: "voice",
-                dummyText: "That would be great!",
-                recordingDuration: 2000
-            },
-        ],
-    },
-
-    {
-        id: "msg-openphone-25",
-        role: "ai-agent",
-        parts: [
-            {
-                type: "new-workflow",
-                workflow: "Generate and send summary of WTD leads every monday morning",
-                category: "automation"
-            },
-        ],
-    },
-
-
+    }
 ]
