@@ -84,6 +84,11 @@ type BroadcastMessage = {
     status: ChatStatus;
     isUserMessageInPlaceholder: boolean;
   };
+} | {
+  type: 'WORKFLOW_RECORDING_STATE';
+  payload: {
+    state: 'recording' | 'paused' | 'idle' | 'not_started';
+  };
 }
 
 // Utility functions for API state management
@@ -1329,6 +1334,16 @@ const ChatBotDemo = () => {
             appendMessage(message.payload.newMessage);
           }
           break;
+
+        case 'WORKFLOW_RECORDING_STATE':
+          setWorkflowRecordingState(message.payload.state);
+          if (message.payload.state === 'recording' && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              action: 'recordingStarted',
+              source: 'stackbirds-app'
+            }, '*');
+          }
+          break;
       }
 
       setTimeout(() => {
@@ -1702,6 +1717,22 @@ const ChatBotDemo = () => {
                           // Start capture - show recording indicator
                           saveToAPIRef.current = true;
                           setWorkflowRecordingState("recording");
+
+                          if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({
+                              action: "recordingStarted",
+                              source: "stackbirds-app"
+                            }, "*");
+                          }
+
+                          if (updateSourceRef.current === 'self' && broadcastInstance) {
+                            broadcastInstance.broadcastMessage({
+                              type: 'WORKFLOW_RECORDING_STATE',
+                              payload: {
+                                state: 'recording'
+                              }
+                            });
+                          }
                         }
                       }}
                       className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${(part.action === 'connect_thumbtack' || part.action === 'connect_openphone') && connectionStates[part.action.split('_')[1]] === 'connected'
@@ -1883,6 +1914,21 @@ const ChatBotDemo = () => {
                                   onClick={() => {
                                     saveToAPIRef.current = true;
                                     setWorkflowRecordingState("recording");
+                                                              if (window.parent && window.parent !== window) {
+                                    window.parent.postMessage({
+                                      action: "recordingStarted",
+                                      source: "stackbirds-app"
+                                    }, "*");
+                                  }
+
+                                  if (updateSourceRef.current === 'self' && broadcastInstance) {
+                                    broadcastInstance.broadcastMessage({
+                                      type: 'WORKFLOW_RECORDING_STATE',
+                                      payload: {
+                                        state: 'recording'
+                                      }
+                                    });
+                                  }
                                   }}
                                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                   title="Resume"
