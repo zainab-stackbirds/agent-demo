@@ -1314,7 +1314,7 @@ const ChatBotDemo = () => {
     }
   };
 
-  const handleStopRecording = (transcribedText: string) => {
+  const handleStopRecording = (transcribedText: string, autoSubmit: boolean = false) => {
     // Stop the recording
     setIsRecording(false);
     setRecordingState("idle");
@@ -1331,29 +1331,35 @@ const ChatBotDemo = () => {
       recordingTimerRef.current = null;
     }
 
-    // Mark that this is a user action - should be saved to API
-    saveToAPIRef.current = true;
+    if (autoSubmit) {
+      // Original flow: automatically submit the message
+      // Mark that this is a user action - should be saved to API
+      saveToAPIRef.current = true;
 
-    // Add the transcribed message
-    const userMessage: CustomUIMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      parts: [{ type: "text", text: transcribedText }],
-    };
+      // Add the transcribed message
+      const userMessage: CustomUIMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        parts: [{ type: "text", text: transcribedText }],
+      };
 
-    const newIndex = currentMessageIndex + 1;
+      const newIndex = currentMessageIndex + 1;
 
-    setIsUserMessageInPlaceholder(false);
-    appendMessage(userMessage);
-    setCurrentMessageIndex(newIndex);
-    setInput(""); // Clear input
+      setIsUserMessageInPlaceholder(false);
+      appendMessage(userMessage);
+      setCurrentMessageIndex(newIndex);
+      setInput(""); // Clear input
 
-    // Broadcast the user message submission
-    if (updateSourceRef.current === "self" && broadcastInstance) {
-      broadcastInstance.broadcastMessage({
-        type: "USER_MESSAGE_SUBMITTED",
-        payload: { message: userMessage, newIndex },
-      });
+      // Broadcast the user message submission
+      if (updateSourceRef.current === "self" && broadcastInstance) {
+        broadcastInstance.broadcastMessage({
+          type: "USER_MESSAGE_SUBMITTED",
+          payload: { message: userMessage, newIndex },
+        });
+      }
+    } else {
+      // New flow: just populate the input field with transcribed text
+      setInput(transcribedText);
     }
   };
 
@@ -1367,11 +1373,12 @@ const ChatBotDemo = () => {
     );
     if (!voicePart || voicePart.type !== "voice") return;
 
-    // Add a natural delay between 50-100ms
-    const delay = Math.random() * 200 + 200; // Random delay between 50-100ms
+    // Add a natural delay between 200-400ms
+    const delay = Math.random() * 200 + 200;
 
     setTimeout(() => {
-      handleStopRecording(voicePart.dummyText);
+      // Don't auto-submit, just populate input field
+      handleStopRecording(voicePart.dummyText, false);
     }, delay);
   };
 
@@ -3014,59 +3021,88 @@ const ChatBotDemo = () => {
                   className="flex-1 border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground shadow-none"
                 />
 
-                {/* Microphone icon button */}
+                {/* Microphone/Send icon button */}
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleStartRecording}
-                    disabled={
-                      !shouldShowInput ||
-                      status === "streaming"
-                    }
-                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-foreground hover:bg-accent rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Start recording"
-                  >
-                    <motion.svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      animate={
-                        isUserTurnToSpeak &&
-                          !isRecording
-                          ? {
-                            rotate: [
-                              0, -8, 8, -8, 0,
-                            ],
-                          }
-                          : { rotate: 0 }
+                  {input.trim() ? (
+                    // Show send icon when there's text
+                    <button
+                      type="submit"
+                      disabled={
+                        !shouldShowInput ||
+                        status === "streaming"
                       }
-                      transition={
-                        isUserTurnToSpeak &&
-                          !isRecording
-                          ? {
-                            duration: 1.2,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }
-                          : { duration: 0.2 }
-                      }
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-foreground hover:bg-accent rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Send message"
                     >
-                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                      <line
-                        x1="12"
-                        x2="12"
-                        y1="19"
-                        y2="22"
-                      />
-                    </motion.svg>
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m22 2-7 20-4-9-9-4Z" />
+                        <path d="M22 2 11 13" />
+                      </svg>
+                    </button>
+                  ) : (
+                    // Show microphone icon when no text
+                    <button
+                      type="button"
+                      onClick={handleStartRecording}
+                      disabled={
+                        !shouldShowInput ||
+                        status === "streaming"
+                      }
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-foreground hover:bg-accent rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Start recording"
+                    >
+                      <motion.svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        animate={
+                          isUserTurnToSpeak &&
+                            !isRecording
+                            ? {
+                              rotate: [
+                                0, -8, 8, -8, 0,
+                              ],
+                            }
+                            : { rotate: 0 }
+                        }
+                        transition={
+                          isUserTurnToSpeak &&
+                            !isRecording
+                            ? {
+                              duration: 1.2,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }
+                            : { duration: 0.2 }
+                        }
+                      >
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line
+                          x1="12"
+                          x2="12"
+                          y1="19"
+                          y2="22"
+                        />
+                      </motion.svg>
+                    </button>
+                  )}
 
                   {/* Audio visualizer icon (when recording state is paused or idle but mic section should show) */}
                   {recordingState === "paused" && (
