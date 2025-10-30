@@ -3146,20 +3146,22 @@ const ChatBotDemo = () => {
               onValueChange={setActiveTab}
               className="w-full flex flex-col flex-1 min-h-0"
             >
-              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-0 z-10 bg-[#ddd] text-white px-2 py-1 gap-0 h-12">
-                <TabsTrigger
-                  value="chat"
-                  className="text-black data-[state=active]:text-black data-[state=active]:bg-white px-4 py-2 transition-all duration-200 ease-in-out"
-                >
-                  Chat
-                </TabsTrigger>
-                <TabsTrigger
-                  value="profile"
-                  className="data-[state=active]:bg-[#f5f5f5] data-[state=active]:text-foreground px-4 py-2 transition-all duration-200 ease-in-out"
-                >
-                  Business Profile
-                </TabsTrigger>
-              </TabsList>
+              {messages.some((m) => m.id === "msg-16") && (
+                <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-0 z-10 bg-[#ddd] text-white px-2 py-1 gap-0 h-12">
+                  <TabsTrigger
+                    value="chat"
+                    className="text-black data-[state=active]:text-black data-[state=active]:bg-white px-4 py-2 transition-all duration-200 ease-in-out"
+                  >
+                    Chat
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="profile"
+                    className="data-[state=active]:bg-[#f5f5f5] data-[state=active]:text-foreground px-4 py-2 transition-all duration-200 ease-in-out"
+                  >
+                    Business Profile
+                  </TabsTrigger>
+                </TabsList>
+              )}
 
               <TabsContent
                 value="chat"
