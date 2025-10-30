@@ -1579,7 +1579,7 @@ const ChatBotDemo = () => {
                                   );
                                 }
                               }
-                            }, 10000); // 10 second pause after connection completes
+                            }, 5000); // 5 second pause after connection completes
                           }, 3000);
                         } else if (
                           [
