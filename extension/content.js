@@ -3,6 +3,84 @@ let sidebarVisible = false;
 let sidebarContainer = null;
 const debug = false
 
+const RECORDING_OVERLAY_ID = "stackbirds-recording-overlay"
+let recordingOverlayTimeoutId = null
+let recordingOverlayRemovalTimeoutId = null
+
+function getPageContentCenterX() {
+	const computedStyles = window.getComputedStyle(document.body)
+	const marginRightValue = parseFloat(computedStyles.marginRight || "0") || 0
+	const contentWidth = Math.max(window.innerWidth - marginRightValue, 0)
+	return contentWidth / 2
+}
+
+function showRecordingOverlay(duration = 2000) {
+	if (!document || !document.body) {
+		return
+	}
+
+	const existingOverlay = document.getElementById(RECORDING_OVERLAY_ID)
+	const overlay = existingOverlay || document.createElement("div")
+
+	if (!existingOverlay) {
+		overlay.id = RECORDING_OVERLAY_ID
+		overlay.className = "stackbirds-recording-overlay"
+		overlay.textContent = "recording"
+		document.body.appendChild(overlay)
+	} else {
+		overlay.classList.remove("stackbirds-recording-overlay-fade")
+		overlay.classList.remove("stackbirds-recording-overlay-visible")
+	}
+
+	const centerX = getPageContentCenterX()
+	overlay.style.left = `${centerX}px`
+	overlay.style.right = "auto"
+	overlay.style.top = "50%"
+
+	if (recordingOverlayRemovalTimeoutId) {
+		clearTimeout(recordingOverlayRemovalTimeoutId)
+		recordingOverlayRemovalTimeoutId = null
+	}
+
+	requestAnimationFrame(() => {
+		overlay.classList.add("stackbirds-recording-overlay-visible")
+	})
+
+	if (recordingOverlayTimeoutId) {
+		clearTimeout(recordingOverlayTimeoutId)
+	}
+
+	recordingOverlayTimeoutId = window.setTimeout(() => {
+		hideRecordingOverlay()
+	}, duration)
+}
+
+function hideRecordingOverlay() {
+	if (recordingOverlayTimeoutId) {
+		clearTimeout(recordingOverlayTimeoutId)
+		recordingOverlayTimeoutId = null
+	}
+
+	const overlay = document.getElementById(RECORDING_OVERLAY_ID)
+	if (!overlay) {
+		return
+	}
+
+	overlay.classList.remove("stackbirds-recording-overlay-visible")
+	overlay.classList.add("stackbirds-recording-overlay-fade")
+
+	if (recordingOverlayRemovalTimeoutId) {
+		clearTimeout(recordingOverlayRemovalTimeoutId)
+	}
+
+	recordingOverlayRemovalTimeoutId = setTimeout(() => {
+		if (overlay.parentElement) {
+			overlay.remove()
+		}
+		recordingOverlayRemovalTimeoutId = null
+	}, 250)
+}
+
 // Listen for extension icon click
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "toggleSidebar") {
@@ -38,6 +116,19 @@ window.addEventListener("message", (event) => {
 		if (!sidebarVisible) {
 			revealSidebar();
 		}
+	}
+
+	// Handle recording started event - show border on OpenPhone page
+	if (event.data && event.data.action === "recordingStarted" && event.data.source === "stackbirds-app") {
+		// Add border class to body
+		document.body.classList.add("stackbirds-recording-border");
+		showRecordingOverlay();
+
+		// Remove border after 2 seconds
+		setTimeout(() => {
+			document.body.classList.remove("stackbirds-recording-border");
+			hideRecordingOverlay();
+		}, 2000);
 	}
 });
 

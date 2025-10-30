@@ -110,3 +110,62 @@ body.stackbirds-sidebar-open {
 	}
 }
 
+/* Recording border animation for OpenPhone page */
+body.stackbirds-recording-border {
+	box-sizing: border-box;
+	border: 2px solid #ef4444 !important;
+	animation: recordingPulse 0.5s ease-in-out;
+	margin: 10px
+}
+
+@keyframes recordingPulse {
+	0% {
+		border-color: #ef4444;
+		box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
+	}
+	50% {
+		border-color: #dc2626;
+		box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+	}
+	100% {
+		border-color: #ef4444;
+		box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
+	}
+}
+
+.stackbirds-recording-overlay {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.85);
+	width: 120px;
+	height: 120px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 9999px;
+	background: rgba(239, 68, 68, 0.95);
+	color: #fff;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	text-transform: none;
+	text-align: center;
+	pointer-events: none;
+	opacity: 0;
+	box-shadow: 0 0 30px rgba(239, 68, 68, 0.45);
+	z-index: 2147483647;
+	transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stackbirds-recording-overlay-visible {
+	opacity: 1;
+	transform: translate(-50%, -50%) scale(1);
+	box-shadow: 0 0 45px rgba(239, 68, 68, 0.55);
+}
+
+.stackbirds-recording-overlay-fade {
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(0.85);
+	box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
