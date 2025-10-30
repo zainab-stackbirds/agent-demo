@@ -838,7 +838,11 @@ const ChatBotDemo = () => {
     const hasOptions = currentMessage.parts.some(
       (part) => part.type === "options"
     );
-    if (hasOptions) {
+    const requiresAction = currentMessage.parts.some(
+      (part) => part.type === "button" && part.action !== undefined
+    );
+
+    if (hasOptions || requiresAction) {
       // Show the message but don't auto-progress
       setStatus("ready");
       appendMessage(currentMessage);
@@ -1305,8 +1309,8 @@ const ChatBotDemo = () => {
                         part.displayAvatar !== undefined &&
                         part.displayAvatar === false ? (
                         <>
-                          <div className="w-10" />
-                          <MessageContent className="p-1">
+                          <div className="w-11" />
+                          <MessageContent className="p-1 pb-3">
                             <TextWithLinks
                               text={part.text}
                             />
@@ -1684,6 +1688,54 @@ const ChatBotDemo = () => {
                               }
                             );
                           }
+
+                          setTimeout(() => {
+                            // Progress to next message and show it automatically
+                            saveToAPIRef.current =
+                              true;
+                            const nextIndex =
+                              currentMessageIndex +
+                              1;
+                            if (
+                              nextIndex <
+                              mockConversation.length
+                            ) {
+                              const nextMessage =
+                                mockConversation[
+                                nextIndex
+                                ];
+                              setStatus("ready");
+                              appendMessage(
+                                nextMessage
+                              );
+                              setCurrentMessageIndex(
+                                nextIndex
+                              );
+
+                              // Broadcast the progress
+                              if (
+                                updateSourceRef.current ===
+                                "self" &&
+                                broadcastInstance
+                              ) {
+                                broadcastInstance.broadcastMessage(
+                                  {
+                                    type: "DEMO_PROGRESS",
+                                    payload:
+                                    {
+                                      newIndex:
+                                        nextIndex,
+                                      newMessage:
+                                        nextMessage,
+                                      status: "ready",
+                                      isUserMessageInPlaceholder:
+                                        false,
+                                    },
+                                  }
+                                );
+                              }
+                            }
+                          }, 100);
                         }
                       }}
                       className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${(part.action ===

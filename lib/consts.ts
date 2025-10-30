@@ -213,12 +213,6 @@ export const thumbtackConversation: CustomUIMessage[] = [
 				type: "text",
 				text: "Now that I can access Thumbtack, lets walk through how you manage your leads there. Can you go to Thumbtack and show me how you do things?",
 			},
-		],
-	},
-	{
-		id: "msg-16",
-		role: "ai-agent",
-		parts: [
 			{
 				type: "button",
 				text: "Start capture",
