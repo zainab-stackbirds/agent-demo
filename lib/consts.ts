@@ -1,5 +1,545 @@
 import { CustomUIMessage } from "@/app/page";
 
+export const thumbtackConversation: CustomUIMessage[] = [
+  {
+    id: "msg-1",
+    role: "assistant",
+    parts: [
+      {
+        type: "text",
+        text: "How can I help you?"
+      },
+      {
+        type: "options",
+        options: [
+          { label: "Sales", action: "select_sales" },
+          { label: "Marketing", action: "select_marketing" },
+          { label: "Operations", action: "select_operations" },
+          { label: "Analyst", action: "select_analyst" }
+        ]
+      }
+    ],
+  },
+  {
+    id: "msg-2",
+    role: "assistant",
+    parts: [
+      {
+        type: "text",
+        text: "Great, I can help you with that. Switching to Sales agent mode."
+      }
+    ],
+  },
+  {
+    id: "msg-3",
+    role: "assistant",
+    parts: [
+      {
+        type: "system-event",
+        event: "agent-switching",
+        metadata: { targetAgent: "Sales Agent" }
+      }
+    ],
+  },
+  {
+    id: "msg-4",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Hi! I’m the Sales Agent, pre-trained for sales and lead management, so I will first need to understand your business and then understand your sales workflows. \n\nTell me about your business. For e.g. do you have a website, facebook, instagram or google business profile?"
+      },
+    ],
+  },
+  {
+    id: "msg-5",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Great. I am the founder of Eat Cook Joy. I am a solo entrepreneur and run the business in texas. My goal is to help every chef in the country get help to start and run their business. Our key value prop is helping chefs provide convenience, affordability and personalization all together. My website is www.eatcookjoy.com. Let me know if you need anything else.",
+        recordingDuration: 4000
+      },
+    ],
+  },
+  {
+    id: "msg-6",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Browsing the website \nBuilding a summary of Eat Cook Joy \nSearching for social profiles \nAnalyzing available reviews",
+        status: "streaming",
+      },
+    ],
+  },
+  {
+    id: "msg-7",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Here is what I understand about your business:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n**Competitors**: Dinner Elf\n\nAm I missing anything?"
+      },
+    ]
+  },
+  {
+    id: "msg-8",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "No",
+        recordingDuration: 1000
+      },
+    ],
+  },
+  {
+    id: "msg-9",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I will store this information and share with your other agents in the future so you don't have to go through this step again. You can find and update this information anytime from the sidebar."
+      },
+      { type: "open-sidebar" },
+      {
+        type: "summary-added",
+        heading: "Business Profile",
+        subheading: "Your business information for all agents",
+        id: "business_profile"
+      },
+    ]
+  },
+  {
+    id: "msg-10",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "summary-updated",
+        messages: ['Business Name: Eat Cook Joy\nValue Prop: Chef tool providing personalization + convenience + affordability\nLocation: Texas\nServices: Meal Prep, Events\nCompetitors: Dinner Elf'],
+        id: "business_profile"
+      },
+    ]
+  },
+  {
+    id: "msg-11",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. \n\nWhere do you manage your leads? Feel free to share in chat or over voice."
+      },
+    ],
+  },
+  {
+    id: "msg-12",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "I manage my leads on Thumbtack",
+        recordingDuration: 2000
+      },
+    ],
+  },
+  {
+    id: "msg-13",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "app-event",
+        apps: [
+          { app_id: "thumbtack", enabled: false },
+        ]
+      },
+    ],
+  },
+  {
+    id: "msg-14",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. Lets connect with Thumbtack"
+      },
+      {
+        type: "button",
+        text: "Connect Thumbtack",
+        action: "connect_thumbtack"
+      }
+    ],
+  },
+  // {
+  //   id: "msg-12",
+  //   role: "ai-agent",
+  //   parts: [
+  //     {
+  //       type: "app-event",
+  //       apps: [
+  //         { app_id: "thumbtack", enabled: true },
+  //       ]
+  //     },
+  //   ],
+  // },
+  {
+    id: "msg-15",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Now that I can access Thumbtack, lets walk through how you manage your leads there. Can you go to Thumbtack and show me how you do things?"
+      },
+    ],
+  },
+  {
+    id: "msg-16",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "button",
+        text: "Start capture",
+        action: "start_capture"
+      }
+    ],
+  },
+  {
+    id: "msg-17",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Jobs"
+      }
+    ],
+  },
+    {
+    id: "msg-18",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Views"
+      }
+    ],
+  },
+  {
+    id: "msg-19",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Leads"
+      }
+    ],
+  },
+  {
+    id: "msg-20",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "recording-state",
+        state: "pause"
+      }
+    ]
+  },
+  {
+    id: "msg-21",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "agent-interrupt",
+        message: "Do you respond to all leads?"
+      },
+    ],
+  },
+  {
+    id: "msg-22",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Yes",
+        recordingDuration: 2000
+      },
+    ],
+  },
+  {
+    id: "msg-23",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Thanks, please continue"
+      }, {
+        type: "recording-state",
+        state: "start"
+      }
+    ],
+  },
+    {
+    id: "msg-24",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on View details"
+      }
+    ],
+  },
+   {
+    id: "msg-25",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "View Contacted Pros"
+      }
+    ],
+  },
+   {
+    id: "msg-26",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Go back"
+      }
+    ],
+  },
+   {
+    id: "msg-27",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Messages"
+      }
+    ],
+  },
+   {
+    id: "msg-28",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on highlight"
+      }
+    ],
+  },
+   {
+    id: "msg-29",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Use your quick reply"
+      }
+    ],
+  },
+    {
+    id: "msg-30",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "agent-interrupt",
+        message: "is this where you store all your templates?"
+      },
+    ],
+  },
+    {
+    id: "msg-31",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Yes",
+        recordingDuration: 2000
+      },
+    ],
+  },
+    {
+    id: "msg-32",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Thanks, please continue"
+      }, {
+        type: "recording-state",
+        state: "start"
+      }
+    ],
+  },
+  {
+    id: "msg-33",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Thank you for your inquiry…"
+      }
+    ],
+  },
+    {
+    id: "msg-34",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: " Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
+  {
+    id: "msg-35",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Cool. I have saved your workflow. Do you have a weekly budget set for your leads? Most private chef companies choose to set a weekly budget and pay for opportunities additionally. Is that how you do this? "
+      },
+    ],
+  },
+  {
+    id: "msg-36",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "yes",
+        recordingDuration: 3000
+      },
+    ],
+  },
+  {
+    id: "msg-37",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Can you show me your setup?"
+      },
+    ],
+  },
+  {
+    id: "msg-38",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "button",
+        text: "Start capture",
+        action: "start_capture"
+      }
+    ],
+  },
+  {
+    id: "msg-39",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Settings"
+      },
+    ],
+  },
+  {
+    id: "msg-40",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on navigation sidebar"
+      },
+    ],
+  },
+  {
+    id: "msg-41",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Weekly budget"
+      },
+    ],
+  },
+  {
+    id: "msg-42",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: "Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
+  {
+    id: "msg-43",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Got it. I will make sure to watch out for incoming leads and send them a templated message as long as it meets your weekly budget. Would you like me to get your approval or just send the message?"
+      },
+    ],
+  },
+  {
+    id: "msg-44",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Get my approval and then we can adjust over time?",
+        recordingDuration: 4000
+      },
+    ],
+  },
+  {
+    id: "msg-45",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Sure. Your preference has been recorded"
+      },
+    ],
+  },
+  {
+    id: "msg-46",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "new-workflow",
+        workflow: "Manage leads on Thumbtack",
+        category: "communication"
+      },
+      {
+        type: "new-workflow",
+        workflow: "Respond to all leads via template",
+        category: "communication"
+      },
+      {
+        type: "new-workflow",
+        workflow: "Approval required",
+        category: "automation"
+      },
+    ],
+  },
+  {
+    id: "msg-47",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Next, I go to Openphone and continue the conversation there. This way I have the details of the client and the SMS feature keeps things easy.",
+        recordingDuration: 4000
+      },
+    ],
+  },
+];
+
 export const openPhoneConversation: Array<CustomUIMessage> = [
     {
         id: "msg-openphone-1",
