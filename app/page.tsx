@@ -251,7 +251,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-2b",
+    id: "msg-3",
     role: "assistant",
     parts: [
       {
@@ -262,7 +262,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-3",
+    id: "msg-4",
     role: "ai-agent",
     parts: [
       {
@@ -272,7 +272,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-4",
+    id: "msg-5",
     role: "user",
     parts: [
       {
@@ -283,40 +283,28 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-4b",
+    id: "msg-6",
     role: "ai-agent",
     parts: [
       {
         type: "reasoning",
-        text: "Analyzing website and business details",
+        text: "Browsing the website \nBuilding a summary of Eat Cook Joy \nSearching for social profiles \nAnalyzing available reviews",
         status: "streaming",
       },
     ],
   },
-  // {
-  //   id: "msg-5",
-  //   role: "ai-agent",
-  //   parts: [
-  //     {
-  //       type: "text-image",
-  //       text: "After searching I found this website, does this look yours?",
-  //       url: "/www_eatcookjoy_com.png",
-  //       link: "https://www.eatcookjoy.com"
-  //     },
-  //   ],
-  // },
   {
-    id: "msg-6",
+    id: "msg-7",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Here is what I understand about your business:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n\nAm I missing anything?"
+        text: "Here is what I understand about your business:\n\n**Business Name**: Eat Cook Joy\n**Value Prop**: Chef tool providing personalization + convenience + affordability\n**Location**: Texas\n**Services**: Meal Prep, Events\n**Competitors**: Dinner Elf\n\nAm I missing anything?"
       },
     ]
   },
   {
-    id: "msg-6",
+    id: "msg-8",
     role: "user",
     parts: [
       {
@@ -327,18 +315,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-6a",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "reasoning",
-        text: "Planning business profile storage and agent coordination",
-        status: "streaming",
-      }
-    ],
-  },
-  {
-    id: "msg-7",
+    id: "msg-9",
     role: "ai-agent",
     parts: [
       {
@@ -355,38 +332,28 @@ const mockConversation: CustomUIMessage[] = [
     ]
   },
   {
-    id: "msg-8",
+    id: "msg-10",
     role: "ai-agent",
     parts: [
       {
         type: "summary-updated",
-        messages: ['Business Name: Eat Cook Joy\nValue Prop: Chef tool providing personalization + convenience + affordability\nLocation: Texas\nServices: Meal Prep, Events'],
+        messages: ['Business Name: Eat Cook Joy\nValue Prop: Chef tool providing personalization + convenience + affordability\nLocation: Texas\nServices: Meal Prep, Events\nCompetitors: Dinner Elf'],
         id: "business_profile"
       },
     ]
   },
   {
-    id: "msg-8a",
+    id: "msg-11",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue."
+        text: "Got it. I have recorded your business details and I will share this with other agents when you need help with other roles. Ok, let's continue. \n\nWhere do you manage your leads? Feel free to share in chat or over voice."
       },
     ],
   },
   {
-    id: "msg-9",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Where do you manage your leads? Feel free to share in chat or over voice."
-      },
-    ],
-  },
-  {
-    id: "msg-10",
+    id: "msg-12",
     role: "user",
     parts: [
       {
@@ -397,18 +364,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-10a",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "reasoning",
-        text: "Processing lead management platform information",
-        status: "streaming",
-      }
-    ],
-  },
-  {
-    id: "msg-10b",
+    id: "msg-13",
     role: "ai-agent",
     parts: [
       {
@@ -420,7 +376,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-11",
+    id: "msg-14",
     role: "ai-agent",
     parts: [
       {
@@ -447,7 +403,7 @@ const mockConversation: CustomUIMessage[] = [
   //   ],
   // },
   {
-    id: "msg-13",
+    id: "msg-15",
     role: "ai-agent",
     parts: [
       {
@@ -457,7 +413,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13c",
+    id: "msg-16",
     role: "ai-agent",
     parts: [
       {
@@ -468,7 +424,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13d",
+    id: "msg-17",
     role: "ai-agent",
     parts: [
       {
@@ -477,8 +433,18 @@ const mockConversation: CustomUIMessage[] = [
       }
     ],
   },
+    {
+    id: "msg-18",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Views"
+      }
+    ],
+  },
   {
-    id: "msg-13e",
+    id: "msg-19",
     role: "ai-agent",
     parts: [
       {
@@ -488,28 +454,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13f",
-    role: "ai-agent",
-    parts: [
-      {
-        type: "text",
-        text: "Click on View details"
-      }
-    ],
-  },
-  {
-    id: "msg-14",
-    role: "user",
-    parts: [
-      {
-        type: "voice",
-        dummyText: "Ok so first I got to Thumbtack. and then I go to jobs. This is where I see the leads. I will click on a lead, then send them a template message.",
-        recordingDuration: 4000
-      },
-    ],
-  },
-  {
-    id: "msg-14b",
+    id: "msg-20",
     role: "ai-agent",
     parts: [
       {
@@ -519,7 +464,7 @@ const mockConversation: CustomUIMessage[] = [
     ]
   },
   {
-    id: "msg-15",
+    id: "msg-21",
     role: "ai-agent",
     parts: [
       {
@@ -529,18 +474,112 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-16",
+    id: "msg-22",
     role: "user",
     parts: [
       {
         type: "voice",
-        dummyText: "Yes, I respond to all my leads.",
+        dummyText: "Yes",
         recordingDuration: 2000
       },
     ],
   },
   {
-    id: "msg-17",
+    id: "msg-23",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Thanks, please continue"
+      }, {
+        type: "recording-state",
+        state: "start"
+      }
+    ],
+  },
+    {
+    id: "msg-24",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on View details"
+      }
+    ],
+  },
+   {
+    id: "msg-25",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "View Contacted Pros"
+      }
+    ],
+  },
+   {
+    id: "msg-26",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Go back"
+      }
+    ],
+  },
+   {
+    id: "msg-27",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Messages"
+      }
+    ],
+  },
+   {
+    id: "msg-28",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on highlight"
+      }
+    ],
+  },
+   {
+    id: "msg-29",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Use your quick reply"
+      }
+    ],
+  },
+    {
+    id: "msg-30",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "agent-interrupt",
+        message: "is this where you store all your templates?"
+      },
+    ],
+  },
+    {
+    id: "msg-31",
+    role: "user",
+    parts: [
+      {
+        type: "voice",
+        dummyText: "Yes",
+        recordingDuration: 2000
+      },
+    ],
+  },
+    {
+    id: "msg-32",
     role: "ai-agent",
     parts: [
       {
@@ -553,7 +592,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13f",
+    id: "msg-33",
     role: "ai-agent",
     parts: [
       {
@@ -562,8 +601,19 @@ const mockConversation: CustomUIMessage[] = [
       }
     ],
   },
+    {
+    id: "msg-34",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "reasoning",
+        text: " Analyzing steps\nSteps stored in memory",
+        status: "streaming",
+      }
+    ],
+  },
   {
-    id: "msg-17",
+    id: "msg-35",
     role: "ai-agent",
     parts: [
       {
@@ -573,7 +623,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-18",
+    id: "msg-36",
     role: "user",
     parts: [
       {
@@ -584,7 +634,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-17",
+    id: "msg-37",
     role: "ai-agent",
     parts: [
       {
@@ -594,7 +644,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-13c",
+    id: "msg-38",
     role: "ai-agent",
     parts: [
       {
@@ -605,28 +655,48 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-19",
+    id: "msg-39",
     role: "ai-agent",
     parts: [
       {
         type: "text",
-        text: "**1**. Click on Settings\n**2**. Click on navigation sidebar**3**. Click on Weekly budget"
+        text: "Click on Settings"
       },
     ],
   },
   {
-    id: "msg-6a",
+    id: "msg-40",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on navigation sidebar"
+      },
+    ],
+  },
+  {
+    id: "msg-41",
+    role: "ai-agent",
+    parts: [
+      {
+        type: "text",
+        text: "Click on Weekly budget"
+      },
+    ],
+  },
+  {
+    id: "msg-42",
     role: "ai-agent",
     parts: [
       {
         type: "reasoning",
-        text: "Analyzed and stored steps in memory",
+        text: "Analyzing steps\nSteps stored in memory",
         status: "streaming",
       }
     ],
   },
   {
-    id: "msg-19",
+    id: "msg-43",
     role: "ai-agent",
     parts: [
       {
@@ -636,7 +706,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-21",
+    id: "msg-44",
     role: "user",
     parts: [
       {
@@ -647,7 +717,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-19",
+    id: "msg-45",
     role: "ai-agent",
     parts: [
       {
@@ -657,7 +727,7 @@ const mockConversation: CustomUIMessage[] = [
     ],
   },
   {
-    id: "msg-22",
+    id: "msg-46",
     role: "ai-agent",
     parts: [
       {

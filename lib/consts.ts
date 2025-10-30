@@ -52,7 +52,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-4a",
+        id: "msg-openphone-5",
         role: "ai-agent",
         parts: [
             {
@@ -62,7 +62,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-5",
+        id: "msg-openphone-6",
         role: "user",
         parts: [
             {
@@ -73,7 +73,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-6",
+        id: "msg-openphone-7",
         role: "ai-agent",
         parts: [
             {
@@ -87,7 +87,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-7",
+        id: "msg-openphone-8",
         role: "user",
         parts: [
             {
@@ -98,7 +98,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-8",
+        id: "msg-openphone-9",
         role: "ai-agent",
         parts: [
             {
@@ -112,7 +112,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-9",
+        id: "msg-openphone-10",
         role: "user",
         parts: [
             {
@@ -123,7 +123,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-10",
+        id: "msg-openphone-11",
         role: "ai-agent",
         parts: [
             {
@@ -137,7 +137,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-11",
+        id: "msg-openphone-12",
         role: "user",
         parts: [
             {
@@ -148,7 +148,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-11a",
+        id: "msg-openphone-13",
         role: "ai-agent",
         parts: [
             {
@@ -159,7 +159,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-12",
+        id: "msg-openphone-14",
         role: "ai-agent",
         parts: [
             {
@@ -173,7 +173,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-13",
+        id: "msg-openphone-15",
         role: "ai-agent",
         parts: [
             {
@@ -185,7 +185,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
     },
 
     {
-        id: "msg-openphone-14",
+        id: "msg-openphone-16",
         role: "ai-agent",
         parts: [
             {
@@ -195,7 +195,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-15",
+        id: "msg-openphone-17",
         role: "user",
         parts: [
             {
@@ -208,7 +208,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 
 
     {
-        id: "msg-openphone-15a",
+        id: "msg-openphone-18",
         role: "ai-agent",
         parts: [
             {
@@ -219,7 +219,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-16",
+        id: "msg-openphone-19",
         role: "ai-agent",
         parts: [
             {
@@ -230,7 +230,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
     },
 
     {
-        id: "msg-openphone-17",
+        id: "msg-openphone-20",
         role: "user",
         parts: [
             {
@@ -241,7 +241,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-18",
+        id: "msg-openphone-21",
         role: "ai-agent",
         parts: [
             {
@@ -253,7 +253,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
     },
 
     {
-        id: "msg-openphone-18a",
+        id: "msg-openphone-22",
         role: "ai-agent",
         parts: [
             {
@@ -264,7 +264,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
         ],
     },
     {
-        id: "msg-openphone-19",
+        id: "msg-openphone-23",
         role: "ai-agent",
         parts: [
             {
@@ -275,7 +275,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
     },
 
     {
-        id: "msg-openphone-20",
+        id: "msg-openphone-24",
         role: "user",
         parts: [
             {
@@ -287,7 +287,7 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
     },
 
     {
-        id: "msg-openphone-21",
+        id: "msg-openphone-25",
         role: "ai-agent",
         parts: [
             {
