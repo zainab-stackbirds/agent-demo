@@ -2,20 +2,21 @@
 
 // Generate or retrieve user ID from localStorage
 function getUserId(): string {
-  if (typeof window === 'undefined') return '';
+  return "some_cool_dude"
+  // if (typeof window === 'undefined') return '';
 
-  const USER_ID_KEY = 'stackbirds_user_id';
-  let userId = localStorage.getItem(USER_ID_KEY);
+  // const USER_ID_KEY = 'stackbirds_user_id';
+  // let userId = localStorage.getItem(USER_ID_KEY);
 
-  if (!userId) {
-    // Generate 6 random letters
-    userId = Array.from({ length: 6 }, () =>
-      String.fromCharCode(97 + Math.floor(Math.random() * 26))
-    ).join('');
-    localStorage.setItem(USER_ID_KEY, userId);
-  }
+  // if (!userId) {
+  //   // Generate 6 random letters
+  //   userId = Array.from({ length: 6 }, () =>
+  //     String.fromCharCode(97 + Math.floor(Math.random() * 26))
+  //   ).join('');
+  //   localStorage.setItem(USER_ID_KEY, userId);
+  // }
 
-  return userId;
+  // return userId;
 }
 
 export interface ConversationState {
