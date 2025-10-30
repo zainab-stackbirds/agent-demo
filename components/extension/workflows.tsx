@@ -93,7 +93,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
           </h3>
           <div className="space-y-1.5">
             <AnimatePresence mode="popLayout">
-              {workflows.map((workflow, index) => {
+              {sortedWorkflows.map((workflow, index) => {
                 const shouldAnimateIn = workflow.isNew === true;
 
                 const category = WORKFLOW_CATEGORIES[workflow.category || "default"];
