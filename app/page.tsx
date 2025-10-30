@@ -35,6 +35,9 @@ import {
   updateConversationState,
   clearConversationState,
   setupSSEConnection,
+  fetchButtonStates,
+  updatePartialButtonStates,
+  type ButtonStates,
 } from "@/lib/api-client";
 import { ExtensionSummary } from "@/components/extension/extension-summary";
 import { AppIntegrations } from "@/components/extension/app-integrations";
@@ -529,13 +532,45 @@ const ChatBotDemo = () => {
         ...app,
         connecting: false,
       }));
-      setAppStatuses(updatedApps);
+
+      // Only update if the apps don't already exist in state, or merge with existing
+      setAppStatuses((prevApps) => {
+        if (prevApps.length === 0) {
+          return updatedApps;
+        }
+
+        // Merge: keep existing apps and their states, add new ones
+        const mergedApps = [...prevApps];
+        updatedApps.forEach((newApp) => {
+          const existingIndex = mergedApps.findIndex((a) => a.app_id === newApp.app_id);
+          if (existingIndex >= 0) {
+            // If app exists and is connected/connecting, keep its state
+            if (mergedApps[existingIndex].enabled || mergedApps[existingIndex].connecting) {
+              // Don't override existing connection status
+              return;
+            }
+            // Otherwise update it
+            mergedApps[existingIndex] = newApp;
+          } else {
+            // New app, add it
+            mergedApps.push(newApp);
+          }
+        });
+        return mergedApps;
+      });
+
       setShowApps(true);
 
-      // Update connection states based on app statuses (preserve existing states)
+      // Update connection states based on app statuses (preserve existing "connected" states)
       setConnectionStates((prev) => {
         const newStates = { ...prev };
         updatedApps.forEach((app) => {
+          // Only update if not already connected
+          if (prev[app.app_id] === "connected") {
+            // Keep connected state
+            return;
+          }
+
           if (app.enabled) {
             newStates[app.app_id] = "connected";
           } else if (app.connecting) {
@@ -608,13 +643,24 @@ const ChatBotDemo = () => {
       recordingStatePart &&
       recordingStatePart.type === "recording-state"
     ) {
+      let newState: "recording" | "paused" | "idle" | "not_started" = "not_started";
       if (recordingStatePart.state === "start") {
+        newState = "recording";
         setWorkflowRecordingState("recording");
       } else if (recordingStatePart.state === "pause") {
+        newState = "paused";
         setWorkflowRecordingState("paused");
       } else if (recordingStatePart.state === "stop") {
+        newState = "idle";
         setWorkflowRecordingState("idle");
       }
+
+      // Save recording state to Redis
+      updatePartialButtonStates({
+        agentRecordingState: newState,
+      }).catch((error) => {
+        console.error("Error saving recording state:", error);
+      });
     }
 
     // Process system-event parts for agent switching
@@ -711,6 +757,7 @@ const ChatBotDemo = () => {
     const initializeState = async () => {
       try {
         const state = await loadFromAPI();
+        const buttonStates = await fetchButtonStates();
 
         // Check if there's existing state to preserve
         if (state && state.messages && state.messages.length > 0) {
@@ -734,6 +781,70 @@ const ChatBotDemo = () => {
           setIsUserMessageInPlaceholder(false);
           setDemoModeActive(true); // Only start demo mode when there's no existing state
         }
+
+        // Load app statuses
+        console.log("📥 Loading state from Redis:", { appStatuses: state.appStatuses, buttonStates });
+        if (state.appStatuses && state.appStatuses.length > 0) {
+          console.log("✅ Setting app statuses from state:", state.appStatuses);
+          setAppStatuses(state.appStatuses);
+          setShowApps(true);
+        }
+
+        // Load button states and sync with app statuses
+        if (buttonStates.isConnectThumbtackClicked) {
+          console.log("🔧 Thumbtack was previously connected, updating app statuses");
+          setConnectionStates((prev) => ({
+            ...prev,
+            thumbtack: "connected",
+          }));
+
+          // Also update appStatuses to show thumbtack as enabled
+          setAppStatuses((prev) => {
+            const hasThumbtack = prev.some((app) => app.app_id === "thumbtack");
+            if (hasThumbtack) {
+              return prev.map((app) =>
+                app.app_id === "thumbtack"
+                  ? { ...app, enabled: true, connecting: false }
+                  : app
+              );
+            } else {
+              // Add thumbtack if it doesn't exist
+              return [
+                ...prev,
+                { app_id: "thumbtack", enabled: true, connecting: false },
+              ];
+            }
+          });
+          setShowApps(true); // Ensure apps section is shown
+        }
+
+        if (buttonStates.isConnectOpenPhoneClicked) {
+          setConnectionStates((prev) => ({
+            ...prev,
+            openphone: "connected",
+          }));
+
+          // Also update appStatuses to show openphone as enabled
+          setAppStatuses((prev) => {
+            const hasOpenphone = prev.some((app) => app.app_id === "openphone");
+            if (hasOpenphone) {
+              return prev.map((app) =>
+                app.app_id === "openphone"
+                  ? { ...app, enabled: true, connecting: false }
+                  : app
+              );
+            } else {
+              // Add openphone if it doesn't exist
+              return [
+                ...prev,
+                { app_id: "openphone", enabled: true, connecting: false },
+              ];
+            }
+          });
+          setShowApps(true); // Ensure apps section is shown
+        }
+
+        setWorkflowRecordingState(buttonStates.agentRecordingState);
 
         setIsInitialized(true);
       } catch (error) {
@@ -791,6 +902,10 @@ const ChatBotDemo = () => {
 
     if (action === "clear") {
       clearConversationStorage().then(() => {
+        // Reset button states as well
+        setConnectionStates({});
+        setWorkflowRecordingState("not_started");
+
         // Remove the query param from URL without reload
         window.history.replaceState({}, "", window.location.pathname);
       });
@@ -811,6 +926,7 @@ const ChatBotDemo = () => {
       isUserMessageInPlaceholder,
       demoModeActive,
       input: "",
+      appStatuses,
     });
 
     // Reset the flag
@@ -821,6 +937,7 @@ const ChatBotDemo = () => {
     status,
     isUserMessageInPlaceholder,
     demoModeActive,
+    appStatuses,
     isInitialized,
   ]);
 
@@ -979,13 +1096,43 @@ const ChatBotDemo = () => {
     }
 
     if (latestAppStatuses.length > 0) {
-      setAppStatuses(latestAppStatuses);
+      // Merge with existing app statuses if any
+      setAppStatuses((prevApps) => {
+        if (prevApps.length === 0) {
+          return latestAppStatuses;
+        }
+
+        // Merge: keep existing apps with their connection states
+        const mergedApps = [...prevApps];
+        latestAppStatuses.forEach((newApp) => {
+          const existingIndex = mergedApps.findIndex((a) => a.app_id === newApp.app_id);
+          if (existingIndex >= 0) {
+            // If app exists and is connected/connecting, keep its state
+            if (mergedApps[existingIndex].enabled || mergedApps[existingIndex].connecting) {
+              // Don't override
+              return;
+            }
+            // Otherwise update it
+            mergedApps[existingIndex] = newApp;
+          } else {
+            // New app, add it
+            mergedApps.push(newApp);
+          }
+        });
+        return mergedApps;
+      });
+
       setShowApps(true);
 
-      // Initialize connection states based on app statuses (preserve existing states)
+      // Initialize connection states based on app statuses (preserve existing "connected" states)
       setConnectionStates((prev) => {
         const newStates = { ...prev };
         latestAppStatuses.forEach((app) => {
+          // Don't override existing connected states
+          if (prev[app.app_id] === "connected") {
+            return;
+          }
+
           if (app.enabled) {
             newStates[app.app_id] = "connected";
           } else if (app.connecting) {
@@ -1531,6 +1678,20 @@ const ChatBotDemo = () => {
                               )
                             );
 
+                            // Save button state to Redis
+                            const buttonUpdate: Partial<ButtonStates> = {};
+                            if (appId === "thumbtack") {
+                              buttonUpdate.isConnectThumbtackClicked = true;
+                            } else if (appId === "openphone") {
+                              buttonUpdate.isConnectOpenPhoneClicked = true;
+                            }
+                            console.log("💾 Saving button state to Redis:", buttonUpdate);
+                            updatePartialButtonStates(buttonUpdate).then(() => {
+                              console.log("✅ Button state saved successfully");
+                            }).catch((error) => {
+                              console.error("❌ Error saving button state:", error);
+                            });
+
                             // After connection completes, wait 10 seconds then progress to next message
                             setTimeout(() => {
                               saveToAPIRef.current =
@@ -1660,6 +1821,13 @@ const ChatBotDemo = () => {
                           setWorkflowRecordingState(
                             "recording"
                           );
+
+                          // Save recording state to Redis
+                          updatePartialButtonStates({
+                            agentRecordingState: "recording",
+                          }).catch((error) => {
+                            console.error("Error saving recording state:", error);
+                          });
 
                           if (
                             window.parent &&

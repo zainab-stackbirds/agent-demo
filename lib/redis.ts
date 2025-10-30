@@ -42,6 +42,18 @@ export async function closeRedisConnection() {
 const getConversationStateKey = (userId: string) => `conversation:state:${userId}`;
 const getConversationUpdatesChannel = (userId: string) => `conversation:updates:${userId}`;
 
+export interface ButtonStates {
+  isConnectOpenPhoneClicked: boolean;
+  isConnectThumbtackClicked: boolean;
+  agentRecordingState: "recording" | "paused" | "idle" | "not_started";
+}
+
+export interface AppStatus {
+  app_id: string;
+  enabled: boolean;
+  connecting?: boolean;
+}
+
 export interface ConversationState {
   messages: any[];
   currentMessageIndex: number;
@@ -49,6 +61,8 @@ export interface ConversationState {
   isUserMessageInPlaceholder: boolean;
   demoModeActive: boolean;
   input: string;
+  buttonStates?: ButtonStates;
+  appStatuses?: AppStatus[];
 }
 
 export async function getConversationState(userId: string): Promise<ConversationState | null> {
@@ -76,6 +90,51 @@ export async function clearConversationState(userId: string): Promise<void> {
 
   // Publish clear event to user-specific channel
   await client.publish(getConversationUpdatesChannel(userId), JSON.stringify({ type: 'clear', data: null }));
+}
+
+// Button states management
+const getButtonStatesKey = (userId: string) => `button:states:${userId}`;
+
+export async function getButtonStates(userId: string): Promise<ButtonStates | null> {
+  const client = getRedisClient();
+  const data = await client.get(getButtonStatesKey(userId));
+
+  if (!data) {
+    return null;
+  }
+
+  return JSON.parse(data);
+}
+
+export async function setButtonStates(userId: string, states: ButtonStates): Promise<void> {
+  const client = getRedisClient();
+  await client.set(getButtonStatesKey(userId), JSON.stringify(states));
+
+  // Publish update event to user-specific channel
+  await client.publish(getConversationUpdatesChannel(userId), JSON.stringify({ type: 'button_states_update', data: states }));
+}
+
+export async function updateButtonState(userId: string, partialState: Partial<ButtonStates>): Promise<void> {
+  const client = getRedisClient();
+  const currentStates = await getButtonStates(userId);
+  
+  const newStates: ButtonStates = {
+    isConnectOpenPhoneClicked: false,
+    isConnectThumbtackClicked: false,
+    agentRecordingState: "not_started",
+    ...currentStates,
+    ...partialState,
+  };
+
+  await setButtonStates(userId, newStates);
+}
+
+export async function clearButtonStates(userId: string): Promise<void> {
+  const client = getRedisClient();
+  await client.del(getButtonStatesKey(userId));
+
+  // Publish clear event to user-specific channel
+  await client.publish(getConversationUpdatesChannel(userId), JSON.stringify({ type: 'button_states_clear', data: null }));
 }
 
 // Create a subscriber connection for SSE

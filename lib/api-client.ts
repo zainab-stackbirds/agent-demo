@@ -19,6 +19,18 @@ function getUserId(): string {
   // return userId;
 }
 
+export interface ButtonStates {
+  isConnectOpenPhoneClicked: boolean;
+  isConnectThumbtackClicked: boolean;
+  agentRecordingState: "recording" | "paused" | "idle" | "not_started";
+}
+
+export interface AppStatus {
+  app_id: string;
+  enabled: boolean;
+  connecting?: boolean;
+}
+
 export interface ConversationState {
   messages: any[];
   currentMessageIndex: number;
@@ -26,6 +38,7 @@ export interface ConversationState {
   isUserMessageInPlaceholder: boolean;
   demoModeActive: boolean;
   input: string;
+  appStatuses?: AppStatus[];
 }
 
 export async function fetchConversationState(): Promise<ConversationState> {
@@ -68,6 +81,52 @@ export async function clearConversationState(): Promise<void> {
 
   if (!response.ok) {
     throw new Error('Failed to clear conversation state');
+  }
+}
+
+// Button states management
+export async function fetchButtonStates(): Promise<ButtonStates> {
+  const userId = getUserId();
+  const response = await fetch('/api/conversation/button-states', {
+    headers: {
+      'X-User-Id': userId,
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch button states');
+  }
+  return response.json();
+}
+
+export async function updateButtonStates(states: ButtonStates): Promise<void> {
+  const userId = getUserId();
+  const response = await fetch('/api/conversation/button-states', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Id': userId,
+    },
+    body: JSON.stringify(states),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update button states');
+  }
+}
+
+export async function updatePartialButtonStates(partialStates: Partial<ButtonStates>): Promise<void> {
+  const userId = getUserId();
+  const response = await fetch('/api/conversation/button-states', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Id': userId,
+    },
+    body: JSON.stringify(partialStates),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to partially update button states');
   }
 }
 

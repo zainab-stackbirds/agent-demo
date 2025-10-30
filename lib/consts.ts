@@ -80,9 +80,20 @@ export const thumbtackConversation: CustomUIMessage[] = [
 		parts: [
 			{
 				type: "text-image",
-				text: "After searching I found this website, does this look yours?",
+				text: "After searching I found this website",
 				url: "/www_eatcookjoy_com.png",
 				link: "https://www.eatcookjoy.com",
+			},
+		],
+	},
+	{
+		id: "msg-6-1-1",
+		role: "ai-agent",
+		parts: [
+			{
+				type: "text",
+				text: "Does this look yours?",
+				displayAvatar: false,
 			},
 		],
 	},
