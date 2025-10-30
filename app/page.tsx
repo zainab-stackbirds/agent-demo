@@ -1295,9 +1295,7 @@ const ChatBotDemo = () => {
       workflowsHydratedRef.current = true;
     }
 
-    // Mark messages as processed to prevent re-running
-    messagesProcessedRef.current = true;
-  }, [messages]);
+  }, [messages, isExtension, summaryData, appStatuses.length]);
 
   // Handle broadcast messages from other tabs/iframes
   useEffect(() => {
