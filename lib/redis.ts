@@ -38,9 +38,9 @@ export async function closeRedisConnection() {
   }
 }
 
-// Constants for Redis keys
-const CONVERSATION_STATE_KEY = 'conversation:state';
-const CONVERSATION_MESSAGES_KEY = 'conversation:messages';
+// Generate user-specific Redis keys
+const getConversationStateKey = (userId: string) => `conversation:state:${userId}`;
+const getConversationUpdatesChannel = (userId: string) => `conversation:updates:${userId}`;
 
 export interface ConversationState {
   messages: any[];
@@ -51,31 +51,31 @@ export interface ConversationState {
   input: string;
 }
 
-export async function getConversationState(): Promise<ConversationState | null> {
+export async function getConversationState(userId: string): Promise<ConversationState | null> {
   const client = getRedisClient();
-  const data = await client.get(CONVERSATION_STATE_KEY);
-  
+  const data = await client.get(getConversationStateKey(userId));
+
   if (!data) {
     return null;
   }
-  
+
   return JSON.parse(data);
 }
 
-export async function setConversationState(state: ConversationState): Promise<void> {
+export async function setConversationState(userId: string, state: ConversationState): Promise<void> {
   const client = getRedisClient();
-  await client.set(CONVERSATION_STATE_KEY, JSON.stringify(state));
-  
-  // Publish update event to all subscribers
-  await client.publish('conversation:updates', JSON.stringify({ type: 'state_update', data: state }));
+  await client.set(getConversationStateKey(userId), JSON.stringify(state));
+
+  // Publish update event to user-specific channel
+  await client.publish(getConversationUpdatesChannel(userId), JSON.stringify({ type: 'state_update', data: state }));
 }
 
-export async function clearConversationState(): Promise<void> {
+export async function clearConversationState(userId: string): Promise<void> {
   const client = getRedisClient();
-  await client.del(CONVERSATION_STATE_KEY);
-  
-  // Publish clear event to all subscribers
-  await client.publish('conversation:updates', JSON.stringify({ type: 'clear', data: null }));
+  await client.del(getConversationStateKey(userId));
+
+  // Publish clear event to user-specific channel
+  await client.publish(getConversationUpdatesChannel(userId), JSON.stringify({ type: 'clear', data: null }));
 }
 
 // Create a subscriber connection for SSE
