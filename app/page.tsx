@@ -2955,7 +2955,7 @@ const ChatBotDemo = () => {
 
   // Render sticky input section
   const renderInputSection = () => (
-    <div className="sticky bottom-[20px] md:bottom-0 z-50 w-full m-5 rounded-lg">
+    <div className="sticky bottom-[20px] md:bottom-0 z-50 w-full px-4 md:px-5 rounded-lg">
       <AnimatePresence mode="wait">
         {recordingState === "recording" ? (
           // Show audio visualizer when recording
@@ -3040,7 +3040,7 @@ const ChatBotDemo = () => {
                     !shouldShowInput ||
                     status === "streaming"
                   }
-                  className="flex-1 border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground shadow-none"
+                  className="flex-1 md:w-full border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground shadow-none"
                 />
 
                 {/* Microphone/Send icon button */}
