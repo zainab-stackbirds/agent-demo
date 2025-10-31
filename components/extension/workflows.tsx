@@ -119,7 +119,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                     <div
                       className={`group relative flex items-start gap-3 rounded-lg border px-3 py-2.5 pt-4 transition-all duration-300 bg-white min-h-[70px]
                         ${isRecent
-                          ? 'border-primary/50 bg-gradient-to-r from-primary/12 to-primary/8 shadow-md ring-1 ring-primary/20'
+                          ? 'border-primary/50 bg-white shadow-md ring-1 ring-primary/20'
                           : isPretrained
                             ? 'border-muted/30 bg-muted/20'
                             : 'border-muted/20 bg-muted/10'
@@ -204,7 +204,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                               }
                               : undefined
                             }
-                            className="flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-primary"
+                            className="flex items-center gap-1 rounded-full bg-[#f0f0f0] px-2 py-0.5 text-primary"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"

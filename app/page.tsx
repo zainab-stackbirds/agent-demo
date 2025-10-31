@@ -46,7 +46,7 @@ import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Header from "@/components/UnitComponents/Header";
 import RecordingIndicator from "@/components/extension/recording-indicator";
-import { ArrowDownRight, MousePointer2 } from "lucide-react";
+import { MousePointer2 } from "lucide-react";
 import { MeshGradientComponent } from "@/components/ui/mesh-gradient";
 
 export type CustomUIMessage = Omit<UIMessage, "role" | "parts"> & {
@@ -944,14 +944,6 @@ const ChatBotDemo = () => {
   ]);
 
   useEffect(() => {
-    console.log("--------------------------------");
-    console.log("🔍 Demo mode active:", demoModeActive);
-    console.log("🔍 Is initialized:", isInitialized);
-    console.log("🔍 Current message index:", currentMessageIndex);
-    console.log("🔍 Mock conversation length:", mockConversation.length);
-    console.log("🔍 Workflow recording state:", workflowRecordingState);
-    console.log("🔍 Messages:", messages);
-
     if (
       !demoModeActive ||
       !isInitialized ||
@@ -960,13 +952,11 @@ const ChatBotDemo = () => {
       return;
 
     const currentMessage = mockConversation[currentMessageIndex];
-    console.log("🔍 Current message:", currentMessage);
 
     // Check if current message has options - if so, don't auto-progress
     const hasOptions = currentMessage.parts.some(
       (part) => part.type === "options"
     );
-    console.log("🔍 Has options:", hasOptions);
     const requiresAction = currentMessage.parts.some(
       (part) => part.type === "button" && part.action !== undefined
     );
@@ -991,7 +981,6 @@ const ChatBotDemo = () => {
 
     if (hasOptions) {
       // Show the message but don't auto-progress
-      console.log("🔍 Showing message with options or requires action");
       setStatus("ready");
       appendMessage(currentMessage);
       return;
@@ -1470,6 +1459,7 @@ const ChatBotDemo = () => {
               </Sources>
             )}
           {message.parts.map((part, i) => {
+            const isLastMessage = index === messages.length - 1;
             switch (part.type) {
               case "text":
                 return (
@@ -1496,7 +1486,7 @@ const ChatBotDemo = () => {
                         from={message.role}
                         className="mb-2"
                       >
-                        <div className="w-11" />
+                        <div className="w-8" />
                         <MessageContent className="font-mono flex flex-row items-start">
                           <MousePointer2 className="w-4 h-4 text-gray-500" />
                           <TextWithLinks
@@ -2547,7 +2537,7 @@ const ChatBotDemo = () => {
                     className="mb-2"
                   >
                     {/* Avatar with pulsing red border */}
-                    <div className="relative">
+                    {isLastMessage ? <div className="relative">
                       <motion.div
                         className="absolute -inset-0.5 rounded-full"
                         animate={{
@@ -2579,7 +2569,11 @@ const ChatBotDemo = () => {
                         name="SA"
                         className="relative z-10"
                       />
-                    </div>
+                    </div> : <MessageAvatar
+                      src=""
+                      name="SA"
+                      className="relative z-10"
+                    />}
 
                     {/* Subtle message content */}
                     <MessageContent>

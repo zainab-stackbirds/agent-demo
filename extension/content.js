@@ -2,7 +2,7 @@
 let sidebarVisible = false;
 let sidebarContainer = null;
 let defaultTab = "chat"; // Default tab for sidebar iframe
-const debug = false;
+const debug = true;
 
 const RECORDING_OVERLAY_ID = "stackbirds-recording-overlay";
 let recordingOverlayTimeoutId = null;
