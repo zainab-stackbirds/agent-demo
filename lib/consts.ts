@@ -830,4 +830,15 @@ export const openPhoneConversation: Array<CustomUIMessage> = [
 			},
 		],
 	},
+	{
+		id: "msg-openphone-18",
+		role: "user",
+		parts: [
+			{
+				type: "voice",
+				dummyText: "Yes please do",
+				recordingDuration: 2000,
+			},
+		],
+	},
 ];

@@ -794,7 +794,6 @@ const ChatBotDemo = () => {
 
         // Load button states and sync with app statuses
         if (buttonStates.isConnectThumbtackClicked) {
-          console.log("🔧 Thumbtack was previously connected, updating app statuses");
           setConnectionStates((prev) => ({
             ...prev,
             thumbtack: "connected",
@@ -962,6 +961,8 @@ const ChatBotDemo = () => {
     );
 
     if (requiresAction) {
+      // Mark that this is a demo progress action - should be saved to API
+      saveToAPIRef.current = true;
       appendMessage(currentMessage);
       setTimeout(() => {
         setStatus("ready");
@@ -980,6 +981,8 @@ const ChatBotDemo = () => {
     }
 
     if (hasOptions) {
+      // Mark that this is a demo progress action - should be saved to API
+      saveToAPIRef.current = true;
       // Show the message but don't auto-progress
       setStatus("ready");
       appendMessage(currentMessage);
