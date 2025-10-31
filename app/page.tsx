@@ -2955,7 +2955,7 @@ const ChatBotDemo = () => {
 
   // Render sticky input section
   const renderInputSection = () => (
-    <div className="sticky bottom-[20px] md:bottom-0 z-50 w-full px-4 md:px-5 rounded-lg">
+    <div className="sticky bottom-[20px] md:bottom-[35px] z-50 w-full px-4 md:px-5 rounded-lg">
       <AnimatePresence mode="wait">
         {recordingState === "recording" ? (
           // Show audio visualizer when recording
