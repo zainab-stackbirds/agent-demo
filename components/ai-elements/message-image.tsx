@@ -8,6 +8,8 @@ import type { UIMessage } from "ai";
 import { cva, type VariantProps } from "class-variance-authority";
 import Image from "next/image";
 import type { ComponentProps, HTMLAttributes } from "react";
+import { Message, MessageContent, } from "./message";
+
 
 export type MessageImageProps = HTMLAttributes<HTMLDivElement> & {
     from: UIMessage["role"] | "ai-agent";
@@ -89,15 +91,17 @@ export const MessageImage = ({
         <div className="flex flex-col gap-2 max-w-[80%]">
             {/* Text content - only show if text is not empty */}
             {text && text.trim() !== "" && (
-                <MessageImageContent variant="contained">
-                    <div className="whitespace-pre-wrap">{text}</div>
-                </MessageImageContent>
+                <Message from={from === "ai-agent" ? "ai-agent" : "user"}>
+                    <MessageContent className="font-mono flex flex-row items-start">
+                        {text}
+                    </MessageContent>
+                </Message>
             )}
 
             {/* Image */}
             <div
                 className={cn(
-                    "relative overflow-hidden rounded-lg border border-border p-1 group/image",
+                    "relative overflow-hidden rounded-lg border border-border group/image",
                     from === "user" ? "ml-auto" : "mr-auto",
                     text && text.trim() !== "" ? "max-w-[500px]" : "max-w-[500px]"
                 )}
@@ -107,7 +111,7 @@ export const MessageImage = ({
                     height={500}
                     src={url}
                     alt="Message image"
-                    className="w-full h-auto object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                    className="w-full h-auto object-contain cursor-pointer hover:opacity-95 transition-opacity"
                     style={{ maxHeight: "300px" }}
                     onClick={() => {
                         // Open link in new tab when clicked (fallback to image URL)

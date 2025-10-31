@@ -31,9 +31,9 @@ const eventConfig = {
     },
     "agent-switching": {
         icon: RefreshCwIcon,
-        color: "text-orange-600 dark:text-orange-400",
-        bgColor: "bg-orange-50 dark:bg-orange-950/30",
-        borderColor: "border-orange-200 dark:border-orange-800",
+        color: "text-black",
+        bgColor: "bg-blue-200/20 backdrop-blur supports-[backdrop-filter]:bg-blue-200/20 rounded-2xl",
+        borderColor: "border-blue-200/20 border-2",
     },
 };
 
@@ -71,7 +71,7 @@ export const SystemEvent = ({
             )}
             {...props}
         >
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#868b9c] to-transparent" />
 
             <div
                 className={cn(
@@ -83,11 +83,11 @@ export const SystemEvent = ({
                     "shadow-sm"
                 )}
             >
-                <Icon className="size-4 animate-pulse" />
+                <Icon className="size-4 animate-pulse text-blue-600" />
                 <span>{getMessage()}</span>
             </div>
 
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#868b9c] to-transparent" />
         </div>
     );
 };

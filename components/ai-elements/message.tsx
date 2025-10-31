@@ -35,7 +35,7 @@ const messageContentVariants = cva(
         contained: [
           "max-w-[80%] px-4 py-3",
           "group-[.is-user]:bg-secondary group-[.is-user]:text-foreground group-[.is-user]:[&_*]:text-foreground", // Switched to secondary
-          "group-[.is-assistant]:bg-primary group-[.is-assistant]:text-primary-foreground group-[.is-assistant]:[&_*]:text-primary-foreground", // Switched to primary
+          "group-[.is-assistant]:bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 group-[.is-assistant]:text-black group-[.is-assistant]:[&_*]:text-black border-2 border-white", // Switched to primary
           "group-[.is-ai-agent]:text-foreground group-[.is-ai-agent]:[&_*]:text-foreground", // Plain text - no background
         ],
         flat: [

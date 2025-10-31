@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getButtonStates, setButtonStates, updateButtonState, clearButtonStates } from '@/lib/redis';
-import type { ButtonStates } from '@/lib/redis';
+import { getButtonStates, setButtonStates, updateButtonState, clearButtonStates } from '@/lib/state';
+import type { ButtonStates } from '@/lib/state';
 
 export async function GET(request: NextRequest) {
   try {

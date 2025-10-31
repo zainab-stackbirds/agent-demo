@@ -215,7 +215,7 @@ export function AudioVisualizer({
     return (
         <div
             ref={containerRef}
-            className="h-full w-full cursor-pointer rounded-lg bg-background/80 backdrop-blur"
+            className="h-full w-full cursor-pointer rounded-lg"
             onClick={onClick}
         >
             <canvas ref={canvasRef} className="h-full w-full" />

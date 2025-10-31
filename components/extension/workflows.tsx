@@ -86,11 +86,11 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="mb-3"
     >
-      <Card className="border-primary/10 bg-gradient-to-br from-background/95 via-background to-muted/10">
-        <CardContent className="px-3 py-2 sm:px-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
-            Learned Workflows
-          </h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em]">
+        Learned Workflows
+      </h3>
+      <Card className="bg-transparent border-none shadow-none mt-0 py-2">
+        <CardContent className="p-0">
           <div className="space-y-1.5">
             <AnimatePresence mode="popLayout">
               {sortedWorkflows.map((workflow, index) => {
@@ -102,6 +102,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
 
                 return (
                   <motion.div
+                    className="w-full"
                     key={workflow.id}
                     initial={shouldAnimateIn ? { opacity: 0, x: -16, scale: 0.95 } : false}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -116,7 +117,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                     }
                   >
                     <div
-                      className={`group relative flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all duration-300 backdrop-blur
+                      className={`group relative flex items-start gap-3 rounded-lg border px-3 py-2.5 pt-4 transition-all duration-300 bg-white min-h-[70px]
                         ${isRecent
                           ? 'border-primary/50 bg-gradient-to-r from-primary/12 to-primary/8 shadow-md ring-1 ring-primary/20'
                           : isPretrained
@@ -171,7 +172,7 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                         </motion.p>
 
                         {/* Category label */}
-                        <motion.span
+                        <motion.div
                           initial={shouldAnimateIn ? { opacity: 0 } : false}
                           animate={{ opacity: 1 }}
                           transition={shouldAnimateIn
@@ -181,10 +182,10 @@ export const Workflows = ({ workflows }: WorkflowsProps) => {
                             }
                             : undefined
                           }
-                          className="text-[0.65rem] text-muted-foreground/70 font-medium mt-0.5 block"
+                          className="text-[0.65rem] text-muted-foreground/70 font-medium mt-0.5 block my-auto"
                         >
                           {category.label}
-                        </motion.span>
+                        </motion.div>
                       </div>
 
                       {/* Status indicators */}

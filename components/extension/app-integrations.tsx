@@ -34,11 +34,11 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="mb-3"
     >
-      <Card className="border-primary/10 bg-gradient-to-br from-background/95 via-background to-muted/10">
-        <CardContent className="px-3 py-2 sm:px-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
-            Required Apps
-          </h3>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]">
+        Required Apps
+      </h3>
+      <Card className="bg-transparent border-none shadow-none mt-0 py-2">
+        <CardContent className="p-0">
           <div className="flex flex-wrap gap-1.5 sm:gap-2.5">
             <AnimatePresence mode="popLayout">
               {apps.map((app, index) => {
@@ -46,7 +46,7 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                 if (!metadata) return null;
 
                 const accentColor = metadata.color;
-                const isConnected = true;
+                const isConnected = app.enabled;
                 const isConnecting = app.connecting === true;
 
                 return (
@@ -66,10 +66,10 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                       aria-disabled={!isConnected && !isConnecting}
                       className={`group relative flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-all duration-300 backdrop-blur
                         ${isConnected
-                          ? 'border-primary/30 bg-primary/5 opacity-90 hover:opacity-100'
+                          ? 'border-primary/30 bg-white hover:opacity-100'
                           : isConnecting
                             ? 'border-primary/50 bg-primary/10 opacity-75'
-                            : 'border-muted/40 bg-muted/60 opacity-45 cursor-not-allowed'
+                            : 'border-muted/40 opacity-80 cursor-not-allowed'
                         }
                       `}
                       style={{
@@ -79,28 +79,13 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                     >
                       <div className="flex flex-col items-center gap-1.5">
                         {/* App Logo with animation */}
-                        <motion.div
-                          initial={{ rotate: -8, scale: 0.9 }}
-                          animate={{
-                            rotate: isConnecting ? [0, 360] : 0,
-                            scale: 1
-                          }}
-                          transition={{
-                            duration: isConnecting ? 1.5 : 0.45,
-                            repeat: isConnecting ? Infinity : 0,
-                            delay: index * 0.12 + 0.18,
-                            type: isConnecting ? "tween" : "spring",
-                            ease: isConnecting ? "linear" : undefined,
-                            stiffness: isConnecting ? undefined : 200,
-                            damping: isConnecting ? undefined : 16
-                          }}
-                          className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white/90 shadow-sm ring-1 ring-black/5"
-                          style={{ border: (isConnected || isConnecting) ? `1px solid ${accentColor}` : undefined }}
+                        <div
+                          className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg"
                         >
                           <img
                             src={metadata.logo}
                             alt={metadata.name}
-                            className="h-6 w-6 object-contain"
+                            className="h-10 w-10 object-contain"
                             onError={(e) => {
                               // Fallback to first letter if logo fails to load
                               const target = e.target as HTMLImageElement;
@@ -112,7 +97,7 @@ export const AppIntegrations = ({ apps }: AppIntegrationsProps) => {
                               target.parentElement?.appendChild(fallback);
                             }}
                           />
-                        </motion.div>
+                        </div>
 
                         <motion.h4
                           initial={{ opacity: 0, y: 4 }}

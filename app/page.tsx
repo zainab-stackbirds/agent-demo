@@ -46,6 +46,8 @@ import { Workflows } from "@/components/extension/workflows";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Header from "@/components/UnitComponents/Header";
 import RecordingIndicator from "@/components/extension/recording-indicator";
+import { ArrowDownRight, MousePointer2 } from "lucide-react";
+import { MeshGradientComponent } from "@/components/ui/mesh-gradient";
 
 export type CustomUIMessage = Omit<UIMessage, "role" | "parts"> & {
   role: "assistant" | "user" | "ai-agent";
@@ -200,14 +202,7 @@ class BroadcastSync {
       }
     };
 
-    // Listen to localStorage changes from other tabs (legacy support - not used with Redis)
-    const handleStorageChange = (event: StorageEvent) => {
-      // localStorage sync is no longer used - state is managed via Redis
-      // This listener is kept for compatibility but does nothing
-    };
-
     window.addEventListener("message", handlePostMessage);
-    window.addEventListener("storage", handleStorageChange);
   }
 
   addMessageListener(handler: (message: BroadcastMessage) => void) {
@@ -327,6 +322,16 @@ const ChatBotDemo = () => {
   const [showSummary, setShowSummary] = useState(false);
 
   const [summaryMessages, setSummaryMessages] = useState<string[]>([]);
+
+  const settings = {
+    background: {
+      color1: { hex: "#ffffff" },
+      color2: { hex: "#dddddd" },
+      color3: { hex: "#9eb6ff" },
+      color4: { hex: "#bbbbbb" },
+      speed: 0.5,
+    },
+  }
 
   // App integrations state
   const [appStatuses, setAppStatuses] = useState<
@@ -655,7 +660,6 @@ const ChatBotDemo = () => {
         setWorkflowRecordingState("idle");
       }
 
-      // Save recording state to Redis
       updatePartialButtonStates({
         agentRecordingState: newState,
       }).catch((error) => {
@@ -783,9 +787,7 @@ const ChatBotDemo = () => {
         }
 
         // Load app statuses
-        console.log("📥 Loading state from Redis:", { appStatuses: state.appStatuses, buttonStates });
         if (state.appStatuses && state.appStatuses.length > 0) {
-          console.log("✅ Setting app statuses from state:", state.appStatuses);
           setAppStatuses(state.appStatuses);
           setShowApps(true);
         }
@@ -968,9 +970,26 @@ const ChatBotDemo = () => {
     const requiresAction = currentMessage.parts.some(
       (part) => part.type === "button" && part.action !== undefined
     );
-    console.log("🔍 Requires action:", requiresAction);
 
-    if (hasOptions || requiresAction) {
+    if (requiresAction) {
+      appendMessage(currentMessage);
+      setTimeout(() => {
+        setStatus("ready");
+        if (updateSourceRef.current === "self" && broadcastInstance) {
+          broadcastInstance.broadcastMessage({
+            type: "DEMO_PROGRESS",
+            payload: {
+              newIndex: currentMessageIndex,
+              status: "ready",
+              isUserMessageInPlaceholder: true,
+            },
+          });
+        }
+      }, 2000); // Wait 2 seconds before progressing
+      return;
+    }
+
+    if (hasOptions) {
       // Show the message but don't auto-progress
       console.log("🔍 Showing message with options or requires action");
       setStatus("ready");
@@ -1455,52 +1474,58 @@ const ChatBotDemo = () => {
               case "text":
                 return (
                   <Fragment key={`${message.id}-${i}`}>
-                    <Message
-                      from={message.role}
-                      className="mb-2"
-                    >
-                      {message.role === "user" ? (
-                        <>
-                          <MessageContent>
-                            <TextWithLinks
-                              text={part.text}
-                            />
-                          </MessageContent>
-                          <MessageAvatar
-                            src=""
-                            name="ZG"
+                    {message.role === "user" ? (
+                      <Message
+                        from={message.role}
+                        className="mb-2"
+                      >
+                        <MessageContent>
+                          <TextWithLinks
+                            text={part.text}
                           />
-                        </>
-                      ) : message.role === "ai-agent" &&
-                        part.displayAvatar !== undefined &&
-                        part.displayAvatar === false ? (
-                        <>
-                          <div className="w-11" />
-                          <MessageContent className="p-1 pb-3">
-                            <TextWithLinks
-                              text={part.text}
-                            />
-                          </MessageContent>
-                        </>
-                      ) : (
-                        <>
-                          <MessageAvatar
-                            src=""
-                            name={
-                              message.role ===
-                                "ai-agent"
-                                ? "SA"
-                                : "A"
-                            }
+                        </MessageContent>
+                        <MessageAvatar
+                          src=""
+                          name="ZG"
+                        />
+                      </Message>
+                    ) : message.role === "ai-agent" &&
+                      part.displayAvatar !== undefined &&
+                      part.displayAvatar === false ? (
+                      <Message
+                        from={message.role}
+                        className="mb-2"
+                      >
+                        <div className="w-11" />
+                        <MessageContent className="font-mono flex flex-row items-start">
+                          <MousePointer2 className="w-4 h-4 text-gray-500" />
+                          <TextWithLinks
+                            text={part.text}
                           />
-                          <MessageContent>
-                            <TextWithLinks
-                              text={part.text}
-                            />
-                          </MessageContent>
-                        </>
-                      )}
-                    </Message>
+                        </MessageContent>
+                      </Message>
+                    ) : (
+                      <Message
+                        from={message.role}
+                        className="mb-2 items-start"
+                      >
+                        <MessageAvatar
+                          src=""
+                          className="mt-2"
+                          name={
+                            message.role ===
+                              "ai-agent"
+                              ? "SA"
+                              : "A"
+                          }
+                        />
+                        <MessageContent className="mb-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-lg">
+                          <TextWithLinks
+                            text={part.text}
+                          />
+                        </MessageContent>
+                      </Message>
+                    )}
                   </Fragment>
                 );
               case "options":
@@ -1596,7 +1621,7 @@ const ChatBotDemo = () => {
                               }
                             }
                           }}
-                          className="px-4 py-2 text-sm font-medium rounded-md border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          className="px-4 py-2 text-sm font-medium rounded-md border-1 border-gray-300 bg-transparent text-black hover:bg-gray-50 hover:border-gray-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                           {option.label}
                         </motion.button>
@@ -1697,14 +1722,12 @@ const ChatBotDemo = () => {
                               )
                             );
 
-                            // Save button state to Redis
                             const buttonUpdate: Partial<ButtonStates> = {};
                             if (appId === "thumbtack") {
                               buttonUpdate.isConnectThumbtackClicked = true;
                             } else if (appId === "openphone") {
                               buttonUpdate.isConnectOpenPhoneClicked = true;
                             }
-                            console.log("💾 Saving button state to Redis:", buttonUpdate);
                             updatePartialButtonStates(buttonUpdate).then(() => {
                               console.log("✅ Button state saved successfully");
                             }).catch((error) => {
@@ -1841,7 +1864,6 @@ const ChatBotDemo = () => {
                             "recording"
                           );
 
-                          // Save recording state to Redis
                           updatePartialButtonStates({
                             agentRecordingState: "recording",
                           }).catch((error) => {
@@ -2933,7 +2955,7 @@ const ChatBotDemo = () => {
 
   // Render sticky input section
   const renderInputSection = () => (
-    <div className="sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/40 py-4 px-6">
+    <div className="sticky bottom-[20px] md:bottom-0 z-50 w-full m-5 rounded-lg">
       <AnimatePresence mode="wait">
         {recordingState === "recording" ? (
           // Show audio visualizer when recording
@@ -2955,7 +2977,7 @@ const ChatBotDemo = () => {
               </div>
               <button
                 onClick={handleCrossButtonClick}
-                className="flex items-center justify-center w-12 h-12 rounded-full  text-green transition-all shadow-md hover:shadow-lg hover:bg-green-600 hover:text-white duration-300"
+                className="flex items-center justify-center w-12 h-12 rounded-full bg-white text-green transition-all shadow-md hover:shadow-lg hover:bg-green-600 hover:text-white duration-300"
                 aria-label="Send voice message"
               >
                 <svg
@@ -3134,7 +3156,24 @@ const ChatBotDemo = () => {
 
   return (
     <LayoutGroup>
-      <div className="max-w-7xl p-4 md:p-0 mx-auto relative size-full min-h-screen flex flex-col">
+      <MeshGradientComponent
+        colors={[
+          settings.background.color1.hex,
+          settings.background.color2.hex,
+          settings.background.color3.hex,
+          settings.background.color4.hex,
+        ]}
+        speed={settings.background.speed}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          zIndex: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      />
+      <div className="max-w-6xl p-4 my-0 md:my-4 md:p-0 mx-auto relative size-full h-screen md:h-[calc(100vh-35px)] flex flex-col bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-none md:rounded-lg scrollbar-hidden">
         {/* Show Header always */}
         {!isMobile && !isExtension && <Header />}
 
@@ -3144,42 +3183,31 @@ const ChatBotDemo = () => {
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}
-              className="w-full flex flex-col flex-1 min-h-0"
+              className="w-full flex flex-col flex-1 min-h-0 mt-10"
             >
-              {messages.some((m) => m.id === "msg-16") && (
-                <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-0 z-10 bg-[#ddd] text-white px-2 py-1 gap-0 h-12">
-                  <TabsTrigger
-                    value="chat"
-                    className="text-black data-[state=active]:text-black data-[state=active]:bg-white px-4 py-2 transition-all duration-200 ease-in-out"
-                  >
-                    Chat
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="profile"
-                    className="data-[state=active]:bg-[#f5f5f5] data-[state=active]:text-foreground px-4 py-2 transition-all duration-200 ease-in-out"
-                  >
-                    Business Profile
-                  </TabsTrigger>
-                </TabsList>
-              )}
+              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 sticky top-[50px] z-10 bg-[#ffffff55] text-white px-2 py-1 gap-0 h-12 md:hidden">
+                <TabsTrigger
+                  value="chat"
+                  className="text-black data-[state=active]:text-black data-[state=active]:bg-white px-4 py-2 transition-all duration-200 ease-in-out"
+                >
+                  Chat
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profile"
+                  className="data-[state=active]:bg-white data-[state=active]:text-black px-4 py-2 transition-all duration-200 ease-in-out"
+                >
+                  Business Profile
+                </TabsTrigger>
+              </TabsList>
 
               <TabsContent
                 value="chat"
                 className="mt-0 flex-1 flex flex-col min-h-0 transition-all duration-200 ease-in-out"
               >
-                <div className="flex flex-col flex-1 min-h-0">
-                  <Conversation className="flex-1 min-h-0">
-                    <ConversationContent>
+                <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                  <Conversation className="flex-1 min-h-0 scrollbar-hidden">
+                    <ConversationContent className="scrollbar-hidden">
                       {renderConversationMessages()}
-                      {/* Manual progression indicator */}
-                      {/* {waitingForManualProgression && (
-                        <div className="flex justify-center py-4 opacity-20">
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-2 text-blue-700">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-medium">Press "0" to continue</span>
-                          </div>
-                        </div>
-                      )} */}
                       <AutoScrollHandler />
                     </ConversationContent>
                     <ConversationScrollButton />
@@ -3190,10 +3218,10 @@ const ChatBotDemo = () => {
 
               <TabsContent
                 value="profile"
-                className="mt-0 flex-1 flex flex-col min-h-0 transition-all duration-200 ease-in-out"
+                className="mt-0 flex-1 flex flex-col min-h-0 transition-all duration-200 ease-in-out h-full"
               >
                 {/* Business Profile content - wrapped in scrollable container for consistency */}
-                <div className="flex-1 overflow-y-auto px-4 py-4">
+                <div className="flex-1 overflow-y-auto px-4 py-4 h-full scrollbar-hidden">
                   {showSummary && summaryData ? (
                     <>
                       <ExtensionSummary
@@ -3270,9 +3298,9 @@ const ChatBotDemo = () => {
         {!isMobile && isExtension && (
           <div className="flex flex-1 min-h-0 gap-6">
             {/* Main chat area - 2/3 width */}
-            <div className="w-2/3 flex-shrink-0 flex flex-col min-h-0">
+            <div className="w-2/3 flex-shrink-0 flex flex-col min-h-0 overflow-hidden scrollbar-hidden">
               <Conversation className="flex-1 min-h-0">
-                <ConversationContent>
+                <ConversationContent className="scrollbar-hidden">
                   {renderConversationMessages()}
                   <AutoScrollHandler />
                 </ConversationContent>
@@ -3282,7 +3310,7 @@ const ChatBotDemo = () => {
             </div>
 
             {/* Sidebar - 1/3 width */}
-            <div className="w-1/3 flex-shrink-0 flex flex-col min-h-0">
+            <div className="w-1/3 flex-shrink-0 flex flex-col min-h-0 scrollbar-hidden">
               <RecordingIndicator
                 recordingState={workflowRecordingState}
               />
@@ -3317,7 +3345,7 @@ const ChatBotDemo = () => {
           <motion.div
             layoutId="conversation-container"
             layout="position"
-            className="flex flex-col flex-1 min-h-0 px-6 will-change-transform"
+            className="flex flex-col flex-1 min-h-0 px-6 will-change-transform scrollbar-hidden"
             initial={false}
             animate={{
               paddingTop: 16,
@@ -3329,7 +3357,7 @@ const ChatBotDemo = () => {
             <motion.div
               layoutId="conversation-content"
               layout="position"
-              className="flex-1 flex flex-col min-h-0 will-change-transform"
+              className="flex-1 flex flex-col min-h-0 overflow-hidden will-change-transform scrollbar-hidden"
               transition={{
                 layout: {
                   duration: 1,
@@ -3338,17 +3366,8 @@ const ChatBotDemo = () => {
               }}
             >
               <Conversation className="flex-1 min-h-0">
-                <ConversationContent>
+                <ConversationContent className="scrollbar-hidden">
                   {renderConversationMessages()}
-                  {/* Manual progression indicator */}
-                  {/* {waitingForManualProgression && (
-                    <div className="flex justify-center py-4 opacity-20">
-                      <div className="opacity-20 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-2 text-blue-700">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium">Press "0" to continue</span>
-                      </div>
-                    </div>
-                  )} */}
                   <AutoScrollHandler />
                 </ConversationContent>
                 <ConversationScrollButton />

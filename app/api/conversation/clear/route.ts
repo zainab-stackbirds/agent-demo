@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clearConversationState, clearButtonStates } from '@/lib/redis';
+import { clearConversationState, clearButtonStates } from '@/lib/state';
 
 export async function POST(request: NextRequest) {
   try {

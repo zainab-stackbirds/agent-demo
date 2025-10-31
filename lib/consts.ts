@@ -93,7 +93,6 @@ export const thumbtackConversation: CustomUIMessage[] = [
 			{
 				type: "text",
 				text: "Does this look yours?",
-				displayAvatar: false,
 			},
 		],
 	},
@@ -303,6 +302,12 @@ export const thumbtackConversation: CustomUIMessage[] = [
 				type: "text",
 				text: "Thanks, please continue",
 			},
+		],
+	},
+	{
+		id: "msg-23-1",
+		role: "ai-agent",
+		parts: [
 			{
 				type: "recording-state",
 				state: "start",

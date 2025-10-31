@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSubscriberRedis, getConversationState } from '@/lib/redis';
+import { getConversationState, subscribeToUserChannel } from '@/lib/state';
 
 export async function GET(request: NextRequest) {
   // Get userId from query params
@@ -34,30 +34,21 @@ export async function GET(request: NextRequest) {
       };
 
       try {
-        const subscriberRedis = getSubscriberRedis();
-        const userChannel = `conversation:updates:${userId}`;
-
-        // Subscribe to user-specific conversation updates
-        await subscriberRedis.subscribe(userChannel);
-
         // Send initial state
         const initialState = await getConversationState(userId);
         send(JSON.stringify({ type: 'initial', data: initialState }));
 
-        // Listen for updates
-        subscriberRedis.on('message', (channel, message) => {
-          if (channel === userChannel) {
-            send(message);
-          }
+        // Subscribe to in-memory channel
+        const unsubscribe = subscribeToUserChannel(userId, (message) => {
+          send(message);
         });
 
         // Cleanup on client disconnect
-        request.signal.addEventListener('abort', async () => {
+        request.signal.addEventListener('abort', () => {
           if (isClosed) return; // Already cleaned up
           isClosed = true;
           try {
-            await subscriberRedis.unsubscribe(userChannel);
-            // Check if controller is not already closed
+            unsubscribe();
             if (controller.desiredSize !== null) {
               controller.close();
             }

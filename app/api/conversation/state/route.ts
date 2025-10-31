@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getConversationState, setConversationState, clearConversationState } from '@/lib/redis';
-import type { ConversationState } from '@/lib/redis';
+import { getConversationState, setConversationState, clearConversationState } from '@/lib/state';
+import type { ConversationState } from '@/lib/state';
 
 export async function GET(request: NextRequest) {
   try {
